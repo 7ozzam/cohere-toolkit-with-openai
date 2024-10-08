@@ -1,5 +1,6 @@
 import json
 import os
+from typing import Any
 from uuid import uuid4
 
 from dotenv import load_dotenv
@@ -17,7 +18,13 @@ load_dotenv()
 model_deployments = ALL_MODEL_DEPLOYMENTS.copy()
 model_deployments.update(COMMUNITY_DEPLOYMENTS_SETUP)
 
+openAiModels = model_deployments.get(ModelDeploymentName.OpenAI).models
+defaultOpenAiModel = openAiModels[0]
+
 MODELS_NAME_MAPPING = {
+    ModelDeploymentName.OpenAI: {
+        **{model: {"cohere_name": model, "is_default": defaultOpenAiModel == model } for model in openAiModels},
+    },
     ModelDeploymentName.CoherePlatform: {
         "command": {
             "cohere_name": "command",
@@ -123,7 +130,7 @@ MODELS_NAME_MAPPING = {
 }
 
 
-def deployments_models_seed(op):
+def deployments_models_seed(op, models_name_mapping: dict[ModelDeploymentName, Any]=MODELS_NAME_MAPPING):
     """
     Seed default deployments, models, organization, user and agent.
     """
@@ -147,7 +154,7 @@ def deployments_models_seed(op):
     op.execute(sql_command)
 
     # Seed deployments and models
-    for deployment in MODELS_NAME_MAPPING.keys():
+    for deployment in models_name_mapping.keys():
         deployment_id = str(uuid4())
         sql_command = text(
             """
@@ -176,7 +183,7 @@ def deployments_models_seed(op):
         )
         op.execute(sql_command)
 
-        for model_name, model_mapping_name in MODELS_NAME_MAPPING[deployment].items():
+        for model_name, model_mapping_name in models_name_mapping[deployment].items():
             model_id = str(uuid4())
             sql_command = text(
                 """

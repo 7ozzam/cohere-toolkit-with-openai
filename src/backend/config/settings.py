@@ -218,6 +218,19 @@ class RedisSettings(BaseSettings, BaseModel):
     )
 
 
+class OpenAISettings(BaseSettings, BaseModel):
+    model_config = SETTINGS_CONFIG
+    api_key: Optional[str] = Field(
+        default=None, validation_alias=AliasChoices("OPENAI_API_KEY", "api_key")
+    )
+    endpoint_url: Optional[str] = Field(
+        default=None, validation_alias=AliasChoices("OPENAI_ENDPOINT_URL", "endpoint_url")
+    )
+    default_model: Optional[str] = Field(
+        default=None, validation_alias=AliasChoices("OPENAI_DEFAULT_MODEL", "default_model")
+    )
+
+
 class SageMakerSettings(BaseSettings, BaseModel):
     model_config = SETTINGS_CONFIG
     endpoint_name: Optional[str] = Field(
@@ -293,6 +306,7 @@ class DeploymentSettings(BaseSettings, BaseModel):
     default_deployment: Optional[str] = None
     enabled_deployments: Optional[List[str]] = None
 
+    openai: Optional[OpenAISettings] = Field(default=OpenAISettings())
     sagemaker: Optional[SageMakerSettings] = Field(default=SageMakerSettings())
     azure: Optional[AzureSettings] = Field(default=AzureSettings())
     cohere_platform: Optional[CoherePlatformSettings] = Field(

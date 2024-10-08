@@ -14,6 +14,7 @@ from backend.model_deployments.bedrock import BEDROCK_ENV_VARS
 from backend.model_deployments.cohere_platform import COHERE_ENV_VARS
 from backend.model_deployments.sagemaker import SAGE_MAKER_ENV_VARS
 from backend.model_deployments.single_container import SC_ENV_VARS
+from backend.model_deployments.open_ai import OpenAIDeployment, OPENAI_ENV_VARS
 from backend.schemas.deployment import Deployment
 from backend.services.logger.utils import LoggerFactory
 
@@ -21,6 +22,7 @@ logger = LoggerFactory().get_logger()
 
 
 class ModelDeploymentName(StrEnum):
+    OpenAI = "OpenAI"
     CoherePlatform = "Cohere Platform"
     SageMaker = "SageMaker"
     Azure = "Azure"
@@ -32,6 +34,14 @@ use_community_features = Settings().feature_flags.use_community_features
 
 # TODO names in the map below should not be the display names but ids
 ALL_MODEL_DEPLOYMENTS = {
+    ModelDeploymentName.OpenAI: Deployment(
+        id="openai",
+        name=ModelDeploymentName.OpenAI,
+        deployment_class=OpenAIDeployment,
+        models=OpenAIDeployment.list_models(),
+        is_available=OpenAIDeployment.is_available(),
+        env_vars=OPENAI_ENV_VARS,
+    ),
     ModelDeploymentName.CoherePlatform: Deployment(
         id="cohere_platform",
         name=ModelDeploymentName.CoherePlatform,

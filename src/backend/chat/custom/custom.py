@@ -15,6 +15,15 @@ from backend.schemas.context import Context
 from backend.schemas.tool import Category, Tool
 from backend.services.file import get_file_service
 from backend.tools.utils.tools_checkers import tool_has_category
+from backend.crud import model as model_crud
+from backend.database_models import Model
+
+from backend.crud import deployment as deployment_crud
+from backend.database_models import Deployment
+# from backend.database_models.deployment import 
+from backend.database_models.database import DBSessionDep
+
+
 
 MAX_STEPS = 15
 
@@ -39,10 +48,34 @@ class CustomChat(BaseChat):
         Returns:
             Generator[StreamResponse, None, None]: Chat response.
         """
+        
         logger = ctx.get_logger()
         # TODO Eugene: Discuss with Scott how to get agent here and use the Agent deployment
         # Choose the deployment model - validation already performed by request validator
-        deployment_name = ctx.get_deployment_name()
+        agent_id = ctx.get_agent_id()
+        deployment = []
+        deployment_name = ctx.get_deployment_name() or ''
+        
+        if agent_id:
+            try:
+                if (kwargs.get('session')):
+                    session: Any = kwargs.get('session')
+                    deployment = deployment_crud.get_deployments_by_agent_id(db=session, agent_id=agent_id or '')
+            except Exception as e:
+                raise HTTPException(status_code=400, detail="Agent Get Deployments Error: " + str(e))
+        
+        if len(deployment):
+            deployment_name = deployment[0].name
+        
+        
+        # model = model_crud.get_model(session, model_id)
+        
+        print("===================================================")
+        print(ctx)
+        print(deployment)
+        print(agent_id)
+        print("===================================================")
+        
         deployment_model = get_deployment(deployment_name, ctx)
 
         # Bind the logger with the conversation ID

@@ -62,7 +62,7 @@ class CohereToOpenAI:
     def cohere_to_openai_event_chunk(event: ChatCompletionChunk, previous_response: Optional[str] = None, function_triggered: str = 'none', chat_request: CohereChatRequest = None, generation_id: Optional[str] = "") -> List[StreamedChatResponse]:
         
         # tool_call_is_complete = CohereToOpenAI.check_if_tool_call_in_text_chunk_is_complete(previous_response or "")
-        # is_there_json = len(jsonparser.parse_json(previous_response).keys()) > 0
+        
         extracted_json_string = CohereToOpenAI.extract_json_from_string(previous_response)
         print("extracted_json_string: ",extracted_json_string)
         
@@ -72,7 +72,7 @@ class CohereToOpenAI:
             is_json_full = False
             
         parsed_previous_response = jp.parse(extracted_json_string)
-        
+        is_there_json = len(parsed_previous_response) > 0
         # print("tool_call_is_complete: ",tool_call_is_complete)
         if (is_there_json and is_json_full):
             # parsed_previous_response = pjp.parse_json(previous_response)

@@ -14,11 +14,14 @@ from cohere.types import StreamedChatResponse,  StreamStartStreamedChatResponse,
 from cohere.types import Tool as CohereTool
 from backend.schemas.tool import Tool as BackendTool
 import partial_json_parser as pjp
+from partialjson import JSONParser as jsonparser
 from partial_json_parser import JSON
 import json
+
+jp = jsonparser()
+
 # Assuming CohereChatRequest class is defined above as provided.
 class CohereToOpenAI:
-    
     @staticmethod
     def get_value(json_obj: JSON, key: str) -> Any:
         if isinstance(json_obj, dict):
@@ -41,15 +44,38 @@ class CohereToOpenAI:
                 
         return new_chat_history
                     
+                    
+    @staticmethod
+    def extract_json_from_string(string_with_json: str):
+        # Find the position of the first '{'
+        start = string_with_json.find('{')
+        # Find the position of the last '}'
+        end = string_with_json.rfind('}')
+        
+        # If both braces are found, slice the string
+        if start != -1 and end != -1 and start < end:
+            return string_with_json[start:end + 1]
+        else:
+            return ""  # Return None if no valid JSON structure is found
+    
     @staticmethod
     def cohere_to_openai_event_chunk(event: ChatCompletionChunk, previous_response: Optional[str] = None, function_triggered: str = 'none', chat_request: CohereChatRequest = None, generation_id: Optional[str] = "") -> List[StreamedChatResponse]:
         
         # tool_call_is_complete = CohereToOpenAI.check_if_tool_call_in_text_chunk_is_complete(previous_response or "")
-        is_there_json = len(pjp.parse_json(previous_response).keys()) > 0
-        is_json_full = full_text.strip().endswith("}") and full_text.strip().count("{") == full_text.strip().count("}")
+        # is_there_json = len(jsonparser.parse_json(previous_response).keys()) > 0
+        extracted_json_string = extract_json_from_string(previous_response)
+        print("extracted_json_string: ",extracted_json_string)
+        
+        if (len(extracted_json_string) > 0):
+            is_json_full = full_text.strip().count("{") == full_text.strip().count("}")
+        else:
+            is_json_full = False
+            
+        parsed_previous_response = jp.parse(extracted_json_string)
+        
         print("tool_call_is_complete: ",tool_call_is_complete)
         if (is_there_json and is_json_full):
-            parsed_previous_response = pjp.parse_json(previous_response)
+            # parsed_previous_response = pjp.parse_json(previous_response)
             
             if (parsed_previous_response):
                 print("parsed_previous_response: ",parsed_previous_response)

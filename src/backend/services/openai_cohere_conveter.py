@@ -67,7 +67,7 @@ class CohereToOpenAI:
         print("extracted_json_string: ",extracted_json_string)
         
         if (len(extracted_json_string) > 0):
-            is_json_full = full_text.strip().count("{") == full_text.strip().count("}")
+            is_json_full = extracted_json_string.strip().count("{") == extracted_json_string.strip().count("}")
         else:
             is_json_full = False
             

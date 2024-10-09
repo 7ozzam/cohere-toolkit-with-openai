@@ -44,9 +44,11 @@ class CohereToOpenAI:
     @staticmethod
     def cohere_to_openai_event_chunk(event: ChatCompletionChunk, previous_response: Optional[str] = None, function_triggered: str = 'none', chat_request: CohereChatRequest = None, generation_id: Optional[str] = "") -> List[StreamedChatResponse]:
         
-        tool_call_is_complete = CohereToOpenAI.check_if_tool_call_in_text_chunk_is_complete(previous_response or "")
+        # tool_call_is_complete = CohereToOpenAI.check_if_tool_call_in_text_chunk_is_complete(previous_response or "")
+        is_there_json = len(pjp.parse_json(previous_response).keys()) > 0
+        is_json_full = full_text.strip().endswith("}") and full_text.strip().count("{") == full_text.strip().count("}")
         print("tool_call_is_complete: ",tool_call_is_complete)
-        if (previous_response and tool_call_is_complete):
+        if (is_there_json and is_json_full):
             parsed_previous_response = pjp.parse_json(previous_response)
             
             if (parsed_previous_response):
@@ -109,8 +111,8 @@ class CohereToOpenAI:
         if not tool_calls:
             return oai_calls
         for tool_call in tool_calls:
-            arguments = str(tool_call["parameters"])
-            name = str(tool_call["name"])
+            arguments = str(tool_call.parameters)
+            name = str(tool_call.name)
             function = OpenAIFunction(arguments=arguments, name=name)
             
             
@@ -134,7 +136,6 @@ class CohereToOpenAI:
         # Add chat history if it exists
         if cohere_request.chat_history:
             for chat_entry in cohere_request.chat_history:
-                print("CHAT ENTRY: ", chat_entry)
                 if (chat_entry.message and chat_entry.role):
                     chat_entry.tool_calls
                     msg: ChatCompletionMessageParam = ChatCompletionAssistantMessageParam(

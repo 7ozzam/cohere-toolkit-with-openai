@@ -1,5 +1,6 @@
 from typing import Any, AsyncGenerator, Dict, Iterable, List
 
+from cohere import StreamStartStreamedChatResponse
 from openai import OpenAI
 
 import asyncio
@@ -15,7 +16,7 @@ from backend.services.openai_cohere_conveter import CohereToOpenAI
 
 # Set up logging
 logger = logging.getLogger(__name__)
-
+import uuid
 
 
 OPENAI_URL_ENV_VAR = "OPENAI_ENDPOINT_URL"
@@ -102,11 +103,13 @@ class OpenAIDeployment(BaseDeployment):
         self, chat_request: CohereChatRequest, ctx: Context, **kwargs: Any
     ) -> AsyncGenerator[Any, Any]:
         """Invoke chat stream using the OpenAI-compatible API."""
-        
+        generation_id = uuid.uuid4().hex
         # print(chat_request)
         # print(chat_request.model_dump(exclude={"stream", "file_ids", "agent_id"}))
         # return
-        
+        first_request_is_sent = False
+        function_triggered = 'none'
+        full_previous_reponse = ''
         openAi_chat_request = CohereToOpenAI.cohere_to_openai_request_body(chat_request)
         print(f"OpenAI chat request: {openAi_chat_request}")
         try:
@@ -118,8 +121,23 @@ class OpenAIDeployment(BaseDeployment):
             
             # Yield each event as the stream progresses
             for event in stream:
-                cohere_event = CohereToOpenAI.cohere_to_openai_event_chunk(event)
-                yield to_dict(cohere_event)
+                if event.choices[0].delta.content:
+                    full_previous_reponse += event.choices[0].delta.content
+                                        
+                if function_triggered != 'calling':
+                    cohere_events = CohereToOpenAI.cohere_to_openai_event_chunk(event=event, previous_response=full_previous_reponse, function_triggered=function_triggered, chat_request=chat_request)
+                else:
+                    cohere_events = []
+                    
+                if len(cohere_events) > 0:
+                    for cohere_event in cohere_events:
+                        if (cohere_event.event_type == "tool-calls-generation" or cohere_event.event_type == "tool-calls-chunk"):
+                            function_triggered = "calling"
+                        if not first_request_is_sent:
+                            stream_start = StreamStartStreamedChatResponse(event_type = "stream-start", generation_id=generation_id)
+                            yield to_dict(stream_start)
+                        yield to_dict(cohere_event)
+            
         except Exception as e:
             logger.error(f"Error invoking chat stream: {e}")
             raise

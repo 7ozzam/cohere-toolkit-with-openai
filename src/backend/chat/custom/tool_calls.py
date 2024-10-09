@@ -23,6 +23,8 @@ async def async_call_tools(
 ) -> list[dict[str, str]]:
     logger = ctx.get_logger()
 
+    print("I'll take the call from this", chat_history[-1])
+    
     tool_results = []
     if "tool_calls" not in chat_history[-1]:
         return tool_results

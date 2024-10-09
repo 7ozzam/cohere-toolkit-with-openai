@@ -25,6 +25,7 @@ class ReadFileTool(BaseTool):
         return True
 
     async def call(self, parameters: dict, **kwargs: Any) -> List[Dict[str, Any]]:
+        print("Read File is Called With Params", parameters)
         file = parameters.get("file")
 
         session = kwargs.get("session")

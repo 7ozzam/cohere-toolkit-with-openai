@@ -78,6 +78,7 @@ class CohereDeployment(BaseDeployment):
         )
 
         for event in stream:
+            print("CohereChunk: ",event)
             event_dict = to_dict(event)
 
             event_dict_log = event_dict.copy()

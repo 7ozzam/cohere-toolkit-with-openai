@@ -229,6 +229,7 @@ class CustomChat(BaseChat):
                 ctx,
             ):
                 if event["event_type"] == StreamEvent.STREAM_END:
+                    print("HistoryUpdated", event)
                     chat_request.chat_history = event["response"].get(
                         "chat_history", []
                     )

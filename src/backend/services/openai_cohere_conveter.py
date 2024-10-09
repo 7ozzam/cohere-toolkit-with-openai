@@ -63,7 +63,7 @@ class CohereToOpenAI:
         
         # tool_call_is_complete = CohereToOpenAI.check_if_tool_call_in_text_chunk_is_complete(previous_response or "")
         # is_there_json = len(jsonparser.parse_json(previous_response).keys()) > 0
-        extracted_json_string = extract_json_from_string(previous_response)
+        extracted_json_string = CohereToOpenAI.extract_json_from_string(previous_response)
         print("extracted_json_string: ",extracted_json_string)
         
         if (len(extracted_json_string) > 0):

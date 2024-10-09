@@ -73,7 +73,7 @@ class CohereToOpenAI:
             
         parsed_previous_response = jp.parse(extracted_json_string)
         
-        print("tool_call_is_complete: ",tool_call_is_complete)
+        # print("tool_call_is_complete: ",tool_call_is_complete)
         if (is_there_json and is_json_full):
             # parsed_previous_response = pjp.parse_json(previous_response)
             

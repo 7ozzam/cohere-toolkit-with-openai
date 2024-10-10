@@ -263,7 +263,7 @@ class CohereToOpenAI:
                 print("tool_result: ", tool_result)
                 output_str= str(tool_result.get("outputs")).translate(str.maketrans('', '', filter))
                 
-                append_message_safe("assistant", f"{output_str}")
+                append_message_safe("system", f"the tool response is: {output_str}")
                 
                 # print("messages: ", messages)
         

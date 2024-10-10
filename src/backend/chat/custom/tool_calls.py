@@ -81,7 +81,8 @@ async def _call_tool_async(
     tool_call: dict,
     deployment_model: BaseDeployment,
 ) -> List[Dict[str, Any]]:
-    tool = AVAILABLE_TOOLS.get(tool_call["name"])
+    tool_name = tool_call["name"] or tool_call["tool_name"] or tool_call["tool"] or ""
+    tool = AVAILABLE_TOOLS.get(tool_name)
     print("tool: ", tool)
     if not tool:
         print("tool: ", tool)

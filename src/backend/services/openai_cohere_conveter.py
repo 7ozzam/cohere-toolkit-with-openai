@@ -2,7 +2,7 @@ from typing import Iterable, List, Dict, Any, Optional, Union
 
 from cohere import NonStreamedChatResponse, ToolResult
 from openai.types.chat.completion_create_params import CompletionCreateParamsBase
-from openai.types.chat import ChatCompletionSystemMessageParam, ChatCompletionUserMessageParam,ChatCompletionAssistantMessageParam, ChatCompletionMessageParam, ChatCompletionChunk, ChatCompletionToolParam, ChatCompletionMessageToolCallParam
+from openai.types.chat import ChatCompletionSystemMessageParam, ChatCompletionUserMessageParam,ChatCompletionAssistantMessageParam, ChatCompletionMessageParam, ChatCompletionChunk, ChatCompletionToolParam, ChatCompletionMessageToolCallParam, ChatCompletionToolMessageParam
 from openai.types.chat.chat_completion_chunk import ChoiceDeltaToolCall
 from openai.types import FunctionParameters
 from openai.types.chat.chat_completion_message_tool_call_param import Function as OpenAIFunction
@@ -192,6 +192,8 @@ class CohereToOpenAI:
                 message_instance = ChatCompletionUserMessageParam(**message_data)
             elif role == "assistant":
                 message_instance = ChatCompletionAssistantMessageParam(**message_data)
+            elif role == "tool":
+                message_instance = ChatCompletionToolMessageParam(**message_data)
             else:
                 print(f"Skipping unknown role: {role}")
                 return
@@ -260,10 +262,10 @@ class CohereToOpenAI:
             for tool_result in cohere_request.tool_results:
                 # Add the tool results
                 filter = ''.join([chr(i) for i in range(1, 32)])
-                print("tool_result: ", tool_result)
-                output_str= str(tool_result.get("outputs")).translate(str.maketrans('', '', filter))
+                # print("tool_result: ", tool_result)
+                output_str= CohereToOpenAI.clean_string(str(tool_result.get("outputs")).translate(str.maketrans('', '', filter)))
                 
-                append_message_safe("system", f"the tool response is: {output_str}")
+                append_message_safe("tool", f"the tool response is: {output_str}")
                 
                 # print("messages: ", messages)
         
@@ -282,6 +284,18 @@ class CohereToOpenAI:
         
         return openai_request
 
+    @staticmethod
+    def clean_string(input_string):
+        # Remove unnecessary escape sequences (like \n and \\)
+        cleaned_string = input_string.replace("\\n", "\n").replace("\\\\", "\\")
+
+        # Normalize whitespace: replace multiple spaces with a single space
+        cleaned_string = re.sub(r'\s+', ' ', cleaned_string).strip()
+
+        # Optionally, you can also handle specific markup tags or other formatting here if needed
+        # For example: remove any unwanted tags or attributes, if necessary
+
+        return cleaned_string
     @staticmethod
     def remove_markdown_formatting(text):
         # Remove headers

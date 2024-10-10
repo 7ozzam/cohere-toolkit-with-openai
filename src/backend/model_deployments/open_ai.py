@@ -1,6 +1,6 @@
 from typing import Any, AsyncGenerator, Dict, Iterable, List
 
-from cohere import SearchResultsStreamedChatResponse, StreamStartStreamedChatResponse
+from cohere import ChatSearchQuery, ChatSearchResult, ChatSearchResultConnector, SearchResultsStreamedChatResponse, StreamStartStreamedChatResponse
 from openai import OpenAI
 
 import asyncio
@@ -110,6 +110,7 @@ class OpenAIDeployment(BaseDeployment):
         first_request_is_sent = False
         function_triggered = 'none'
         full_previous_reponse = ''
+        result_sent = False
         openAi_chat_request = CohereToOpenAI.cohere_to_openai_request_body(chat_request)
         print("==============================================")
         print("Cohere Original chat request: ", chat_request)
@@ -135,6 +136,21 @@ class OpenAIDeployment(BaseDeployment):
                     cohere_events = CohereToOpenAI.cohere_to_openai_event_chunk(event=event, previous_response=full_previous_reponse, function_triggered=function_triggered, chat_request=chat_request)
                 else:
                     cohere_events = []
+                
+                if chat_request.tool_results and not result_sent:
+                    for tool_result in chat_request.tool_results: 
+                        if chat_request.tool_results and len(chat_request.tool_results):
+                            # Add the tool results
+                            filter = ''.join([chr(i) for i in range(1, 32)])
+                            # print("tool_result: ", tool_result)
+                            output_str= CohereToOpenAI.clean_string(str(tool_result.get("outputs")).translate(str.maketrans('', '', filter)))
+                                    
+                            chat_search_query = ChatSearchQuery(text=output_str, generation_id=generation_id)
+                            connector = ChatSearchResultConnector(id="")
+                            search_result = ChatSearchResult(document_ids=chat_request.file_ids or [], search_query=chat_search_query, connector=connector)
+                            search_event = SearchResultsStreamedChatResponse(event_type = "search-results", documents=[], search_results=[search_result] )
+                            result_sent = True
+                            yield to_dict(search_event)
                     
                 if len(cohere_events) > 0:
                     for cohere_event in cohere_events:

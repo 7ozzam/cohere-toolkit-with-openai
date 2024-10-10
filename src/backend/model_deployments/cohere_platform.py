@@ -73,6 +73,7 @@ class CohereDeployment(BaseDeployment):
     ) -> Any:
         logger = ctx.get_logger()
 
+        print("COHERE_PARAMS: ", chat_request.model_dump(exclude={"stream", "file_ids", "agent_id"}))
         stream = self.client.chat_stream(
             **chat_request.model_dump(exclude={"stream", "file_ids", "agent_id"}),
         )

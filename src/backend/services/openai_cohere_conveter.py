@@ -257,15 +257,15 @@ class CohereToOpenAI:
             
             # print("messages: ", messages)
         
-        if cohere_request.tool_results and len(cohere_request.tool_results):
-            # results: List[ToolResult] = cohere_request.tool_results # type: ignore
-            for tool_result in cohere_request.tool_results:
-                # Add the tool results
-                filter = ''.join([chr(i) for i in range(1, 32)])
-                # print("tool_result: ", tool_result)
-                output_str= CohereToOpenAI.clean_string(str(tool_result.get("outputs")).translate(str.maketrans('', '', filter)))
+        # if cohere_request.tool_results and len(cohere_request.tool_results):
+        #     # results: List[ToolResult] = cohere_request.tool_results # type: ignore
+        #     for tool_result in cohere_request.tool_results:
+        #         # Add the tool results
+        #         filter = ''.join([chr(i) for i in range(1, 32)])
+        #         # print("tool_result: ", tool_result)
+        #         output_str= CohereToOpenAI.clean_string(str(tool_result.get("outputs")).translate(str.maketrans('', '', filter)))
                 
-                append_message_safe("tool", f"the tool response is: {output_str}")
+        #         append_message_safe("tool", f"the tool response is: {output_str}")
                 
                 # print("messages: ", messages)
         

@@ -1,6 +1,6 @@
 from typing import Any, AsyncGenerator, Dict, Iterable, List
 
-from cohere import StreamStartStreamedChatResponse
+from cohere import SearchResultsStreamedChatResponse, StreamStartStreamedChatResponse
 from openai import OpenAI
 
 import asyncio
@@ -111,8 +111,15 @@ class OpenAIDeployment(BaseDeployment):
         function_triggered = 'none'
         full_previous_reponse = ''
         openAi_chat_request = CohereToOpenAI.cohere_to_openai_request_body(chat_request)
+        print("==============================================")
+        print("Cohere Original chat request: ", chat_request)
+        print("==============================================")
         print(f"OpenAI chat request: {openAi_chat_request}")
+        print("==============================================")
         try:
+            # if chat_request.tool_results:
+            #     yield to_dict(SearchResultsStreamedChatResponse(event_type = "search-results", documents=[] ))
+                
             stream = await asyncio.to_thread(
                 self.openai.chat.completions.create,
                 **openAi_chat_request,

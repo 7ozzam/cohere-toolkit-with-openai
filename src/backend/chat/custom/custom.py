@@ -13,6 +13,7 @@ from backend.schemas.chat import ChatMessage, ChatRole
 from backend.schemas.cohere_chat import CohereChatRequest
 from backend.schemas.context import Context
 from backend.schemas.tool import Category, Tool
+from backend.schemas.chat import StreamSearchResults
 from backend.services.file import get_file_service
 from backend.tools.utils.tools_checkers import tool_has_category
 from backend.crud import model as model_crud
@@ -248,11 +249,18 @@ class CustomChat(BaseChat):
                 tool_results = await async_call_tools(
                     chat_request.chat_history, deployment_model, ctx, **kwargs
                 )
+                print("Tool results", tool_results)
 
                 # Remove the message if tool results are present
                 if tool_results:
                     chat_request.tool_results = list(tool_results)
-                    chat_request.message = ""
+                    # toolMessage =  ChatMessage(role=ChatRole.SYSTEM, message="", tool_results=tool_results)
+                    # searchResultChunk = StreamSearchResults(search_results=tool_results, documents=[])
+                    
+                    if chat_request.chat_history and len(chat_request.chat_history) > 0:
+                        # chat_request.chat_history.append(toolMessage)
+                        chat_request.message = ""
+                    
             else:
                 break  # Exit loop if there are no new tool calls
 

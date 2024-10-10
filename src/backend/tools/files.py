@@ -27,14 +27,24 @@ class ReadFileTool(BaseTool):
     async def call(self, parameters: dict, **kwargs: Any) -> List[Dict[str, Any]]:
         print("Read File is Called With Params", parameters)
         file = parameters.get("file")
-
+        _file_id = parameters.get("file_id")
+        _file_name = parameters.get("filename")
+        
         session = kwargs.get("session")
         user_id = kwargs.get("user_id")
-        if not file:
+        if not file and not _file_id and not _file_name:
             return []
-
-        _, file_id = file
-        retrieved_file = file_crud.get_file(session, file_id, user_id)
+        elif file:
+            _, file_id = file
+            retrieved_file = file_crud.get_file(session, file_id, user_id)    
+        elif _file_name and not _file_id:
+            retrieved_file = file_crud.get_file_by_name(session, _file_name, user_id)
+        elif _file_id:
+            retrieved_file = file_crud.get_file(session, _file_id, user_id)
+            
+        
+        
+        
         if not retrieved_file:
             return []
 

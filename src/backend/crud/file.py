@@ -51,6 +51,21 @@ def get_file(db: Session, file_id: str, user_id: str) -> File:
 
 
 @validate_transaction
+def get_file_by_name(db: Session, file_name: str, user_id: str) -> File:
+    """
+    Get a file by ID.
+
+    Args:
+        db (Session): Database session.
+        file_id (str): File ID.
+        user_id (str): User ID.
+
+    Returns:
+        File: File with the given ID.
+    """
+    return db.query(File).filter(File.file_name == file_name, File.user_id == user_id).first()
+
+@validate_transaction
 def get_files(db: Session, user_id: str, offset: int = 0, limit: int = 100):
     """
     List all files.

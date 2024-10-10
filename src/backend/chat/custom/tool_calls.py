@@ -56,10 +56,13 @@ async def _call_all_tools_async(
     deployment_model: BaseDeployment,
     ctx: Context,
 ) -> dict[str, str]:
+    print("tool_calls: ", tool_calls)
     tasks = [
         _call_tool_async(ctx, db, tool_call, deployment_model)
         for tool_call in tool_calls
     ]
+    
+    print("tasks: ", tasks)
     combined = asyncio.gather(*tasks)
     try:
         tool_results = await asyncio.wait_for(combined, timeout=TIMEOUT)
@@ -79,7 +82,9 @@ async def _call_tool_async(
     deployment_model: BaseDeployment,
 ) -> List[Dict[str, Any]]:
     tool = AVAILABLE_TOOLS.get(tool_call["name"])
+    print("tool: ", tool)
     if not tool:
+        print("tool: ", tool)
         logger.info(
             event=f"[Custom Chat] Tool not included in tools parameter: {tool_call['name']}",
         )

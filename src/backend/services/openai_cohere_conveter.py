@@ -1,8 +1,8 @@
 from typing import Iterable, List, Dict, Any, Optional, Union
 
 from cohere import NonStreamedChatResponse, ToolResult
-from openai.types.chat.completion_create_params import CompletionCreateParamsBase
-from openai.types.completion_create_params import CompletionCreateParams
+from openai.types.chat.completion_create_params import CompletionCreateParamsBase as ChatCompletionCreateParamsBase
+from openai.types.completion_create_params import CompletionCreateParamsBase as RegularCompletionCreateParamsBase
 from openai.types.chat import ChatCompletionSystemMessageParam, ChatCompletionUserMessageParam,ChatCompletionAssistantMessageParam, ChatCompletionMessageParam, ChatCompletionChunk, ChatCompletionToolParam, ChatCompletionMessageToolCallParam, ChatCompletionToolMessageParam
 from openai.types.chat.chat_completion_chunk import ChoiceDeltaToolCall
 from openai.types import FunctionParameters
@@ -174,7 +174,7 @@ class CohereToOpenAI:
         return oai_calls
         
     @staticmethod
-    def cohere_to_openai_chat_request_body(cohere_request: CohereChatRequest, build_template: bool = False) -> CompletionCreateParamsBase:
+    def cohere_to_openai_chat_request_body(cohere_request: CohereChatRequest, build_template: bool = False) -> ChatCompletionCreateParamsBase:
         messages: List[ChatCompletionMessageParam] = []
         cohere_messages = cohere_request.chat_history.copy() if cohere_request.chat_history else []
 
@@ -255,9 +255,9 @@ class CohereToOpenAI:
         cohere_request: CohereChatRequest,
         messages: List[ChatCompletionMessageParam],
         tools: Any
-    ) -> CompletionCreateParamsBase:
+    ) -> ChatCompletionCreateParamsBase:
         """Create OpenAI request parameters without building a template."""
-        return CompletionCreateParamsBase(
+        return ChatCompletionCreateParamsBase(
             messages=messages,
             model=cohere_request.model,  # type: ignore
             max_tokens=cohere_request.max_tokens,
@@ -274,12 +274,12 @@ class CohereToOpenAI:
         messages: List[ChatCompletionMessageParam],
         tools: Any,
         tool_response: Any
-    ) -> CompletionCreateParams:
+    ) -> RegularCompletionCreateParamsBase:
         """Create OpenAI request parameters by building a template."""
         template_builder = TemplateBuilder(chat_messages=messages, tools=tools, tool_response=tool_response)
         full_template = template_builder.build_full_template()
         print(full_template)  # Output the final template
-        return CompletionCreateParams(
+        return RegularCompletionCreateParamsBase(
             prompt=full_template,
             model=cohere_request.model,  # type: ignore
             max_tokens=cohere_request.max_tokens,

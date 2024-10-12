@@ -196,7 +196,6 @@ class CohereToOpenAI:
     def cohere_to_openai_completion_request_body(cohere_request: CohereChatRequest, build_template: bool = False) -> CompletionCreateParams:
         messages: List[ChatCompletionMessageParam] = []
         cohere_messages = cohere_request.chat_history.copy() if cohere_request.chat_history else []
-        tools_response = None
         # Process chat history
         if cohere_messages:
             messages.extend(CohereToOpenAI.process_chat_history(cohere_messages))
@@ -206,7 +205,7 @@ class CohereToOpenAI:
             tools_response = str(CohereToOpenAI.process_tool_results(cohere_request.tool_results))
         
         tools = CohereToOpenAI.convert_tools(cohere_request.tools)
-        openai_request = CohereToOpenAI._create_request_with_template(cohere_request, messages, tools, build_template, tool_response=tools_response)
+        openai_request = CohereToOpenAI._create_request_with_template(cohere_request, messages, tools, build_template, tool_response=tools_response or None)
 
         return openai_request
 

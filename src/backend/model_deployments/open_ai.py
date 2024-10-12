@@ -173,11 +173,7 @@ class OpenAIDeployment(BaseDeployment):
             # if chat_request.tool_results:
             #     yield to_dict(SearchResultsStreamedChatResponse(event_type = "search-results", documents=[] ))
                 
-            stream = await asyncio.to_thread(
-                openai_call,
-                **openAi_chat_request,
-                stream=True
-            )
+
             
             # Yield each event as the stream progresses
             for event in stream:

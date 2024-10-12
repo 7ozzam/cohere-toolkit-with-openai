@@ -99,6 +99,20 @@ def get_files_by_ids(db: Session, file_ids: list[str], user_id: str) -> list[Fil
     return db.query(File).filter(File.id.in_(file_ids), File.user_id == user_id).all()
 
 
+def get_files_by_names(db: Session, file_names: list[str], user_id: str) -> list[File]:
+    """
+    Get files by IDs.
+
+    Args:
+        db (Session): Database session.
+        file_ids (list[str]): File IDs.
+        user_id (str): User ID.
+
+    Returns:
+        list[File]: List of files with the given IDs.
+    """
+    return db.query(File).filter(File.file_name.in_(file_names), File.user_id == user_id).all()
+
 @validate_transaction
 def get_files_by_file_names(
     db: Session, file_names: list[str], user_id: str

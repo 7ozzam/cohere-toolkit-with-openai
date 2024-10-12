@@ -96,10 +96,10 @@ async def _call_tool_async(
             }
         ]
         return outputs
-
+    parameters = tool_call.get("parameters", {}) or tool_call.get("arguments", {})
     try:
         outputs = await tool.implementation().call(
-            parameters=tool_call.get("parameters"),
+            parameters=parameters,
             ctx=ctx,
             session=db,
             model_deployment=deployment_model,

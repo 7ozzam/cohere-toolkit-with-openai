@@ -35,7 +35,10 @@ class ReadFileTool(BaseTool):
         if not file and not _file_id and not _file_name:
             return []
         elif file:
-            _, file_id = file
+            if isinstance(file, str):
+                file_id = file
+            elif isinstance(file, dict):
+                _, file_id = file
             retrieved_file = file_crud.get_file(session, file_id, user_id)    
         elif _file_name and not _file_id:
             retrieved_file = file_crud.get_file_by_name(session, _file_name, user_id)
@@ -46,7 +49,7 @@ class ReadFileTool(BaseTool):
         
         
         if not retrieved_file:
-            return []
+            return ["It seems you're using wrong parameters or the file doesn't exist, please use the correct file_id from the conversation."]
 
         return [
             {
@@ -75,17 +78,47 @@ class SearchFileTool(BaseTool):
     async def call(
         self, parameters: dict, ctx: Any, **kwargs: Any
     ) -> List[Dict[str, Any]]:
-        query = parameters.get("search_query")
-        files = parameters.get("files")
+        query = parameters.get("search_query") or parameters.get("query")
+        
+        
+        def get_files(params):
+            return (parameters.get("files") or 
+                    [params.get("file")] or 
+                    [])
+        def get_file_ids(params):
+            return (params.get("file_ids") or 
+                    params.get("ids") or 
+                    [params.get("file_id")] or 
+                    [params.get("id")] or 
+                    [])
+
+        def get_file_names(params):
+            return (params.get("file_names") or 
+                    params.get("filenames") or 
+                    [params.get("filename")] or 
+                    [params.get("file_name")] or 
+                    [])
+        files = get_files(parameters)
+        _file_ids = get_file_ids(parameters)
+        _file_names = get_file_names(parameters)
+        
+        
 
         session = kwargs.get("session")
         user_id = kwargs.get("user_id")
 
-        if not query or not files:
+        if not query or (not files and not _file_ids and not _file_names):
             return []
 
-        file_ids = [file_id for _, file_id in files]
-        retrieved_files = file_crud.get_files_by_ids(session, file_ids, user_id)
+        if len(files):
+            file_ids = [file_id for _, file_id in files]
+            retrieved_files = file_crud.get_files_by_ids(session, file_ids, user_id)
+        elif len(_file_ids):
+            retrieved_files = file_crud.get_files_by_ids(session, _file_ids, user_id)
+        elif len(_file_names):
+            retrieved_files = file_crud.get_files_by_names(session, _file_names, user_id)
+        
+            
         if not retrieved_files:
             return []
 
@@ -98,4 +131,8 @@ class SearchFileTool(BaseTool):
                     "url": file.file_name,
                 }
             )
-        return results
+            
+        if len(results) > 0:
+            return results
+        else:
+            return ["It seems you're using wrong parameters or the file doesn't exist, please use the correct file_id from the conversation."]

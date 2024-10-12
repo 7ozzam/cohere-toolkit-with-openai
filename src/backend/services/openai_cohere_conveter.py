@@ -196,7 +196,7 @@ class CohereToOpenAI:
     def cohere_to_openai_completion_request_body(cohere_request: CohereChatRequest, build_template: bool = False) -> CompletionCreateParams:
         messages: List[ChatCompletionMessageParam] = []
         cohere_messages = cohere_request.chat_history.copy() if cohere_request.chat_history else []
-
+        tools_response = None
         # Process chat history
         if cohere_messages:
             messages.extend(CohereToOpenAI.process_chat_history(cohere_messages))

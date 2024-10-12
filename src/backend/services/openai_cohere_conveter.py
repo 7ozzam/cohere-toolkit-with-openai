@@ -201,11 +201,12 @@ class CohereToOpenAI:
             messages.extend(CohereToOpenAI.process_chat_history(cohere_messages))
 
         # Process tool results
+        tools_response = ""
         if cohere_request.tool_results and len(cohere_request.tool_results):
             tools_response = str(CohereToOpenAI.process_tool_results(cohere_request.tool_results))
         
         tools = CohereToOpenAI.convert_tools(cohere_request.tools)
-        openai_request = CohereToOpenAI._create_request_with_template(cohere_request, messages, tools, build_template, tool_response=tools_response or None)
+        openai_request = CohereToOpenAI._create_request_with_template(cohere_request, messages, tools, build_template, tool_response=tools_response)
 
         return openai_request
 

@@ -181,8 +181,12 @@ class OpenAIDeployment(BaseDeployment):
             
             # Yield each event as the stream progresses
             for event in stream:
-                if event.choices[0].delta.content:
-                    full_previous_reponse += event.choices[0].delta.content
+                if build_template:
+                    stream_message = event.choices[0].text
+                else:
+                    stream_message = event.choices[0].delta.content
+                    if stream_message:
+                        full_previous_reponse += stream_message
                                         
                 if function_triggered != 'calling':
                     cohere_events = CohereToOpenAI.openai_to_cohere_event_chunk(event=event, previous_response=full_previous_reponse, function_triggered=function_triggered, chat_request=chat_request)

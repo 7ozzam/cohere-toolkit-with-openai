@@ -75,7 +75,12 @@ class CohereToOpenAI:
     
     @staticmethod
     def openai_to_cohere_event_chunk(event: ChatCompletionChunk, previous_response: Optional[str] = None, function_triggered: str = 'none', chat_request: CohereChatRequest = None, generation_id: Optional[str] = "") -> list[StreamedChatResponse] | None:
-        
+        if build_template:
+            stream_message = event.choices[0].text
+        else:
+            stream_message = event.choices[0].delta.content
+            if stream_message:
+                full_previous_reponse += stream_message
         # tool_call_is_complete = CohereToOpenAI.check_if_tool_call_in_text_chunk_is_complete(previous_response or "")
         
         extracted_json_string = CohereToOpenAI.extract_json_from_string(previous_response)
@@ -110,7 +115,7 @@ class CohereToOpenAI:
                     # if chat_request:
                     tool_call_message = ChatbotMessage(role='CHATBOT', message="", tool_calls=[tool_call_class])
                     # {"message":"", "role":"CHATBOT","tool_calls":[tool_call_class]}
-                    # tool_call_chat_message = ChatMessage(message=event.choices[0].delta.content or "", role="CHATBOT",tool_calls=[tool_call_dict])
+                    # tool_call_chat_message = ChatMessage(message=stream_message or "", role="CHATBOT",tool_calls=[tool_call_dict])
                     new_chat_history.append(tool_call_message)
                     # new_chat_history.extend([tool_call_message])
                         
@@ -118,7 +123,7 @@ class CohereToOpenAI:
                     end_response = StreamEndStreamedChatResponse(event_type = "stream-end",finish_reason="COMPLETE", response=response)
                     
                     return [
-                        TextGenerationStreamedChatResponse(event_type = "text-generation", text=event.choices[0].delta.content or ''),
+                        TextGenerationStreamedChatResponse(event_type = "text-generation", text=stream_message or ''),
                         ToolCallsChunkStreamedChatResponse(event_type = "tool-calls-chunk", tool_call_delta=tool_call_delta),
                             ToolCallsGenerationStreamedChatResponse(event_type = "tool-calls-generation", tool_calls=[tool_call_class], text="I will read the document to find the names of all the chapters."),
                             end_response
@@ -134,12 +139,12 @@ class CohereToOpenAI:
                 for tool_call_dict in event.choices[0].delta.tool_calls:
                     return [ToolCallsGenerationStreamedChatResponse(event_type = "tool-calls-chunk", tool_call_delta=CohereToOpenAI.convert_tool_call_delta(tool_call_dict))]
             else:
-                return [TextGenerationStreamedChatResponse(event_type = "text-generation", text=event.choices[0].delta.content or '')]
+                return [TextGenerationStreamedChatResponse(event_type = "text-generation", text=stream_message or '')]
         elif event.choices[0].finish_reason == "stop":
-            response = NonStreamedChatResponse(text=event.choices[0].delta.content or '')
+            response = NonStreamedChatResponse(text=stream_message or '')
             return [StreamEndStreamedChatResponse(event_type = "stream-end",finish_reason="COMPLETE", response=response)]
         else:
-            return [TextGenerationStreamedChatResponse(event_type = "text-generation", text=event.choices[0].delta.content or '')]
+            return [TextGenerationStreamedChatResponse(event_type = "text-generation", text=stream_message or '')]
     
     @staticmethod
     def check_if_tool_call_in_text_chunk_is_complete(full_text: str) -> bool:

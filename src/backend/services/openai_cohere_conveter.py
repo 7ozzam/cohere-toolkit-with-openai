@@ -265,7 +265,7 @@ class CohereToOpenAI:
         return ChatCompletionCreateParamsBase(
             messages=messages,
             model=cohere_request.model,  # type: ignore
-            max_tokens=cohere_request.max_tokens,
+            max_tokens=cohere_request.max_tokens or -1,
             temperature=cohere_request.temperature,
             frequency_penalty=cohere_request.frequency_penalty,
             presence_penalty=cohere_request.presence_penalty,
@@ -287,7 +287,7 @@ class CohereToOpenAI:
         return RegularCompletionCreateParamsBase(
             prompt=full_template,
             model=cohere_request.model,  # type: ignore
-            max_tokens=cohere_request.max_tokens,
+            max_tokens=cohere_request.max_tokens or -1,
             temperature=cohere_request.temperature,
             frequency_penalty=cohere_request.frequency_penalty,
             presence_penalty=cohere_request.presence_penalty,

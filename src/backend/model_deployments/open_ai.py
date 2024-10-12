@@ -91,7 +91,7 @@ class OpenAIDeployment(BaseDeployment):
                 self.openai.chat.completions.create,
                 model=chat_request.model,
                 messages=chat_request.model_dump(exclude={"stream", "file_ids", "agent_id"})["messages"],
-                extra_body={"options": {"num_ctx": 128000}},
+                # extra_body={"options": {"num_ctx": 128000}},
                 stream=False
             )
             return to_dict(response)

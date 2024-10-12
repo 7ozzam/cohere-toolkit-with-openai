@@ -1,6 +1,6 @@
 from typing import Any, AsyncGenerator, Dict, Iterable, List
 
-from cohere import ChatSearchQuery, ChatSearchResult, ChatSearchResultConnector, SearchResultsStreamedChatResponse, StreamStartStreamedChatResponse
+from cohere import ChatSearchQuery, ChatSearchResult, ChatSearchResultConnector, ChatbotMessage, SearchResultsStreamedChatResponse, StreamStartStreamedChatResponse
 from openai import OpenAI
 
 import asyncio
@@ -13,7 +13,7 @@ from backend.config.settings import Settings
 from backend.model_deployments.utils import get_model_config_var
 from backend.chat.collate import to_dict
 from backend.services.openai_cohere_conveter import CohereToOpenAI
-
+from backend.schemas.chat import ChatRole, ChatMessage
 # Set up logging
 logger = logging.getLogger(__name__)
 import uuid
@@ -91,6 +91,7 @@ class OpenAIDeployment(BaseDeployment):
                 self.openai.chat.completions.create,
                 model=chat_request.model,
                 messages=chat_request.model_dump(exclude={"stream", "file_ids", "agent_id"})["messages"],
+                extra_body={"options": {"num_ctx": 128000}},
                 stream=False
             )
             return to_dict(response)
@@ -102,18 +103,42 @@ class OpenAIDeployment(BaseDeployment):
     async def invoke_chat_stream(
         self, chat_request: CohereChatRequest, ctx: Context, **kwargs: Any
     ) -> AsyncGenerator[Any, Any]:
+        
+    
+        
         """Invoke chat stream using the OpenAI-compatible API."""
         generation_id = uuid.uuid4().hex
         # print(chat_request)
         # print(chat_request.model_dump(exclude={"stream", "file_ids", "agent_id"}))
         # return
+        
+        
+            
+        
+        appended_user_message = False
         first_request_is_sent = False
         function_triggered = 'none'
         full_previous_reponse = ''
         result_sent = False
+        
+        
+        if not appended_user_message and chat_request.message:
+            user_message = ChatMessage(role=ChatRole.USER, message=chat_request.message)
+            if chat_request.chat_history and len(chat_request.chat_history) > 0:
+                chat_request.chat_history.append(
+                    user_message
+                )
+            else:
+                chat_request.chat_history = [
+                    user_message
+                ]
+            appended_user_message = True
+        
         openAi_chat_request = CohereToOpenAI.cohere_to_openai_request_body(chat_request)
+        
         print("==============================================")
         print("Cohere Original chat request: ", chat_request)
+        print("==============================================")
         print("==============================================")
         print(f"OpenAI chat request: {openAi_chat_request}")
         print("==============================================")
@@ -133,34 +158,41 @@ class OpenAIDeployment(BaseDeployment):
                     full_previous_reponse += event.choices[0].delta.content
                                         
                 if function_triggered != 'calling':
-                    cohere_events = CohereToOpenAI.cohere_to_openai_event_chunk(event=event, previous_response=full_previous_reponse, function_triggered=function_triggered, chat_request=chat_request)
+                    cohere_events = CohereToOpenAI.openai_to_cohere_event_chunk(event=event, previous_response=full_previous_reponse, function_triggered=function_triggered, chat_request=chat_request)
                 else:
                     cohere_events = []
                 
+                if cohere_events and len(cohere_events) > 0:
+                    for cohere_event in cohere_events:
+                        if (cohere_event.event_type == "tool-calls-generation" or cohere_event.event_type == "tool-calls-chunk"):
+                            function_triggered = "calling"
+                            if cohere_event.event_type == "tool-calls-generation" and cohere_event.tool_calls and len(cohere_event.tool_calls) > 0:
+                                for tool_call in cohere_event.tool_calls:
+                                    tool_call_dict = {f"{str(tool_call.name)}": tool_call.parameters}
+                                    tool_call_message = ChatMessage(role=ChatRole.CHATBOT, message="I'm calling a the system tool to retireve information", tool_calls=[tool_call_dict])
+                                    if chat_request.chat_history and len(chat_request.chat_history) > 0:
+                                        chat_request.chat_history.append(tool_call_message)
+                                        
+                        if not first_request_is_sent:
+                            stream_start = StreamStartStreamedChatResponse(event_type = "stream-start", generation_id=generation_id)
+                            yield to_dict(stream_start)
+                            
+                        yield to_dict(cohere_event)
+            
                 if chat_request.tool_results and not result_sent:
                     for tool_result in chat_request.tool_results: 
                         if chat_request.tool_results and len(chat_request.tool_results):
                             # Add the tool results
-                            filter = ''.join([chr(i) for i in range(1, 32)])
                             # print("tool_result: ", tool_result)
-                            output_str= CohereToOpenAI.clean_string(str(tool_result.get("outputs")).translate(str.maketrans('', '', filter)))
-                                    
+                            
+                            output_str= CohereToOpenAI.clean_string(str(tool_result))
                             chat_search_query = ChatSearchQuery(text=output_str, generation_id=generation_id)
                             connector = ChatSearchResultConnector(id="")
                             search_result = ChatSearchResult(document_ids=chat_request.file_ids or [], search_query=chat_search_query, connector=connector)
                             search_event = SearchResultsStreamedChatResponse(event_type = "search-results", documents=[], search_results=[search_result] )
                             result_sent = True
                             yield to_dict(search_event)
-                    
-                if len(cohere_events) > 0:
-                    for cohere_event in cohere_events:
-                        if (cohere_event.event_type == "tool-calls-generation" or cohere_event.event_type == "tool-calls-chunk"):
-                            function_triggered = "calling"
-                        if not first_request_is_sent:
-                            stream_start = StreamStartStreamedChatResponse(event_type = "stream-start", generation_id=generation_id)
-                            yield to_dict(stream_start)
-                        yield to_dict(cohere_event)
-            
+                        
         except Exception as e:
             logger.error(f"Error invoking chat stream: {e}")
             raise

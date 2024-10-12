@@ -31,7 +31,7 @@ class CohereToOpenAI:
     # def __init__(self):
     
     @staticmethod
-    def convert_chatmessage_to_message(chatMessages: List[ChatMessage]) -> List[Message]:
+    def convert_backend_message_to_openai_message(chatMessages: List[ChatMessage]) -> List[Message]:
         new_chat_history = []
         for x in chatMessages:
             if hasattr(x, "role") and hasattr(x, "message"):
@@ -72,7 +72,7 @@ class CohereToOpenAI:
             return ""  # Return None if no valid JSON structure is found
     
     @staticmethod
-    def cohere_to_openai_event_chunk(event: ChatCompletionChunk, previous_response: Optional[str] = None, function_triggered: str = 'none', chat_request: CohereChatRequest = None, generation_id: Optional[str] = "") -> List[StreamedChatResponse]:
+    def openai_to_cohere_event_chunk(event: ChatCompletionChunk, previous_response: Optional[str] = None, function_triggered: str = 'none', chat_request: CohereChatRequest = None, generation_id: Optional[str] = "") -> list[StreamedChatResponse] | None:
         
         # tool_call_is_complete = CohereToOpenAI.check_if_tool_call_in_text_chunk_is_complete(previous_response or "")
         
@@ -93,6 +93,7 @@ class CohereToOpenAI:
             if (parsed_previous_response):
                 print("parsed_previous_response: ",parsed_previous_response)
                 
+                
                 func_name = CohereToOpenAI.get_value(parsed_previous_response, "name")
                 func_params: Dict[str, Any] = CohereToOpenAI.get_value(parsed_previous_response, "parameters")
                 
@@ -102,18 +103,24 @@ class CohereToOpenAI:
                 # Copy the chat history and append the tool_call_message
                 
 
-                new_chat_history = CohereToOpenAI.convert_chatmessage_to_message(chat_request.chat_history)
+                new_chat_history = CohereToOpenAI.convert_backend_message_to_openai_message(chat_request.chat_history)
                 if function_triggered == 'none':
                     # if chat_request:
-                    tool_call_message = {"message":"", "role":"CHATBOT","tool_calls":[tool_call_class]} # type: ignore
+                    tool_call_message = ChatbotMessage(role='CHATBOT', message="", tool_calls=[tool_call_class])
+                    # {"message":"", "role":"CHATBOT","tool_calls":[tool_call_class]}
                     # tool_call_chat_message = ChatMessage(message=event.choices[0].delta.content or "", role="CHATBOT",tool_calls=[tool_call_dict])
                     new_chat_history.append(tool_call_message)
-                    new_chat_history.extend(new_chat_history)
+                    # new_chat_history.extend([tool_call_message])
                         
-                    response = NonStreamedChatResponse(text="I will read the document to find the names of the chapters.",chat_history=new_chat_history, generation_id=generation_id, finish_reason="COMPLETE", tool_calls=[tool_call_class])
-                    return [ToolCallsChunkStreamedChatResponse(event_type = "tool-calls-chunk", tool_call_delta=tool_call_delta),
+                    response = NonStreamedChatResponse(text="",chat_history=new_chat_history, generation_id=generation_id, finish_reason="COMPLETE", tool_calls=[tool_call_class])
+                    end_response = StreamEndStreamedChatResponse(event_type = "stream-end",finish_reason="COMPLETE", response=response)
+                    
+                    return [
+                        TextGenerationStreamedChatResponse(event_type = "text-generation", text=event.choices[0].delta.content or ''),
+                        ToolCallsChunkStreamedChatResponse(event_type = "tool-calls-chunk", tool_call_delta=tool_call_delta),
                             ToolCallsGenerationStreamedChatResponse(event_type = "tool-calls-generation", tool_calls=[tool_call_class], text="I will read the document to find the names of all the chapters."),
-                            StreamEndStreamedChatResponse(event_type = "stream-end",finish_reason="COMPLETE", response=response, is_finished=True, generation_id=generation_id)]
+                            end_response
+                            ]
                     
                 # if function_triggered == 'calling':
                 #     return [ToolCallsGenerationStreamedChatResponse(event_type = "tool-calls-generation", tool_calls=[tool_call], text="I will read the document to find the names of all the chapters.")]
@@ -150,30 +157,31 @@ class CohereToOpenAI:
     @staticmethod
     def cohere_to_open_ai_request_tool_call(tool_calls: List[Dict[str, Any] | None]) -> List[ChatCompletionMessageToolCallParam]:
         oai_calls = []
-        if not tool_calls:
-            return oai_calls
-        for tool_call in tool_calls:
-            if hasattr(tool_call, "parameters") and hasattr(tool_call, "name"):
-                arguments = str(tool_call.parameters)
-                # print("parameters: ", tool_call.parameters)
-                # print("arguments: ", arguments)
-                name = str(tool_call.name)
-                function = OpenAIFunction(arguments=arguments, name=name)
-                
-                
-                call = ChatCompletionMessageToolCallParam(id="",type="function", function=function)
-                oai_calls.append(call)
+        if tool_calls and len(tool_calls) > 1:
+            for tool_call in tool_calls:
+                if tool_call and tool_call["parameters"] and tool_call["name"]:
+                    arguments = str(tool_call.get("parameters"))
+                    # print("parameters: ", tool_call.parameters)
+                    # print("arguments: ", arguments)
+                    name = str(tool_call.get("name"))
+                    function = OpenAIFunction(arguments=arguments, name=name)
+                    
+                    
+                    call = ChatCompletionMessageToolCallParam(id="",type="function", function=function)
+                    oai_calls.append(call)
         return oai_calls
         
     @staticmethod
     def cohere_to_openai_request_body(cohere_request: CohereChatRequest) -> CompletionCreateParamsBase:
         # Start with the new user message
-        messages: List[ChatCompletionMessageParam] = []
+        messages: List[ChatCompletionMessageParam] = [
+            ChatCompletionSystemMessageParam(role="system", content="You are a helpful assistant. Engage with the user in the conversation. Dont use the tools unless it's absolutely necessary to assist the user with information you don't already, Now you can start chatting")
+        ]
         
         # Make a copy of chat history if it exists
         cohere_messages = cohere_request.chat_history.copy() if cohere_request.chat_history else []
         
-        def append_message_safe(role, content=None, tool_calls=None):
+        def append_message_safe(role, content=None, tool_calls=None, to_end=True):
             """Appends a message if the content exists, otherwise skips."""
             if not content:  # Skip appending if content is None or empty
                 print(f"Skipping {role} message: content is empty or missing.")
@@ -199,7 +207,10 @@ class CohereToOpenAI:
                 return
             
             # print(f"Appending {role} message:", message_instance)
-            messages.append(message_instance)
+            if to_end:
+                messages.append(message_instance)
+            else:
+                messages.insert(0, message_instance)
             # print("Current messages:", messages)
         
         # Helper function to convert object to dictionary
@@ -212,7 +223,13 @@ class CohereToOpenAI:
 
         # Process chat history
         if cohere_messages:
+            
+            
+                    
+                    
             print("HERE IS THE HISTORY", cohere_messages)
+            
+            
             for chat_entry in cohere_messages:
                 print(f"Type of chat_entry: {type(chat_entry)}")  # Debug the type
                 
@@ -229,43 +246,68 @@ class CohereToOpenAI:
                 message = chat_entry_dict.get("message", "")
                 tool_results = chat_entry_dict.get("tool_results", "")
                 tool_calls = (
-                    CohereToOpenAI.cohere_to_open_ai_request_tool_call(chat_entry_dict.get("tool_calls"))
+                    CohereToOpenAI.cohere_to_open_ai_request_tool_call(chat_entry_dict.get("tool_calls", []))
                     if "tool_calls" in chat_entry_dict
                     else None
                 )
+                print("Chat Entry Parsed Details: ", f"role: {role}, message: {message}, tool_results: {tool_results}, tool_calls: {tool_calls}")
 
                 if not role:
                     print("Skipping entry: No role found.")
                     continue
 
                 # Append messages based on role
-                if role == 'SYSTEM':
-                    append_message_safe("system", f"{message} {tool_results}", tool_calls)
-                elif role == 'USER':
-                    append_message_safe("user", f"{message} {tool_results}")
-                elif role == 'ASSISTANT' or role == 'CHATBOT':  # Added CHATBOT to align with your example
-                    append_message_safe("assistant", f"{message} {tool_results}", tool_calls)
-                else:
-                    print(f"Skipping entry with unknown role: {role}")
-        if cohere_request.message:
-            # Add the new user message
-            # user_message = {
-            #     "role": "user",
-            #     "content": cohere_request.message,
-            # }
-            append_message_safe("user", cohere_request.message)
-            
-            # print("messages: ", messages)
-        
-        # if cohere_request.tool_results and len(cohere_request.tool_results):
-        #     # results: List[ToolResult] = cohere_request.tool_results # type: ignore
-        #     for tool_result in cohere_request.tool_results:
-        #         # Add the tool results
-        #         filter = ''.join([chr(i) for i in range(1, 32)])
-        #         # print("tool_result: ", tool_result)
-        #         output_str= CohereToOpenAI.clean_string(str(tool_result.get("outputs")).translate(str.maketrans('', '', filter)))
+                if role and (message or tool_results or tool_calls):
+                    if role == 'SYSTEM':
+                        if "The user uploaded the following attachments" in str(message):
+                            append_message_safe("system", f"{message}", tool_calls, to_end=False)
+                        else:
+                            append_message_safe("system", f"{message}", tool_calls)
+                    elif role == 'USER':
+                        append_message_safe("user", f"{message}")
+                    elif role == 'ASSISTANT' or role == 'CHATBOT':  # Added CHATBOT to align with your example
+                        append_message_safe("assistant", f"{message}", tool_calls)
+                    else:
+                        print(f"Skipping entry with unknown role: {role}")
+       
+            if cohere_request.tool_results and len(cohere_request.tool_results):
+                # results: List[ToolResult] = cohere_request.tool_results # type: ignore
+                for tool_result in cohere_request.tool_results:
+                    # Add the tool results
+                    filter = ''.join([chr(i) for i in range(1, 32)])
+                    # print("tool_result: ", tool_result)
+                    outputs: List[Any] = tool_result.get("outputs")
+                    if len(outputs) == 1:
+                        output_dict: dict = outputs[0]
+                        print("output_dict: ", output_dict)
+                        if  output_dict and "text" in output_dict.keys():
+                            output_str= CohereToOpenAI.clean_string(str(output_dict['text']))
+                        else:
+                            output_str= CohereToOpenAI.clean_string(str(outputs))
+                            
+                        append_message_safe("tool", content=f"the tool response is: {output_str}")
+                    elif len(outputs) > 1:
+                        for output_dict in outputs:
+                            if output_dict['text']:
+                                output_str= CohereToOpenAI.clean_string(str(output_dict['text']))
+                            else:
+                                output_str= CohereToOpenAI.clean_string(str(output_dict))
+                            append_message_safe("tool", content=f"the tool response is: {output_str}")
+                        
+                    
                 
-        #         append_message_safe("tool", f"the tool response is: {output_str}")
+        # if cohere_request.message:
+        #     # Add the new user message
+        #     # user_message = {
+        #     #     "role": "user",
+        #     #     "content": cohere_request.message,
+        #     # }
+        #     append_message_safe("user", cohere_request.message)
+            
+        #     print("messages: ", messages)
+        
+        
+       
                 
                 # print("messages: ", messages)
         
@@ -279,7 +321,6 @@ class CohereToOpenAI:
             presence_penalty=cohere_request.presence_penalty,
             stop=cohere_request.stop_sequences,
             tools=CohereToOpenAI.convert_tools(cohere_request.tools),
-            functions=[],  # Adjust if necessary
         )
         
         return openai_request
@@ -289,11 +330,11 @@ class CohereToOpenAI:
         # Remove unnecessary escape sequences (like \n and \\)
         cleaned_string = input_string.replace("\\n", "\n").replace("\\\\", "\\")
 
+        # Remove object/array brackets and slashes
+        cleaned_string = re.sub(r'[{}\[\]\\]', '', cleaned_string)
+
         # Normalize whitespace: replace multiple spaces with a single space
         cleaned_string = re.sub(r'\s+', ' ', cleaned_string).strip()
-
-        # Optionally, you can also handle specific markup tags or other formatting here if needed
-        # For example: remove any unwanted tags or attributes, if necessary
 
         return cleaned_string
     @staticmethod
@@ -337,32 +378,45 @@ class CohereToOpenAI:
 
     @staticmethod
     def convert_tools(tools: List[BackendTool] | None) -> List[ChatCompletionToolParam]:
+        def convert_tool_parameter_defination(tool_parameter_definitions: Dict[str, ToolParameterDefinitionsValue] | None) -> Dict[str, object]:
+            if not tool_parameter_definitions:
+                return {}
+            
+            params: Dict[str, object] = {}
+            for key, value in tool_parameter_definitions.items():
+                if key != 'required':
+                    params[key] = value
+            return params
         open_ai_tools: List[ChatCompletionToolParam] = []
         if not tools:
             return open_ai_tools
+        
+        required_parameters = []
+        parameters: dict[str, Any] = {}
         for tool in tools:
-            parameters = CohereToOpenAI.convert_tool_parameter_defination(tool.parameter_definitions)
+            if tool.parameter_definitions:
+                required_parameters: List[str] = [key for key,value in tool.parameter_definitions.items()  if value and value['required']]
+                
+            params = convert_tool_parameter_defination(tool.parameter_definitions)
+            
+            if len(params) > 0:
+                parameters = {"type": "object",**params, "required": required_parameters}
+                
             oai_tool = ChatCompletionToolParam(
             type="function",
             function={
                 "name": tool.name or '',
                 "description": tool.description or '',
                 "parameters": parameters,
-                "strict": tool.name == 'read_document'
+                "strict": False
             }
             )
             open_ai_tools.append(oai_tool)
         
+        
             
         return open_ai_tools
 
-    @staticmethod
-    def convert_tool_parameter_defination(tool_parameter_definitions: Dict[str, ToolParameterDefinitionsValue] | None) -> Dict[str, object]:
-        if not tool_parameter_definitions:
-            return {}
-        
-        params: Dict[str, object] = {}
-        for key, value in tool_parameter_definitions.items():
-            params[key] = value
-        return params
+  
+  
         

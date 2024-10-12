@@ -249,7 +249,6 @@ class CustomChat(BaseChat):
                 tool_results = await async_call_tools(
                     chat_request.chat_history, deployment_model, ctx, **kwargs
                 )
-                print("Tool results", tool_results)
 
                 # Remove the message if tool results are present
                 if tool_results:

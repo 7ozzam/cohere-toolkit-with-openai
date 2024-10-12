@@ -139,22 +139,19 @@ class OpenAIDeployment(BaseDeployment):
         
 
         
-        openai_call = self.openai.chat.completions.create
         if build_template:
-            openAi_chat_request = CohereToOpenAI.cohere_to_openai_completion_request_body(chat_request, build_template)
-            openai_call = self.openai.completions.create
+            openAi_chat_request = CohereToOpenAI.cohere_to_openai_completion_request_body(chat_request)
             stream = await asyncio.to_thread(
-                openai_call,
+                self.openai.completions.create,
                 **openAi_chat_request,
                 stream=True
             )
             print("The result is of type CompletionCreateParams")
             
         else:
-            openAi_chat_request = CohereToOpenAI.cohere_to_openai_chat_request_body(chat_request, build_template)
-            openai_call = self.openai.chat.completions.create
+            openAi_chat_request = CohereToOpenAI.cohere_to_openai_chat_request_body(chat_request)
             stream = await asyncio.to_thread(
-                openai_call,
+                self.openai.chat.completions.create,
                 **openAi_chat_request,
                 stream=True
             )

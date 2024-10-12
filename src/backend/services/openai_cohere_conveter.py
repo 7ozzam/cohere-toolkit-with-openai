@@ -179,7 +179,7 @@ class CohereToOpenAI:
         return oai_calls
         
     @staticmethod
-    def cohere_to_openai_chat_request_body(cohere_request: CohereChatRequest, build_template: bool = False) -> ChatCompletionCreateParamsBase:
+    def cohere_to_openai_chat_request_body(cohere_request: CohereChatRequest) -> ChatCompletionCreateParamsBase:
         messages: List[ChatCompletionMessageParam] = []
         cohere_messages = cohere_request.chat_history.copy() if cohere_request.chat_history else []
 
@@ -198,7 +198,7 @@ class CohereToOpenAI:
         return openai_request
     
     @staticmethod
-    def cohere_to_openai_completion_request_body(cohere_request: CohereChatRequest, build_template: bool = False) -> RegularCompletionCreateParamsBase:
+    def cohere_to_openai_completion_request_body(cohere_request: CohereChatRequest) -> RegularCompletionCreateParamsBase:
         messages: List[ChatCompletionMessageParam] = []
         cohere_messages = cohere_request.chat_history.copy() if cohere_request.chat_history else []
         # Process chat history

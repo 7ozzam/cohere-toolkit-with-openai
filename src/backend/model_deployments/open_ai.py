@@ -173,6 +173,7 @@ class OpenAIDeployment(BaseDeployment):
                 
 
             if stream:
+                logger.info("OpenAI chat stream started", stream)
                 # Yield each event as the stream progresses
                 for event in stream:
                     if build_template:

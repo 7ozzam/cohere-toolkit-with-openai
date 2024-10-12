@@ -179,7 +179,7 @@ class OpenAIDeployment(BaseDeployment):
                             full_previous_response += stream_message
 
                     if function_triggered != 'calling':
-                        cohere_events = CohereToOpenAI.openai_to_cohere_event_chunk(event=event, previous_response=full_previous_response, function_triggered=function_triggered, chat_request=chat_request)
+                        cohere_events = CohereToOpenAI.openai_to_cohere_event_chunk(event=event, previous_response=full_previous_response, function_triggered=function_triggered, chat_request=chat_request, build_template=build_template)
                     else:
                         cohere_events = []
 

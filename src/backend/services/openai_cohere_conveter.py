@@ -174,7 +174,7 @@ class CohereToOpenAI:
         return oai_calls
         
     @staticmethod
-    def cohere_to_openai_request_body(cohere_request: CohereChatRequest, build_template: bool = False) -> CompletionCreateParamsBase | CompletionCreateParams:
+    def cohere_to_openai_chat_request_body(cohere_request: CohereChatRequest, build_template: bool = False) -> CompletionCreateParamsBase:
         messages: List[ChatCompletionMessageParam] = []
         cohere_messages = cohere_request.chat_history.copy() if cohere_request.chat_history else []
 
@@ -188,7 +188,24 @@ class CohereToOpenAI:
 
         # Prepare OpenAI request parameters
         tools = CohereToOpenAI.convert_tools(cohere_request.tools)
-        openai_request = CohereToOpenAI.create_openai_request(cohere_request, messages, tools, build_template)
+        openai_request = CohereToOpenAI._create_request_without_template(cohere_request, messages, tools)
+
+        return openai_request
+    
+    @staticmethod
+    def cohere_to_openai_completion_request_body(cohere_request: CohereChatRequest, build_template: bool = False) -> CompletionCreateParams:
+        messages: List[ChatCompletionMessageParam] = []
+        cohere_messages = cohere_request.chat_history.copy() if cohere_request.chat_history else []
+
+        # Process chat history
+        if cohere_messages:
+            messages.extend(CohereToOpenAI.process_chat_history(cohere_messages))
+
+        # Process tool results
+        if cohere_request.tool_results and len(cohere_request.tool_results):
+            tools_response = str(CohereToOpenAI.process_tool_results(cohere_request.tool_results))
+
+        openai_request = CohereToOpenAI._create_request_with_template(cohere_request, messages, tools, build_template, tool_response=tools_response)
 
         return openai_request
 
@@ -233,31 +250,44 @@ class CohereToOpenAI:
         return messages
 
     @staticmethod
-    def create_openai_request(cohere_request: CohereChatRequest, messages: List[ChatCompletionMessageParam], tools: Any, build_template: bool) -> CompletionCreateParamsBase | CompletionCreateParams:
-        if not build_template:
-            return CompletionCreateParamsBase(
-                messages=messages,
-                model=cohere_request.model,  # type: ignore
-                max_tokens=cohere_request.max_tokens,
-                temperature=cohere_request.temperature,
-                frequency_penalty=cohere_request.frequency_penalty,
-                presence_penalty=cohere_request.presence_penalty,
-                stop=cohere_request.stop_sequences,
-                tools=tools
-            )
-        else:
-            template_builder = TemplateBuilder(chat_messages=messages, tools=tools)
-            full_template = template_builder.build_full_template()
-            print(full_template)  # Output the final template
-            return CompletionCreateParams(
-                prompt=full_template,
-                model=cohere_request.model,  # type: ignore
-                max_tokens=cohere_request.max_tokens,
-                temperature=cohere_request.temperature,
-                frequency_penalty=cohere_request.frequency_penalty,
-                presence_penalty=cohere_request.presence_penalty,
-                stop=cohere_request.stop_sequences,
-            )
+    def _create_request_without_template(
+        cohere_request: CohereChatRequest,
+        messages: List[ChatCompletionMessageParam],
+        tools: Any
+    ) -> CompletionCreateParamsBase:
+        """Create OpenAI request parameters without building a template."""
+        return CompletionCreateParamsBase(
+            messages=messages,
+            model=cohere_request.model,  # type: ignore
+            max_tokens=cohere_request.max_tokens,
+            temperature=cohere_request.temperature,
+            frequency_penalty=cohere_request.frequency_penalty,
+            presence_penalty=cohere_request.presence_penalty,
+            stop=cohere_request.stop_sequences,
+            tools=tools
+        )
+
+    @staticmethod
+    def _create_request_with_template(
+        cohere_request: CohereChatRequest,
+        messages: List[ChatCompletionMessageParam],
+        tools: Any,
+        tool_response: Any
+    ) -> CompletionCreateParams:
+        """Create OpenAI request parameters by building a template."""
+        template_builder = TemplateBuilder(chat_messages=messages, tools=tools, tool_response=tool_response)
+        full_template = template_builder.build_full_template()
+        print(full_template)  # Output the final template
+        return CompletionCreateParams(
+            prompt=full_template,
+            model=cohere_request.model,  # type: ignore
+            max_tokens=cohere_request.max_tokens,
+            temperature=cohere_request.temperature,
+            frequency_penalty=cohere_request.frequency_penalty,
+            presence_penalty=cohere_request.presence_penalty,
+            stop=cohere_request.stop_sequences,
+        )
+
 
     @staticmethod
     def to_dict(obj: Any) -> dict | None:

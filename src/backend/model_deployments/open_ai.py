@@ -107,7 +107,7 @@ class OpenAIDeployment(BaseDeployment):
         self, chat_request: CohereChatRequest, ctx: Context, **kwargs: Any
     ) -> AsyncGenerator[Any, Any]:
         
-    
+        build_template = True
         
         """Invoke chat stream using the OpenAI-compatible API."""
         generation_id = uuid.uuid4().hex
@@ -138,9 +138,10 @@ class OpenAIDeployment(BaseDeployment):
             appended_user_message = True
         
 
-        openAi_chat_request = CohereToOpenAI.cohere_to_openai_request_body(chat_request)
+        
         openai_call = self.openai.chat.completions.create
-        if openAi_chat_request.__class__ ==  CompletionCreateParams:
+        if build_template:
+            openAi_chat_request = CohereToOpenAI.cohere_to_openai_completion_request_body(chat_request, build_template)
             openai_call = self.openai.completions.create
             stream = await asyncio.to_thread(
                 openai_call,
@@ -149,7 +150,8 @@ class OpenAIDeployment(BaseDeployment):
             )
             print("The result is of type CompletionCreateParams")
             
-        elif openAi_chat_request.__class__ == CompletionCreateParamsBase:
+        elif build_template == False:
+            openAi_chat_request = CohereToOpenAI.cohere_to_openai_chat_request_body(chat_request, build_template)
             openai_call = self.openai.chat.completions.create
             stream = await asyncio.to_thread(
                 openai_call,

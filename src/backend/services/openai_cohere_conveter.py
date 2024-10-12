@@ -408,7 +408,7 @@ class CohereToOpenAI:
                 "name": tool.name or '',
                 "description": tool.description or '',
                 "parameters": parameters,
-                "strict": False
+                # "strict": False
             }
             )
             open_ai_tools.append(oai_tool)

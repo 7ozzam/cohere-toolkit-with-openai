@@ -2,6 +2,7 @@ from typing import Iterable, List, Dict, Any, Optional, Union
 
 from cohere import NonStreamedChatResponse, ToolResult
 from openai.types.chat.completion_create_params import CompletionCreateParamsBase
+from openai.types.completion_create_params import CompletionCreateParams
 from openai.types.chat import ChatCompletionSystemMessageParam, ChatCompletionUserMessageParam,ChatCompletionAssistantMessageParam, ChatCompletionMessageParam, ChatCompletionChunk, ChatCompletionToolParam, ChatCompletionMessageToolCallParam, ChatCompletionToolMessageParam
 from openai.types.chat.chat_completion_chunk import ChoiceDeltaToolCall
 from openai.types import FunctionParameters
@@ -11,6 +12,7 @@ from backend.schemas.cohere_chat import CohereChatRequest
 from backend.schemas.chat import ChatRole, ChatMessage
 from cohere.types import StreamedChatResponse,  StreamStartStreamedChatResponse,SearchQueriesGenerationStreamedChatResponse,SearchResultsStreamedChatResponse,TextGenerationStreamedChatResponse,CitationGenerationStreamedChatResponse,ToolCallsGenerationStreamedChatResponse,StreamEndStreamedChatResponse,ToolCallsChunkStreamedChatResponse, ToolCallsChunkStreamedChatResponse, ToolCallDelta, ToolParameterDefinitionsValue, ToolCall, Message, ChatbotMessage, UserMessage, ToolMessage, SystemMessage
 
+from backend.services.template_builder import TemplateBuilder
 from cohere.types import Tool as CohereTool
 from backend.schemas.tool import Tool as BackendTool
 import partial_json_parser as pjp
@@ -172,158 +174,119 @@ class CohereToOpenAI:
         return oai_calls
         
     @staticmethod
-    def cohere_to_openai_request_body(cohere_request: CohereChatRequest) -> CompletionCreateParamsBase:
-        # Start with the new user message
-        messages: List[ChatCompletionMessageParam] = [
-            ChatCompletionSystemMessageParam(role="system", content="You are a helpful assistant. Engage with the user in the conversation. Dont use the tools unless it's absolutely necessary to assist the user with information you don't already, Now you can start chatting")
-        ]
-        
-        # Make a copy of chat history if it exists
+    def cohere_to_openai_request_body(cohere_request: CohereChatRequest, build_template: bool = False) -> CompletionCreateParamsBase | CompletionCreateParams:
+        messages: List[ChatCompletionMessageParam] = []
         cohere_messages = cohere_request.chat_history.copy() if cohere_request.chat_history else []
-        
-        def append_message_safe(role, content=None, tool_calls=None, to_end=True):
-            """Appends a message if the content exists, otherwise skips."""
-            if not content:  # Skip appending if content is None or empty
-                print(f"Skipping {role} message: content is empty or missing.")
-                return
-            
-            message_data = {"role": role, "content": content}
-            
-            # Add tool_calls only if it's relevant
-            if tool_calls:
-                message_data["tool_calls"] = tool_calls
-            
-            # Instantiate the correct message type based on role
-            if role == "system":
-                message_instance = ChatCompletionSystemMessageParam(**message_data)
-            elif role == "user":
-                message_instance = ChatCompletionUserMessageParam(**message_data)
-            elif role == "assistant":
-                message_instance = ChatCompletionAssistantMessageParam(**message_data)
-            elif role == "tool":
-                message_instance = ChatCompletionToolMessageParam(**message_data)
-            else:
-                print(f"Skipping unknown role: {role}")
-                return
-            
-            # print(f"Appending {role} message:", message_instance)
-            if to_end:
-                messages.append(message_instance)
-            else:
-                messages.insert(0, message_instance)
-            # print("Current messages:", messages)
-        
-        # Helper function to convert object to dictionary
-        def to_dict(obj):
-            if isinstance(obj, dict):
-                return obj
-            elif hasattr(obj, '__dict__'):
-                return obj.__dict__  # Convert object to dict
-            return None  # Return None for unsupported types
 
         # Process chat history
         if cohere_messages:
-            
-            
-                    
-                    
-            print("HERE IS THE HISTORY", cohere_messages)
-            
-            
-            for chat_entry in cohere_messages:
-                print(f"Type of chat_entry: {type(chat_entry)}")  # Debug the type
-                
-                # Convert chat_entry to dictionary if it's an object
-                chat_entry_dict = to_dict(chat_entry)
-                if chat_entry_dict is None:
-                    print(f"Skipping entry: chat_entry is not a dict or an object.")
-                    continue
+            messages.extend(CohereToOpenAI.process_chat_history(cohere_messages))
 
-                print(f"chat_entry: {chat_entry_dict}")
+        # Process tool results
+        if cohere_request.tool_results and len(cohere_request.tool_results):
+            messages.extend(CohereToOpenAI.process_tool_results(cohere_request.tool_results))
 
-                # Access role and message using dictionary syntax
-                role = chat_entry_dict.get("role")  # Use dictionary's .get() method
-                message = chat_entry_dict.get("message", "")
-                tool_results = chat_entry_dict.get("tool_results", "")
-                tool_calls = (
-                    CohereToOpenAI.cohere_to_open_ai_request_tool_call(chat_entry_dict.get("tool_calls", []))
-                    if "tool_calls" in chat_entry_dict
-                    else None
-                )
-                print("Chat Entry Parsed Details: ", f"role: {role}, message: {message}, tool_results: {tool_results}, tool_calls: {tool_calls}")
+        # Prepare OpenAI request parameters
+        tools = CohereToOpenAI.convert_tools(cohere_request.tools)
+        openai_request = CohereToOpenAI.create_openai_request(cohere_request, messages, tools, build_template)
 
-                if not role:
-                    print("Skipping entry: No role found.")
-                    continue
-
-                # Append messages based on role
-                if role and (message or tool_results or tool_calls):
-                    if role == 'SYSTEM':
-                        if "The user uploaded the following attachments" in str(message):
-                            append_message_safe("system", f"{message}", tool_calls, to_end=False)
-                        else:
-                            append_message_safe("system", f"{message}", tool_calls)
-                    elif role == 'USER':
-                        append_message_safe("user", f"{message}")
-                    elif role == 'ASSISTANT' or role == 'CHATBOT':  # Added CHATBOT to align with your example
-                        append_message_safe("assistant", f"{message}", tool_calls)
-                    else:
-                        print(f"Skipping entry with unknown role: {role}")
-       
-            if cohere_request.tool_results and len(cohere_request.tool_results):
-                # results: List[ToolResult] = cohere_request.tool_results # type: ignore
-                for tool_result in cohere_request.tool_results:
-                    # Add the tool results
-                    filter = ''.join([chr(i) for i in range(1, 32)])
-                    # print("tool_result: ", tool_result)
-                    outputs: List[Any] = tool_result.get("outputs")
-                    if len(outputs) == 1:
-                        output_dict: dict = outputs[0]
-                        print("output_dict: ", output_dict)
-                        if  output_dict and "text" in output_dict.keys():
-                            output_str= CohereToOpenAI.clean_string(str(output_dict['text']))
-                        else:
-                            output_str= CohereToOpenAI.clean_string(str(outputs))
-                            
-                        append_message_safe("tool", content=f"the tool response is: {output_str}")
-                    elif len(outputs) > 1:
-                        for output_dict in outputs:
-                            if output_dict['text']:
-                                output_str= CohereToOpenAI.clean_string(str(output_dict['text']))
-                            else:
-                                output_str= CohereToOpenAI.clean_string(str(output_dict))
-                            append_message_safe("tool", content=f"the tool response is: {output_str}")
-                        
-                    
-                
-        # if cohere_request.message:
-        #     # Add the new user message
-        #     # user_message = {
-        #     #     "role": "user",
-        #     #     "content": cohere_request.message,
-        #     # }
-        #     append_message_safe("user", cohere_request.message)
-            
-        #     print("messages: ", messages)
-        
-        
-       
-                
-                # print("messages: ", messages)
-        
-        # Construct the OpenAI request parameters
-        openai_request = CompletionCreateParamsBase(
-            messages=messages,
-            model=cohere_request.model,  # type: ignore
-            max_tokens=cohere_request.max_tokens,
-            temperature=cohere_request.temperature,
-            frequency_penalty=cohere_request.frequency_penalty,
-            presence_penalty=cohere_request.presence_penalty,
-            stop=cohere_request.stop_sequences,
-            tools=CohereToOpenAI.convert_tools(cohere_request.tools),
-        )
-        
         return openai_request
+
+    @staticmethod
+    def process_chat_history(cohere_messages: List[Any]) -> List[ChatCompletionMessageParam]:
+        messages = []
+        for chat_entry in cohere_messages:
+            chat_entry_dict = CohereToOpenAI.to_dict(chat_entry)
+            if chat_entry_dict is None:
+                print("Skipping entry: chat_entry is not a dict or an object.")
+                continue
+
+            role = chat_entry_dict.get("role")
+            message = chat_entry_dict.get("message", "")
+            tool_calls = CohereToOpenAI.get_tool_calls(chat_entry_dict)
+
+            if role and (message or chat_entry_dict.get("tool_results", "") or tool_calls):
+                if role == 'SYSTEM':
+                    messages.append(CohereToOpenAI.append_system_message(message, tool_calls))
+                elif role == 'USER':
+                    messages.append(CohereToOpenAI.append_user_message(message))
+                elif role in ['ASSISTANT', 'CHATBOT']:
+                    messages.append(CohereToOpenAI.append_assistant_message(message, tool_calls))
+                else:
+                    print(f"Skipping entry with unknown role: {role}")
+        return messages
+
+    @staticmethod
+    def process_tool_results(tool_results: List[ToolResult]) -> List[ChatCompletionMessageParam]:
+        messages = []
+        for tool_result in tool_results:
+            outputs: List[Any] = tool_result.get("outputs")
+            messages.extend(CohereToOpenAI.append_tool_responses(outputs))
+        return messages
+
+    @staticmethod
+    def append_tool_responses(outputs: List[Any]) -> List[ChatCompletionMessageParam]:
+        messages = []
+        for output_dict in outputs:
+            output_str = CohereToOpenAI.clean_string(str(output_dict.get('text', str(output_dict))))
+            messages.append(CohereToOpenAI.append_tool_message(f"the tool response is: {output_str}"))
+        return messages
+
+    @staticmethod
+    def create_openai_request(cohere_request: CohereChatRequest, messages: List[ChatCompletionMessageParam], tools: Any, build_template: bool) -> CompletionCreateParamsBase | CompletionCreateParams:
+        if not build_template:
+            return CompletionCreateParamsBase(
+                messages=messages,
+                model=cohere_request.model,  # type: ignore
+                max_tokens=cohere_request.max_tokens,
+                temperature=cohere_request.temperature,
+                frequency_penalty=cohere_request.frequency_penalty,
+                presence_penalty=cohere_request.presence_penalty,
+                stop=cohere_request.stop_sequences,
+                tools=tools
+            )
+        else:
+            template_builder = TemplateBuilder(chat_messages=messages, tools=tools)
+            full_template = template_builder.build_full_template()
+            print(full_template)  # Output the final template
+            return CompletionCreateParams(
+                prompt=full_template,
+                model=cohere_request.model,  # type: ignore
+                max_tokens=cohere_request.max_tokens,
+                temperature=cohere_request.temperature,
+                frequency_penalty=cohere_request.frequency_penalty,
+                presence_penalty=cohere_request.presence_penalty,
+                stop=cohere_request.stop_sequences,
+            )
+
+    @staticmethod
+    def to_dict(obj: Any) -> dict | None:
+        if isinstance(obj, dict):
+            return obj
+        elif hasattr(obj, '__dict__'):
+            return obj.__dict__
+        return None
+
+    @staticmethod
+    def get_tool_calls(chat_entry_dict: dict) -> Any:
+        return (CohereToOpenAI.cohere_to_open_ai_request_tool_call(chat_entry_dict.get("tool_calls", []))
+                if "tool_calls" in chat_entry_dict else None)
+
+    @staticmethod
+    def append_system_message(message: str, tool_calls: Any) -> ChatCompletionSystemMessageParam:
+        return ChatCompletionSystemMessageParam(role="system", content=message, tool_calls=tool_calls)
+
+    @staticmethod
+    def append_user_message(message: str) -> ChatCompletionUserMessageParam:
+        return ChatCompletionUserMessageParam(role="user", content=message)
+
+    @staticmethod
+    def append_assistant_message(message: str, tool_calls: Any) -> ChatCompletionAssistantMessageParam:
+        return ChatCompletionAssistantMessageParam(role="assistant", content=message, tool_calls=tool_calls)
+
+    @staticmethod
+    def append_tool_message(content: str) -> ChatCompletionToolMessageParam:
+        return ChatCompletionToolMessageParam(role="tool", content=content)
 
     @staticmethod
     def clean_string(input_string):

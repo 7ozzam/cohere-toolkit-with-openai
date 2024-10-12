@@ -18,6 +18,9 @@ from backend.schemas.chat import ChatRole, ChatMessage
 logger = logging.getLogger(__name__)
 import uuid
 
+from openai.types.chat.completion_create_params import CompletionCreateParamsBase
+from openai.types.completion_create_params import CompletionCreateParams
+
 
 OPENAI_URL_ENV_VAR = "OPENAI_ENDPOINT_URL"
 OPENAI_API_KEY_ENV_VAR = "OPENAI_API_KEY"
@@ -134,8 +137,30 @@ class OpenAIDeployment(BaseDeployment):
                 ]
             appended_user_message = True
         
+
         openAi_chat_request = CohereToOpenAI.cohere_to_openai_request_body(chat_request)
-        
+        openai_call = self.openai.chat.completions.create
+        if openAi_chat_request.__class__ ==  CompletionCreateParams:
+            openai_call = self.openai.completions.create
+            stream = await asyncio.to_thread(
+                openai_call,
+                **openAi_chat_request,
+                stream=True
+            )
+            print("The result is of type CompletionCreateParams")
+            
+        elif openAi_chat_request.__class__ == CompletionCreateParamsBase:
+            openai_call = self.openai.chat.completions.create
+            stream = await asyncio.to_thread(
+                openai_call,
+                **openAi_chat_request,
+                stream=True
+            )
+            print("The result is of type CompletionCreateParamsBase")
+        else:
+            print("Unknown type")
+            
+                    
         print("==============================================")
         print("Cohere Original chat request: ", chat_request)
         print("==============================================")
@@ -147,7 +172,7 @@ class OpenAIDeployment(BaseDeployment):
             #     yield to_dict(SearchResultsStreamedChatResponse(event_type = "search-results", documents=[] ))
                 
             stream = await asyncio.to_thread(
-                self.openai.chat.completions.create,
+                openai_call,
                 **openAi_chat_request,
                 stream=True
             )

@@ -60,11 +60,11 @@ ALL_TOOLS = {
                 "type": "str",
                 "required": False,
             },
-            "files": {
-                "description": "A list of files represented as tuples of (filename, file ID) to search over",
-                "type": "list[tuple[str, str]]",
-                "required": False,
-            },
+            # "files": {
+            #     "description": "A list of files represented as tuples of (filename, file ID) to search over",
+            #     "type": "list[tuple[str, str]]",
+            #     "required": False,
+            # },
         },
         is_visible=True,
         is_available=SearchFileTool.is_available(),
@@ -81,11 +81,11 @@ ALL_TOOLS = {
                 "type": "str",
                 "required": False,
             },
-            "file": {
-                "description": "A file represented as a tuple (filename, file ID) to read over",
-                "type": "tuple[str, str]",
-                "required": False,
-            }
+            # "file": {
+            #     "description": "A file represented as a tuple (filename, file ID) to read over",
+            #     "type": "tuple[str, str]",
+            #     "required": False,
+            # }
         },
         is_visible=True,
         is_available=ReadFileTool.is_available(),

@@ -258,21 +258,21 @@ class CohereToOpenAI:
         return messages
 
     @staticmethod
-    def process_tool_results_as_text(tool_results: List[ToolResult]) -> List[str] | None:
-        outputs: List[str] | None = []
+    def process_tool_results_as_text(tool_results: List[ToolResult]) -> str | None:
+        text_outputs: str = ""
         
         if len(tool_results):
             for tool_result in tool_results:
-                output = tool_result.get("outputs")
-                if output.get("text"):
-                    text = output.get("text")
-                else:
-                    text = str(output)
-                
-                
-                outputs.append(text)
+                outputs = tool_result.outputs
+                if len(outputs) > 0:
+                    for output in outputs:
+                        if output.get("text"):
+                            text = output.get("text")
+                        else:
+                            text = str(output)
+                        text_outputs += text or ""
             
-        return outputs
+        return text_outputs
     @staticmethod
     def process_tool_results_as_message(tool_results: List[ToolResult]) -> List[ChatCompletionMessageParam]:
         messages: List[ChatCompletionMessageParam] | None = []

@@ -21,6 +21,7 @@ class TemplateBuilder:
             # Tool Instructions
             - When the user asks you a question, you can answer him without tools.
             - When looking for information use relevant functions if available
+            - When you recieve the result from the tool, don't call it again
             - If you decide to invoke any of the function(s), you MUST put it in the format of {'{"name": "function_name", "parameters": As Defined in the function}'}
             You SHOULD NOT include any other text in the response.
 

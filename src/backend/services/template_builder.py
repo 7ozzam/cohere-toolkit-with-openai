@@ -20,7 +20,7 @@ class TemplateBuilder:
             If none of the function can be used, point it out. If the given question lacks the parameters required by the function,
             also point it out. You should only return the function call in tools call sections.
 
-            If you decide to invoke any of the function(s), you MUST put it in the format of [func_name1(params_name1=params_value1, params_name2=params_value2...), func_name2(params)]
+            If you decide to invoke any of the function(s), you MUST put it in the format of {'{"name": "function_name", "parameters": As Defined in the function}'}
             You SHOULD NOT include any other text in the response.
 
             Here is a list of functions in JSON format that you can invoke.

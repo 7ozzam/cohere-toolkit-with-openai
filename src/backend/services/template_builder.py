@@ -8,11 +8,14 @@ class TemplateBuilder:
     def __init__(self, chat_messages: List[ChatCompletionSystemMessageParam],tools: List[dict] = [], system_message: ChatCompletionSystemMessageParam | None = None, tool_response: Any = None):
         current_date = Datetime.now().strftime("%d %B %Y")
         default_system_message = {
-            "content": f"""Cutting Knowledge Date: December 2023
+            "content": f"""
+            Environment: ipython
+            Cutting Knowledge Date: December 2023
             Today Date: {current_date}
 
-            You are a helpful assistant with tool calling capabilities, respond regulary to user questions, just call the tools if needed.
-            When you receive a tool call response, use the output to format an answer to the orginal user question.
+            You are a helpful assistant
+            
+            {self.build_tools_section()}
             """,
             "role": "system",
             "name": "System"
@@ -70,13 +73,16 @@ class TemplateBuilder:
         template += "<|eot_id|>\n"
         
         return template
-    def build_tools_section(self) -> str:
+    def build_tools_section(self, full_body: bool = True) -> str:
         """
         Build the tools section for the template by converting the tools list to JSON.
         """
         if not len(self.tools):
             return ""
-        initial_part = "<|start_header_id|>user<|end_header_id|>"
+        if full_body:
+            initial_part = "<|start_header_id|>user<|end_header_id|>"
+        else:
+            initial_part = ""
         message_body = """Given the following functions, please respond with a JSON for a function call with its proper arguments that best answers the given prompt.
         Respond in the format 
         {"name": "function_name", "parameters": "As Defined in the function"}. 
@@ -87,7 +93,8 @@ class TemplateBuilder:
         template = initial_part + message_body
         tools_json = json.dumps(self.tools, indent=4)  # Format tools as a pretty-printed JSON string
         template += f"{tools_json}\n"
-        template += "<|eot_id|>\n"
+        if full_body:
+            template += "<|eot_id|>\n"
         return template
 
     def build_full_template(self) -> str:
@@ -96,7 +103,7 @@ class TemplateBuilder:
         """
         initial_part = "<|begin_of_text|>"
         full_template = self.build_system_initial_message()
-        full_template += self.build_tools_section()
+        # full_template += self.build_tools_section()
         full_template += self.build_chat_messages()
         full_template += self.build_tool_response_section()
         end_part = "<|start_header_id|>assistant<|end_header_id|>"

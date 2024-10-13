@@ -197,7 +197,7 @@ class CohereToOpenAI:
 
         # Process tool results
         if cohere_request.tool_results and len(cohere_request.tool_results):
-            messages.extend(CohereToOpenAI.process_tool_results(cohere_request.tool_results))
+            messages.extend(CohereToOpenAI.process_tool_results_as_message(cohere_request.tool_results))
 
         # Prepare OpenAI request parameters
         tools = CohereToOpenAI.convert_tools(cohere_request.tools)
@@ -216,7 +216,7 @@ class CohereToOpenAI:
         # Process tool results
         tools_response = None
         if cohere_request.tool_results and len(cohere_request.tool_results):
-            tools_response = str(CohereToOpenAI.process_tool_results(cohere_request.tool_results))
+            tools_response = str(CohereToOpenAI.process_tool_results_as_text(cohere_request.tool_results))
         
         tools = CohereToOpenAI.convert_tools(cohere_request.tools)
         openai_request = CohereToOpenAI._create_request_with_template(cohere_request, messages, tools, tool_response=tools_response)
@@ -248,20 +248,32 @@ class CohereToOpenAI:
         return messages
 
     @staticmethod
-    def process_tool_results(tool_results: List[ToolResult]) -> List[ChatCompletionMessageParam]:
-        messages = []
+    def process_tool_results_as_text(tool_results: List[ToolResult]) -> List[str] | None:
+        outputs: List[str] | None = []
+        
+        if len(tool_results):
+            for tool_result in tool_results:
+                
+                output = str(tool_result.get("outputs"))
+                outputs.append(output)
+            
+        return outputs
+    @staticmethod
+    def process_tool_results_as_message(tool_results: List[ToolResult]) -> List[ChatCompletionMessageParam]:
+        messages: List[ChatCompletionMessageParam] | None = []
         for tool_result in tool_results:
-            outputs: List[Any] = tool_result.outputs
-            messages.extend(CohereToOpenAI.append_tool_responses(outputs))
+            outputs: List[Any] | None = dict(tool_result).get("outputs")
+            message = CohereToOpenAI.generate_tool_reponse_message(f"the tool response is: {outputs}")
+            messages.append(message)
         return messages
 
-    @staticmethod
-    def append_tool_responses(outputs: List[Any]) -> List[ChatCompletionMessageParam]:
-        messages = []
-        for output_dict in outputs:
-            output_str = CohereToOpenAI.clean_string(str(output_dict.get('text', str(output_dict))))
-            messages.append(CohereToOpenAI.append_tool_message(f"the tool response is: {output_str}"))
-        return messages
+    # @staticmethod
+    # def append_tool_responses(outputs: List[Any]) -> List[ChatCompletionMessageParam]:
+    #     messages = []
+    #     for output_dict in outputs:
+    #         output_str = CohereToOpenAI.clean_string(str(output_dict.get('text', str(output_dict))))
+    #         messages.append(CohereToOpenAI.generate_tool_reponse_message(f"the tool response is: {output_str}"))
+    #     return messages
 
     @staticmethod
     def _create_request_without_template(
@@ -329,7 +341,7 @@ class CohereToOpenAI:
         return ChatCompletionAssistantMessageParam(role="assistant", content=message, tool_calls=tool_calls)
 
     @staticmethod
-    def append_tool_message(content: str) -> ChatCompletionToolMessageParam:
+    def generate_tool_reponse_message(content: str) -> ChatCompletionToolMessageParam:
         return ChatCompletionToolMessageParam(role="tool", content=content)
 
     @staticmethod

@@ -69,7 +69,13 @@ class CohereToOpenAI:
         
         # If both braces are found, slice the string
         if start != -1 and end != -1 and start < end:
-            return string_with_json[start:end + 1]
+            # Replace tuples with arrays
+            json_string = string_with_json[start:end + 1]
+            json_string = re.sub(r'\((.*?)\)', r'[\1]', json_string)
+            
+            # Remove any extra closing braces
+            json_string = re.sub(r'\}+\s*$', '}', json_string)
+            return json_string
         else:
             return ""  # Return None if no valid JSON structure is found
     
@@ -84,7 +90,7 @@ class CohereToOpenAI:
         if stream_message:
             previous_response += stream_message
         # tool_call_is_complete = CohereToOpenAI.check_if_tool_call_in_text_chunk_is_complete(previous_response or "")
-        
+      
         extracted_json_string = CohereToOpenAI.extract_json_from_string(previous_response)
         print("extracted_json_string: ",extracted_json_string)
         
@@ -93,6 +99,8 @@ class CohereToOpenAI:
         else:
             is_json_full = False
             
+        
+        
         parsed_previous_response = jp.parse(extracted_json_string)
         is_there_json = len(parsed_previous_response) > 0
         # print("tool_call_is_complete: ",tool_call_is_complete)

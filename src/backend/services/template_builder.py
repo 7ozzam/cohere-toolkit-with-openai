@@ -11,9 +11,9 @@ class TemplateBuilder:
             "content": f"""Cutting Knowledge Date: December 2023
             Today Date: {current_date}
 
+            You are a helpful assistant with tool calling capabilities, respond regulary to user questions, just call the tools if needed.
             When you receive a tool call response, use the output to format an answer to the orginal user question.
-
-            You are a helpful assistant with tool calling capabilities.""",
+            """,
             "role": "system",
             "name": "System"
         }

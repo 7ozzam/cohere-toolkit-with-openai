@@ -335,8 +335,9 @@ class CohereToOpenAI:
         print("Getting Tools")
         print('chat_entry_dict["tool_calls"]', chat_entry_dict["tool_calls"])
         print('chat_entry_dict.get("tool_calls")', chat_entry_dict.get("tool_calls"))
-        return (CohereToOpenAI.cohere_to_open_ai_request_tool_call(chat_entry_dict["tool_calls"])
-                if "tool_calls" in chat_entry_dict else None)
+        oai_tools = CohereToOpenAI.cohere_to_open_ai_request_tool_call(chat_entry_dict["tool_calls"])
+        print("oai_tools: ", oai_tools)
+        return oai_tools
 
     @staticmethod
     def append_system_message(message: str, tool_calls: Any) -> ChatCompletionSystemMessageParam:

@@ -251,7 +251,7 @@ class CohereToOpenAI:
     def process_tool_results(tool_results: List[ToolResult]) -> List[ChatCompletionMessageParam]:
         messages = []
         for tool_result in tool_results:
-            outputs: List[Any] = tool_result.get("outputs")
+            outputs: List[Any] = tool_result.outputs
             messages.extend(CohereToOpenAI.append_tool_responses(outputs))
         return messages
 

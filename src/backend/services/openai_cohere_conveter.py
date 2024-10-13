@@ -269,7 +269,7 @@ class CohereToOpenAI:
                 call: Any  = tool_result_dict.get("call", [])
                 if len(outputs) > 0:
                     for output in outputs:
-                        if output and type(output) == "dict" and output.get("text"):
+                        if output and output.get("text"):
                             text = output.get("text")
                         else:
                             text = str(output)

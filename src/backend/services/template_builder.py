@@ -84,7 +84,7 @@ class TemplateBuilder:
             initial_part = ""
         message_body = """Given the following functions, please respond with a JSON for a function call with its proper arguments that best answers the given prompt.
         Respond in the format 
-        {"name": "function_name", "parameters": "As Defined in the function"}. 
+        {"name": "function_name", "parameters": As Defined in the function}. 
         
         Reminder:
             - Function calls MUST follow the specified format

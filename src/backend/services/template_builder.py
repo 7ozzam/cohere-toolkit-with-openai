@@ -93,6 +93,7 @@ class TemplateBuilder:
         full_template = self.build_system_initial_message()
         full_template += self.build_tools_section()
         full_template += self.build_chat_messages()
+        full_template += self.build_tool_response_section()
         end_part = "<|start_header_id|>assistant<|end_header_id|>"
         return initial_part + full_template + end_part
     

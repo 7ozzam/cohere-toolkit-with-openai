@@ -265,11 +265,11 @@ class CohereToOpenAI:
             for tool_result in tool_results:
                 tool_result_dict = dict(tool_result)
                 print("tool_result_dict: ", tool_result_dict)
-                outputs  = tool_result_dict.get("outputs", [])
+                outputs: List[Any]  = tool_result_dict.get("outputs", [])
                 if len(outputs) > 0:
                     for output in outputs:
-                        if dict(output).get("text"):
-                            text = dict(output).get("text")
+                        if output.get("text"):
+                            text = output.get("text")
                         else:
                             text = str(output)
                         text_outputs += text or ""

@@ -277,10 +277,10 @@ class CohereToOpenAI:
         return text_outputs
     @staticmethod
     def process_tool_results_as_message(tool_results: List[ToolResult]) -> List[ChatCompletionMessageParam]:
-        messages: List[ChatCompletionMessageParam] | None = []
-        for tool_result in tool_results:
-            outputs: List[Any] | None = dict(tool_result).get("outputs")
-            message = CohereToOpenAI.generate_tool_reponse_message(f"the tool response is: {outputs}")
+        messages = []
+        tool_response = CohereToOpenAI.process_tool_results_as_text(tool_results)
+        if tool_response and len(tool_response):
+            message = CohereToOpenAI.generate_tool_reponse_message(f"the tool response is: {tool_response}")
             messages.append(message)
         return messages
 

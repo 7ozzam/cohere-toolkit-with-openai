@@ -71,6 +71,10 @@ class CohereToOpenAI:
         if start != -1 and end != -1 and start < end:
             # Replace tuples with arrays
             json_string = string_with_json[start:end + 1]
+            # Replace parentheses with square brackets for arrays
+            json_string = re.sub(r'\((.*?)\)', r'[\1]', json_string)
+
+            # Remove any trailing characters that may cause issues
             json_string = re.sub(r'(\}+) *$', '}', json_string)
             
             return json_string

@@ -266,8 +266,8 @@ class CohereToOpenAI:
                 outputs = tool_result.get("outputs", [])
                 if len(outputs) > 0:
                     for output in outputs:
-                        if output.get("text"):
-                            text = output.get("text")
+                        if dict(output).get("text"):
+                            text = dict(output).get("text")
                         else:
                             text = str(output)
                         text_outputs += text or ""

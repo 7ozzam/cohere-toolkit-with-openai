@@ -18,8 +18,6 @@ class TemplateBuilder:
             Today Date: {current_date}
 
             You are a helpful assistant
-            
-            {self.build_tools_section()}
             """,
             "role": "system",
             "name": "System"
@@ -87,10 +85,14 @@ class TemplateBuilder:
         message_body = """Given the following functions, please respond with a JSON for a function call with its proper arguments that best answers the given prompt.
         Respond in the format 
         {"name": "function_name", "parameters": "As Defined in the function"}. 
-        - Call tools only if needed
-        - Do not call tools if they are not needed
-        - Do not include any other text with the tool calls
-        - Do not use variables."""
+        
+        Reminder:
+            - Function calls MUST follow the specified format
+            - Required parameters MUST be specified
+            - Only call one function at a time
+            - Put the entire function call reply on one line
+            - Always add your sources when using search results to answer the user query
+        """
         template = initial_part + message_body
         tools_json = json.dumps(self.tools, indent=4)  # Format tools as a pretty-printed JSON string
         template += f"{tools_json}\n"
@@ -104,7 +106,7 @@ class TemplateBuilder:
         """
         initial_part = "<|begin_of_text|>"
         full_template = self.build_system_initial_message()
-        # full_template += self.build_tools_section()
+        full_template += self.build_tools_section(full_body=True)
         full_template += self.build_chat_messages()
         full_template += self.build_tool_response_section()
         end_part = "<|start_header_id|>assistant<|end_header_id|>"

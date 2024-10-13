@@ -2,11 +2,18 @@ from typing import Any, List, Union, TypedDict, Literal, Iterable
 from typing_extensions import Required
 from openai.types.chat import ChatCompletionSystemMessageParam
 import json
+from datetime import datetime as Datetime
 # Function to build the template with messages and tools
 class TemplateBuilder:
     def __init__(self, chat_messages: List[ChatCompletionSystemMessageParam],tools: List[dict] = [], system_message: ChatCompletionSystemMessageParam | None = None, tool_response: Any = None):
+        current_date = Datetime.now().strftime("%d %B %Y")
         default_system_message = {
-            "content": "You are a helpful assistant with tool calling capabilities, you chatting normally with the user, you call tools only if needed,  When you receive a tool call response, use the output to format an answer to the orginal use question.",
+            "content": f"""Cutting Knowledge Date: December 2023
+            Today Date: {current_date}
+
+            When you receive a tool call response, use the output to format an answer to the orginal user question.
+
+            You are a helpful assistant with tool calling capabilities.""",
             "role": "system",
             "name": "System"
         }
@@ -19,7 +26,7 @@ class TemplateBuilder:
         """
         Build the initial system message for the template.
         """
-        template = "<|start_header_id|>system<|end_header_id|>\n"
+        template = f"<|start_header_id|>{self.system_message["role"]}<|end_header_id|>\n"
         if isinstance(self.system_message["content"], str):
             template += f"{self.system_message['content']}\n"
         elif isinstance(self.system_message["content"], Iterable):
@@ -83,10 +90,10 @@ class TemplateBuilder:
         Combine the system initial message, chat messages, and tools section into the full template.
         """
         initial_part = "<|begin_of_text|>"
-        end_part = "<|start_header_id|>assistant<|end_header_id|>"
         full_template = self.build_system_initial_message()
         full_template += self.build_tools_section()
         full_template += self.build_chat_messages()
+        end_part = "<|start_header_id|>assistant<|end_header_id|>"
         return initial_part + full_template + end_part
     
     

@@ -194,6 +194,8 @@ class OpenAIDeployment(BaseDeployment):
                                         tool_call_message = ChatMessage(role=ChatRole.CHATBOT, message="I'm calling a system tool to retrieve information", tool_calls=[tool_call_dict])
                                         if chat_request.chat_history and len(chat_request.chat_history) > 0:
                                             chat_request.chat_history.append(tool_call_message)
+                                        else:
+                                            chat_request.chat_history = [tool_call_message]
 
                             if not first_request_is_sent:
                                 stream_start = StreamStartStreamedChatResponse(event_type="stream-start", generation_id=generation_id)

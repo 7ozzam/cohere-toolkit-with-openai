@@ -224,7 +224,7 @@ class CohereToOpenAI:
         return openai_request
 
     @staticmethod
-    def process_chat_history(cohere_messages: List[Any]) -> List[ChatCompletionMessageParam]:
+    def process_chat_history(cohere_messages: List[ChatMessage]) -> List[ChatCompletionMessageParam]:
         messages = []
         for chat_entry in cohere_messages:
             chat_entry_dict = CohereToOpenAI.to_dict(chat_entry)
@@ -235,8 +235,13 @@ class CohereToOpenAI:
             role = chat_entry_dict.get("role")
             message = chat_entry_dict.get("message", "")
             tool_calls = CohereToOpenAI.get_tool_calls(chat_entry_dict)
-
-            if role and (message or chat_entry_dict.get("tool_results", "") or tool_calls):
+            tool_results = chat_entry_dict.get("tool_results", "")
+            
+            print("==============================")
+            print("Embedding message: ", chat_entry)
+            if role and (message or tool_results or tool_calls):
+                print("Found Something to embed")
+                print("==============================")
                 if role == 'SYSTEM':
                     messages.append(CohereToOpenAI.append_system_message(message, tool_calls))
                 elif role == 'USER':
@@ -398,6 +403,7 @@ class CohereToOpenAI:
     @staticmethod
     def convert_tools(tools: List[BackendTool] | None) -> List[ChatCompletionToolParam]:
         def convert_tool_parameter_defination(tool_parameter_definitions: Dict[str, ToolParameterDefinitionsValue] | None) -> Dict[str, object]:
+            
             if not tool_parameter_definitions:
                 return {}
             

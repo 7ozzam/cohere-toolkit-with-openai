@@ -55,10 +55,15 @@ ALL_TOOLS = {
                 "type": "str",
                 "required": True,
             },
+            "file_id": {
+                "description": "A file_id which is provided by the system when the user uploads a file",
+                "type": "str",
+                "required": False,
+            },
             "files": {
                 "description": "A list of files represented as tuples of (filename, file ID) to search over",
                 "type": "list[tuple[str, str]]",
-                "required": True,
+                "required": False,
             },
         },
         is_visible=True,
@@ -71,10 +76,15 @@ ALL_TOOLS = {
         display_name="Read Document",
         implementation=ReadFileTool,
         parameter_definitions={
+            "file_id": {
+                "description": "A file_id which is provided by the system when the user uploads a file",
+                "type": "str",
+                "required": False,
+            },
             "file": {
                 "description": "A file represented as a tuple (filename, file ID) to read over",
                 "type": "tuple[str, str]",
-                "required": True,
+                "required": False,
             }
         },
         is_visible=True,

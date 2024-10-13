@@ -332,7 +332,10 @@ class CohereToOpenAI:
 
     @staticmethod
     def get_tool_calls(chat_entry_dict: dict) -> Any:
-        return (CohereToOpenAI.cohere_to_open_ai_request_tool_call(chat_entry_dict.get("tool_calls", []))
+        print("Getting Tools")
+        print('chat_entry_dict["tool_calls"]', chat_entry_dict["tool_calls"])
+        print('chat_entry_dict.get("tool_calls")', chat_entry_dict.get("tool_calls"))
+        return (CohereToOpenAI.cohere_to_open_ai_request_tool_call(chat_entry_dict["tool_calls"])
                 if "tool_calls" in chat_entry_dict else None)
 
     @staticmethod

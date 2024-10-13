@@ -97,6 +97,11 @@ async def _call_tool_async(
         ]
         return outputs
     parameters = tool_call.get("parameters", {}) or tool_call.get("arguments", {})
+    if type(parameters) == "str":
+        try:
+            parameters = eval(parameters)
+        except Exception:
+            pass
     try:
         outputs = await tool.implementation().call(
             parameters=parameters,

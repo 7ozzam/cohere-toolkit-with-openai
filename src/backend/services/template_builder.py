@@ -26,7 +26,7 @@ class TemplateBuilder:
         """
         Build the initial system message for the template.
         """
-        template = f"<|start_header_id|>{self.system_message["role"]}<|end_header_id|>\n"
+        template = f"<|start_header_id|>{self.system_message['role']}<|end_header_id|>\n"
         if isinstance(self.system_message["content"], str):
             template += f"{self.system_message['content']}\n"
         elif isinstance(self.system_message["content"], Iterable):

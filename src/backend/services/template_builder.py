@@ -6,7 +6,7 @@ import json
 class TemplateBuilder:
     def __init__(self, chat_messages: List[ChatCompletionSystemMessageParam],tools: List[dict] = [], system_message: ChatCompletionSystemMessageParam | None = None, tool_response: Any = None):
         default_system_message = {
-            "content": "You are a helpful assistant with tool calling capabilities. When you receive a tool call response, use the output to format an answer to the orginal use question.",
+            "content": "You are a helpful assistant with tool calling capabilities, you chatting normally with the user, you call tools only if needed,  When you receive a tool call response, use the output to format an answer to the orginal use question.",
             "role": "system",
             "name": "System"
         }

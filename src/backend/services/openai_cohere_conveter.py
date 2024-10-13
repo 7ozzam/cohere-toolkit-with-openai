@@ -419,7 +419,7 @@ class CohereToOpenAI:
             params = convert_tool_parameter_defination(tool.parameter_definitions)
             
             if len(params) > 0:
-                parameters = {"type": "object",**params, "required": required_parameters}
+                parameters = {"type": "dict",**params, "required": required_parameters}
                 
             oai_tool = ChatCompletionToolParam(
             type="function",

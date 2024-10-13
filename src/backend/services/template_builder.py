@@ -11,12 +11,20 @@ class TemplateBuilder:
         self.tool_response = tool_response
         
         current_date = Datetime.now().strftime("%d %B %Y")
+        # Cutting Knowledge Date: December 2023
+        # Today Date: {current_date}
         default_system_message = {
             "content": f"""
-            Cutting Knowledge Date: December 2023
-            Today Date: {current_date}
+            You are an expert in composing functions. You are given a question and a set of possible functions.
+            Based on the question, you will need to make one or more function/tool calls to achieve the purpose.
+            If none of the function can be used, point it out. If the given question lacks the parameters required by the function,
+            also point it out. You should only return the function call in tools call sections.
 
-            You are a helpful assistant, chatting noramally with the user, cable of performing various tasks, and calling the tools only if needed.
+            If you decide to invoke any of the function(s), you MUST put it in the format of [func_name1(params_name1=params_value1, params_name2=params_value2...), func_name2(params)]
+            You SHOULD NOT include any other text in the response.
+
+            Here is a list of functions in JSON format that you can invoke.
+            {self.build_tools_section(full_body=False)}
             """,
             "role": "system",
             "name": "System"
@@ -77,10 +85,8 @@ class TemplateBuilder:
         """
         if not len(self.tools):
             return ""
-        if full_body:
-            initial_part = "<|start_header_id|>user<|end_header_id|>"
-        else:
-            initial_part = ""
+        
+        initial_part = "<|start_header_id|>user<|end_header_id|>"
         message_body = """Given the following functions, please respond with a JSON for a function call with its proper arguments that best answers the given prompt.
         Respond in the format 
         {"name": "function_name", "parameters": As Defined in the function}. 
@@ -95,9 +101,12 @@ class TemplateBuilder:
         template = initial_part + message_body
         tools_json = json.dumps(self.tools, indent=4)  # Format tools as a pretty-printed JSON string
         template += f"{tools_json}\n"
+        template += "<|eot_id|>\n"
+            
         if full_body:
-            template += "<|eot_id|>\n"
-        return template
+            return template
+        else:
+            return tools_json
 
     def build_full_template(self) -> str:
         """
@@ -105,7 +114,7 @@ class TemplateBuilder:
         """
         initial_part = "<|begin_of_text|>"
         full_template = self.build_system_initial_message()
-        full_template += self.build_tools_section(full_body=True)
+        # full_template += self.build_tools_section(full_body=True)
         full_template += self.build_chat_messages()
         full_template += self.build_tool_response_section()
         end_part = "<|start_header_id|>assistant<|end_header_id|>"

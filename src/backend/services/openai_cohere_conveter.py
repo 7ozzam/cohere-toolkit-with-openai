@@ -170,20 +170,22 @@ class CohereToOpenAI:
         return False
         
     @staticmethod
-    def cohere_to_open_ai_request_tool_call(tool_calls: List[Dict[str, Any] | None]) -> List[ChatCompletionMessageToolCallParam]:
+    def cohere_to_open_ai_request_tool_call(tool_calls: List[Any | None]) -> List[ChatCompletionMessageToolCallParam]:
         oai_calls = []
         if tool_calls and len(tool_calls) > 1:
             for tool_call in tool_calls:
-                if tool_call and tool_call["parameters"] and tool_call["name"]:
-                    arguments = str(tool_call.get("parameters"))
-                    # print("parameters: ", tool_call.parameters)
-                    # print("arguments: ", arguments)
-                    name = str(tool_call.get("name"))
-                    function = OpenAIFunction(arguments=arguments, name=name)
-                    
-                    
-                    call = ChatCompletionMessageToolCallParam(id="",type="function", function=function)
-                    oai_calls.append(call)
+                if tool_call:
+                    tool_call_dict = dict(tool_call)
+                    if tool_call_dict and tool_call_dict["parameters"] and tool_call_dict["name"]:
+                        arguments = str(tool_call_dict.get("parameters"))
+                        # print("parameters: ", tool_call.parameters)
+                        # print("arguments: ", arguments)
+                        name = str(tool_call_dict.get("name"))
+                        function = OpenAIFunction(arguments=arguments, name=name)
+                        
+                        
+                        call = ChatCompletionMessageToolCallParam(id="",type="function", function=function)
+                        oai_calls.append(call)
         return oai_calls
         
     @staticmethod

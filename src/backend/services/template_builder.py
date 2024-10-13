@@ -78,7 +78,12 @@ class TemplateBuilder:
             return ""
         initial_part = "<|start_header_id|>user<|end_header_id|>"
         message_body = """Given the following functions, please respond with a JSON for a function call with its proper arguments that best answers the given prompt.
-        Respond in the format {"name": function name, "parameters": dictionary of argument name and its value}. Do not use variables."""
+        Respond in the format 
+        {"name": "function_name", "parameters": "As Defined in the function"}. 
+        - Call tools only if needed
+        - Do not call tools if they are not needed
+        - Do not include any other text with the tool calls
+        - Do not use variables."""
         template = initial_part + message_body
         tools_json = json.dumps(self.tools, indent=4)  # Format tools as a pretty-printed JSON string
         template += f"{tools_json}\n"

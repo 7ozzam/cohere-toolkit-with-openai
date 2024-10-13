@@ -39,7 +39,9 @@ class TemplateBuilder:
                 template += f"<|start_header_id|>user<|end_header_id|>\n"
             elif message["role"] == "assistant":
                 template += f"<|start_header_id|>assistant<|end_header_id|>\n"
-
+            elif message["role"] == "system":
+                template += f"<|start_header_id|>system<|end_header_id|>\n"
+                
             if isinstance(message["content"], str):
                 template += f"{message['content']}\n"
             elif isinstance(message["content"], Iterable):
@@ -67,9 +69,10 @@ class TemplateBuilder:
         """
         if not len(self.tools):
             return ""
-        initial_part = """Given the following functions, please respond with a JSON for a function call with its proper arguments that best answers the given prompt.
+        initial_part = "<|start_header_id|>user<|end_header_id|>"
+        message_body = """Given the following functions, please respond with a JSON for a function call with its proper arguments that best answers the given prompt.
         Respond in the format {"name": function name, "parameters": dictionary of argument name and its value}. Do not use variables."""
-        template = "<|start_header_id|>user<|end_header_id|>\n" + initial_part
+        template = initial_part + message_body
         tools_json = json.dumps(self.tools, indent=4)  # Format tools as a pretty-printed JSON string
         template += f"{tools_json}\n"
         template += "<|eot_id|>\n"
@@ -80,10 +83,11 @@ class TemplateBuilder:
         Combine the system initial message, chat messages, and tools section into the full template.
         """
         initial_part = "<|begin_of_text|>"
+        end_part = "<|start_header_id|>assistant<|end_header_id|>"
         full_template = self.build_system_initial_message()
-        full_template += self.build_chat_messages()
         full_template += self.build_tools_section()
-        return initial_part + full_template
+        full_template += self.build_chat_messages()
+        return initial_part + full_template + end_part
     
     
 

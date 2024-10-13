@@ -172,7 +172,7 @@ class CohereToOpenAI:
     @staticmethod
     def cohere_to_open_ai_request_tool_call(tool_calls: List[Any | None]) -> List[ChatCompletionMessageToolCallParam]:
         oai_calls = []
-        if tool_calls and len(tool_calls) > 1:
+        if tool_calls and len(tool_calls) > 0:
             for tool_call in tool_calls:
                 if tool_call:
                     tool_call_dict = dict(tool_call)
@@ -229,6 +229,7 @@ class CohereToOpenAI:
     def process_chat_history(cohere_messages: List[ChatMessage]) -> List[ChatCompletionMessageParam]:
         messages = []
         for chat_entry in cohere_messages:
+            print("==============================")
             chat_entry_dict = CohereToOpenAI.to_dict(chat_entry)
             if chat_entry_dict is None:
                 print("Skipping entry: chat_entry is not a dict or an object.")
@@ -239,7 +240,7 @@ class CohereToOpenAI:
             tool_calls = CohereToOpenAI.get_tool_calls(chat_entry_dict)
             tool_results = chat_entry_dict.get("tool_results", "")
             
-            print("==============================")
+            
             print("Embedding message: ", chat_entry)
             if role and (message or tool_results or tool_calls):
                 print("Found Something to embed")

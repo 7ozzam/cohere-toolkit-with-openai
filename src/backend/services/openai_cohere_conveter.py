@@ -251,7 +251,7 @@ class CohereToOpenAI:
                     messages.append(CohereToOpenAI.append_user_message(message))
                 elif role in ['ASSISTANT', 'CHATBOT']:
                     if tool_calls and not len(message):
-                        message = f"Calling: {str(tool_calls)}"
+                        message = f"{str(tool_calls)}"
                     messages.append(CohereToOpenAI.append_assistant_message(message, tool_calls))
                 else:
                     print(f"Skipping entry with unknown role: {role}")

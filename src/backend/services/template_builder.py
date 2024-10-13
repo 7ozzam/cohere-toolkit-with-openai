@@ -6,6 +6,10 @@ from datetime import datetime as Datetime
 # Function to build the template with messages and tools
 class TemplateBuilder:
     def __init__(self, chat_messages: List[ChatCompletionSystemMessageParam],tools: List[dict] = [], system_message: ChatCompletionSystemMessageParam | None = None, tool_response: Any = None):
+        self.chat_messages = chat_messages
+        self.tools = tools
+        self.tool_response = tool_response
+        
         current_date = Datetime.now().strftime("%d %B %Y")
         default_system_message = {
             "content": f"""
@@ -21,9 +25,6 @@ class TemplateBuilder:
             "name": "System"
         }
         self.system_message = system_message or default_system_message
-        self.chat_messages = chat_messages
-        self.tools = tools
-        self.tool_response = tool_response
 
     def build_system_initial_message(self) -> str:
         """

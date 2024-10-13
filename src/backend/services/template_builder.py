@@ -13,11 +13,10 @@ class TemplateBuilder:
         current_date = Datetime.now().strftime("%d %B %Y")
         default_system_message = {
             "content": f"""
-            Environment: ipython
             Cutting Knowledge Date: December 2023
             Today Date: {current_date}
 
-            You are a helpful assistant
+            You are a helpful assistant, chatting noramally with the user, cable of performing various tasks, and calling the tools only if needed.
             """,
             "role": "system",
             "name": "System"

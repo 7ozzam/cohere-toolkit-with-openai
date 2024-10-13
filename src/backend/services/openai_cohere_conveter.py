@@ -75,7 +75,6 @@ class CohereToOpenAI:
     
     @staticmethod
     def openai_to_cohere_event_chunk(event: ChatCompletionChunk, previous_response: Optional[str] = None, function_triggered: str = 'none', chat_request: CohereChatRequest = None, generation_id: Optional[str] = "", build_template: bool = False) -> list[StreamedChatResponse] | None:
-        full_previous_reponse = ""
         
         if build_template:
             stream_message = event.choices[0].text
@@ -83,7 +82,7 @@ class CohereToOpenAI:
             stream_message = event.choices[0].delta.content
         
         if stream_message:
-            full_previous_reponse += stream_message
+            previous_response += stream_message
         # tool_call_is_complete = CohereToOpenAI.check_if_tool_call_in_text_chunk_is_complete(previous_response or "")
         
         extracted_json_string = CohereToOpenAI.extract_json_from_string(previous_response)

@@ -11,21 +11,29 @@ class TemplateBuilder:
         self.tool_response = tool_response
         
         current_date = Datetime.now().strftime("%d %B %Y")
-        # Cutting Knowledge Date: December 2023
-        # Today Date: {current_date}
         default_system_message = {
             "content": f"""
-            You are an expert chat assistant capable of calling functions. You are given a question and a set of possible functions.
-            Based on the question, you will need to make one function/tool calls to achieve the purpose.
-            Then you use the information provided by the function/tool calls to answer the question.
-            If none of the function can be used, point it out. If the given question lacks the parameters required by the function,
-            also point it out. You should only return the function call in tools call sections.
-
-            If you decide to invoke any of the function(s), you MUST put it in the format of {'{"name": "function_name", "parameters": As Defined in the function}'}
+            Environment: ipython
+            Tools: brave_search, wolfram_alpha
+            Cutting Knowledge Date: December 2023
+            Today Date: {current_date}
+            
+            # Tool Instructions
+            - When the user asks you a question, you can answer him without tools.
+            - When looking for information use relevant functions if available
+            - If you decide to invoke any of the function(s), you MUST put it in the format of {'{"name": "function_name", "parameters": As Defined in the function}'}
             You SHOULD NOT include any other text in the response.
 
-            Here is a list of functions in JSON format that you can invoke.
+            You have access to the following functions:
             {self.build_tools_section(full_body=False)}
+            Reminder:
+                - Function calls MUST follow the specified format
+                - Required parameters MUST be specified
+                - Only call one function at a time
+                - Put the entire function call reply on one line
+                - Always add your sources when using search results to answer the user query
+
+            You are a helpful assistant.
             """,
             "role": "system",
             "name": "System"

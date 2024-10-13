@@ -266,13 +266,15 @@ class CohereToOpenAI:
                 tool_result_dict = dict(tool_result)
                 print("tool_result_dict: ", tool_result_dict)
                 outputs: List[Any]  = tool_result_dict.get("outputs", [])
+                call: Any  = tool_result_dict.get("call", [])
                 if len(outputs) > 0:
                     for output in outputs:
                         if output and type(output) == "dict" and output.get("text"):
                             text = output.get("text")
                         else:
                             text = str(output)
-                        text_outputs += text or ""
+                            
+                        text_outputs += f"\nThe result of the tool call: {call} \n is: {text}" or ""
             
         return text_outputs
     @staticmethod
@@ -280,7 +282,7 @@ class CohereToOpenAI:
         messages = []
         tool_response = CohereToOpenAI.process_tool_results_as_text(tool_results)
         if tool_response and len(tool_response):
-            message = CohereToOpenAI.generate_tool_reponse_message(f"the tool response is: {tool_response}")
+            message = CohereToOpenAI.generate_tool_reponse_message(f"{tool_response}")
             messages.append(message)
         return messages
 

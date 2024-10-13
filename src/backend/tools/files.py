@@ -39,6 +39,8 @@ class ReadFileTool(BaseTool):
                 file_id = file
             elif isinstance(file, dict):
                 _, file_id = file
+            elif isinstance(file, list):
+                _, file_id = file
             retrieved_file = file_crud.get_file(session, file_id, user_id)    
         elif _file_name and not _file_id:
             retrieved_file = file_crud.get_file_by_name(session, _file_name, user_id)

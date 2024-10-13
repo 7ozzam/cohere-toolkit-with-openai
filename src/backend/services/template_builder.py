@@ -15,8 +15,9 @@ class TemplateBuilder:
         # Today Date: {current_date}
         default_system_message = {
             "content": f"""
-            You are an expert in composing functions. You are given a question and a set of possible functions.
-            Based on the question, you will need to make one or more function/tool calls to achieve the purpose.
+            You are an expert chat assistant capable of calling functions. You are given a question and a set of possible functions.
+            Based on the question, you will need to make one function/tool calls to achieve the purpose.
+            Then you use the information provided by the function/tool calls to answer the question.
             If none of the function can be used, point it out. If the given question lacks the parameters required by the function,
             also point it out. You should only return the function call in tools call sections.
 

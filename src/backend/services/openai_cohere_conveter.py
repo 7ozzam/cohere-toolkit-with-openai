@@ -264,7 +264,7 @@ class CohereToOpenAI:
         if len(tool_results):
             for tool_result in tool_results:
                 tool_result_dict = dict(tool_result)
-                print("tool_result_dict: ", tool_result_dict)
+                # print("tool_result_dict: ", tool_result_dict)
                 outputs: List[Any]  = tool_result_dict.get("outputs", [])
                 call: Any  = tool_result_dict.get("call", [])
                 if len(outputs) > 0:

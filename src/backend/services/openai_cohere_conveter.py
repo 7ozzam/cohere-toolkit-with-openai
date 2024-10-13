@@ -263,9 +263,14 @@ class CohereToOpenAI:
         
         if len(tool_results):
             for tool_result in tool_results:
-                output = dict(tool_result.get("outputs", {})).get("text", "")
+                output = tool_result.get("outputs")
+                if output.get("text"):
+                    text = output.get("text")
+                else:
+                    text = str(output)
                 
-                outputs.append(output)
+                
+                outputs.append(text)
             
         return outputs
     @staticmethod

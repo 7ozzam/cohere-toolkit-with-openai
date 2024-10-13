@@ -71,6 +71,7 @@ class CohereToOpenAI:
         if start != -1 and end != -1 and start < end:
             # Replace tuples with arrays
             json_string = string_with_json[start:end + 1]
+            json_string = json_string.replace('(', '[').replace(')', ']')
             
             return json_string
         else:

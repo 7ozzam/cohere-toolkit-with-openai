@@ -12,7 +12,7 @@ from backend.schemas.cohere_chat import CohereChatRequest
 from backend.schemas.chat import ChatRole, ChatMessage
 from cohere.types import StreamedChatResponse,  StreamStartStreamedChatResponse,SearchQueriesGenerationStreamedChatResponse,SearchResultsStreamedChatResponse,TextGenerationStreamedChatResponse,CitationGenerationStreamedChatResponse,ToolCallsGenerationStreamedChatResponse,StreamEndStreamedChatResponse,ToolCallsChunkStreamedChatResponse, ToolCallsChunkStreamedChatResponse, ToolCallDelta, ToolParameterDefinitionsValue, ToolCall, Message, ChatbotMessage, UserMessage, ToolMessage, SystemMessage
 
-from backend.services.template_builder import TemplateBuilder
+from backend.services.template_builder.template_builder import TemplateBuilderFactory as TemplateBuilder
 from cohere.types import Tool as CohereTool
 from backend.schemas.tool import Tool as BackendTool
 import partial_json_parser as pjp
@@ -350,8 +350,8 @@ class CohereToOpenAI:
         tool_response: Any
     ) -> RegularCompletionCreateParamsBase:
         """Create OpenAI request parameters by building a template."""
-        template_builder = TemplateBuilder(chat_messages=messages, tools=tools, tool_response=tool_response)
-        full_template = template_builder.build_full_template()
+        # template_builder = TemplateBuilder(template_name="",chat_messages=messages, tools=tools, tool_response=tool_response)
+        full_template = TemplateBuilder.build_full_template(template_name="llama3.1",chat_messages=messages, tools=tools, tool_response=tool_response)
         print(full_template)  # Output the final template
         return RegularCompletionCreateParamsBase(
             prompt=full_template,

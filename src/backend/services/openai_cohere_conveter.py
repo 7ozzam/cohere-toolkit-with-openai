@@ -76,84 +76,109 @@ class CohereToOpenAI:
             return json_string
         else:
             return ""  # Return None if no valid JSON structure is found
-    
+    ChatCompletionChunk
     @staticmethod
-    def openai_to_cohere_event_chunk(event: ChatCompletionChunk, previous_response: Optional[str] = None, function_triggered: str = 'none', chat_request: CohereChatRequest = None, generation_id: Optional[str] = "", build_template: bool = False) -> list[StreamedChatResponse] | None:
-        
-        if build_template:
-            stream_message = event.choices[0].text
-        else:
-            stream_message = event.choices[0].delta.content
-        
-        if stream_message:
-            previous_response += stream_message
-        # tool_call_is_complete = CohereToOpenAI.check_if_tool_call_in_text_chunk_is_complete(previous_response or "")
-      
-        extracted_json_string = CohereToOpenAI.extract_json_from_string(previous_response)
-        print("extracted_json_string: ",extracted_json_string)
-        
-        if (len(extracted_json_string) > 0):
-            is_json_full = extracted_json_string.strip().count("{") == extracted_json_string.strip().count("}")
-        else:
-            is_json_full = False
-            
-        
-        
-        parsed_previous_response = jp.parse(extracted_json_string)
-        is_there_json = len(parsed_previous_response) > 0
-        # print("tool_call_is_complete: ",tool_call_is_complete)
-        if (is_there_json and is_json_full):
-            # parsed_previous_response = pjp.parse_json(previous_response)
-            
-            if (parsed_previous_response):
-                print("parsed_previous_response: ",parsed_previous_response)
-                
-                
-                func_name = CohereToOpenAI.get_value(parsed_previous_response, "name")
-                func_params: Dict[str, Any] = CohereToOpenAI.get_value(parsed_previous_response, "parameters")
-                
-                tool_call_dict = {"name":func_name, "parameters":func_params}
-                tool_call_class = ToolCall(**tool_call_dict)
-                tool_call_delta = ToolCallDelta(name=func_name, index=0, parameters=str(func_params))
-                # Copy the chat history and append the tool_call_message
-                
+    def openai_to_cohere_event_chunk(
+        event: Any,
+        previous_response: Optional[str] = None, 
+        function_triggered: str = 'none', 
+        chat_request: CohereChatRequest | None = None, 
+        generation_id: Optional[str] = "", 
+        build_template: bool = False,
+        stream_message: Optional[str] = "",
+        finish_reason: Optional[str] = None,
+        delta: Optional[ChoiceDeltaToolCall] = None
+    ) -> list[StreamedChatResponse] | None:
 
-                new_chat_history = CohereToOpenAI.convert_backend_message_to_openai_message(chat_request.chat_history)
-                if function_triggered == 'none':
-                    # if chat_request:
-                    tool_call_message = ChatbotMessage(role='CHATBOT', message="", tool_calls=[tool_call_class])
-                    # {"message":"", "role":"CHATBOT","tool_calls":[tool_call_class]}
-                    # tool_call_chat_message = ChatMessage(message=stream_message or "", role="CHATBOT",tool_calls=[tool_call_dict])
-                    new_chat_history.append(tool_call_message)
-                    # new_chat_history.extend([tool_call_message])
-                        
-                    response = NonStreamedChatResponse(text="",chat_history=new_chat_history, generation_id=generation_id, finish_reason="COMPLETE", tool_calls=[tool_call_class])
-                    end_response = StreamEndStreamedChatResponse(event_type = "stream-end",finish_reason="COMPLETE", response=response)
-                    
-                    return [
-                        TextGenerationStreamedChatResponse(event_type = "text-generation", text=stream_message or ''),
-                        ToolCallsChunkStreamedChatResponse(event_type = "tool-calls-chunk", tool_call_delta=tool_call_delta),
-                            ToolCallsGenerationStreamedChatResponse(event_type = "tool-calls-generation", tool_calls=[tool_call_class], text="I will read the document to find the names of all the chapters."),
-                            end_response
-                            ]
-                    
-                # if function_triggered == 'calling':
-                #     return [ToolCallsGenerationStreamedChatResponse(event_type = "tool-calls-generation", tool_calls=[tool_call], text="I will read the document to find the names of all the chapters.")]
+        # # Extract the message from the event
+        # stream_message = ""
+        # finish_reason = None
+        # delta = None
+        # if build_template:
+        #     if event.choices:
+        #         stream_message = event.choices[0].text
+        #         finish_reason = event.choices[0].finish_reason
+        #         delta = getattr(event.choices[0], 'delta', None)
+        #     elif event.content:
+        #         stream_message = event.content
+        #         if event.stop:
+        #             finish_reason = "stop" 
+        # else:
+        #     stream_message = event.choices[0].delta.content
+        #     finish_reason = event.choices[0].finish_reason
+        #     delta = getattr(event.choices[0], 'delta', None)
         
+        # If message exists, append to the previous response
+        # if stream_message:
+        #     previous_response = (previous_response or "") + stream_message
+
+        # Extract JSON from the response
+        extracted_json_string = CohereToOpenAI.extract_json_from_string(previous_response)
+        print("extracted_json_string:", extracted_json_string)
+
+        # Check if JSON is complete (matching curly braces)
+        is_json_full = extracted_json_string.strip().count("{") == extracted_json_string.strip().count("}") if extracted_json_string else False
+
+        # Parse the extracted JSON
+        parsed_response = jp.parse(extracted_json_string)
+        is_json_present = len(parsed_response) > 0
+
+        # If JSON is valid and complete, handle the tool call
+        if is_json_present and is_json_full:
+            func_name = CohereToOpenAI.get_value(parsed_response, "name")
+            func_params: Dict[str, Any] = CohereToOpenAI.get_value(parsed_response, "parameters")
+
+            tool_call_class = ToolCall(name=func_name, parameters=func_params)
+            tool_call_delta = ToolCallDelta(name=func_name, index=0, parameters=str(func_params))
+
+            new_chat_history = CohereToOpenAI.convert_backend_message_to_openai_message(chat_request.chat_history)
+
+            # Handle response based on function_triggered status
+            if function_triggered == 'none':
+                tool_call_message = ChatbotMessage(role='CHATBOT', message="", tool_calls=[tool_call_class])
+                new_chat_history.append(tool_call_message)
+
+                response = NonStreamedChatResponse(
+                    text="", 
+                    chat_history=new_chat_history, 
+                    generation_id=generation_id, 
+                    finish_reason="COMPLETE", 
+                    tool_calls=[tool_call_class]
+                )
+                
+                end_response = StreamEndStreamedChatResponse(
+                    event_type="stream-end", 
+                    finish_reason="COMPLETE", 
+                    response=response
+                )
+
+                return [
+                    TextGenerationStreamedChatResponse(event_type="text-generation", text=stream_message or ''),
+                    ToolCallsChunkStreamedChatResponse(event_type="tool-calls-chunk", tool_call_delta=tool_call_delta),
+                    ToolCallsGenerationStreamedChatResponse(
+                        event_type="tool-calls-generation", 
+                        tool_calls=[tool_call_class], 
+                        text="I will read the document to find the names of all the chapters."
+                    ),
+                    end_response
+                ]
+
+        # Handle tool call completion or stop signals
         
-        print("OllamaChunk: ",event)
-        if (event.choices[0].finish_reason == "tool_calls" or event.choices[0].finish_reason == "function_call" or (hasattr(event.choices[0], "delta") and event.choices[0].delta.function_call)):
-            if (event.choices[0].delta.tool_calls):
-                for tool_call_dict in event.choices[0].delta.tool_calls:
-                    return [ToolCallsGenerationStreamedChatResponse(event_type = "tool-calls-chunk", tool_call_delta=CohereToOpenAI.convert_tool_call_delta(tool_call_dict))]
-            else:
-                return [TextGenerationStreamedChatResponse(event_type = "text-generation", text=stream_message or '')]
-        elif event.choices[0].finish_reason == "stop":
+
+        if finish_reason in ["tool_calls", "function_call"] or (delta and delta.function_call):
+            tool_calls = getattr(delta, 'tool_calls', None)
+            if tool_calls:
+                tool_call_deltas = [CohereToOpenAI.convert_tool_call_delta(tc) for tc in tool_calls]
+                return [ToolCallsGenerationStreamedChatResponse(event_type="tool-calls-chunk", tool_call_delta=tool_call_deltas[0])]
+            return [TextGenerationStreamedChatResponse(event_type="text-generation", text=stream_message or '')]
+        
+        elif finish_reason == "stop":
             response = NonStreamedChatResponse(text=stream_message or '')
-            return [StreamEndStreamedChatResponse(event_type = "stream-end",finish_reason="COMPLETE", response=response)]
-        else:
-            return [TextGenerationStreamedChatResponse(event_type = "text-generation", text=stream_message or '')]
-    
+            return [StreamEndStreamedChatResponse(event_type="stream-end", finish_reason="COMPLETE", response=response)]
+
+        return [TextGenerationStreamedChatResponse(event_type="text-generation", text=stream_message or '')]
+
     @staticmethod
     def check_if_tool_call_in_text_chunk_is_complete(full_text: str) -> bool:
         if full_text.strip().endswith("}") and full_text.strip().count("{") == full_text.strip().count("}"):

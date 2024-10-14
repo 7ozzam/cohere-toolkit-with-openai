@@ -77,17 +77,11 @@ class CohereToOpenAI:
         else:
             return ""  # Return None if no valid JSON structure is found
     
-    # ChatCompletionChunk
     @staticmethod
-    def openai_to_cohere_event_chunk(event: Any , previous_response: Optional[str] = None, function_triggered: str = 'none', chat_request: CohereChatRequest = None, generation_id: Optional[str] = "", build_template: bool = False) -> list[StreamedChatResponse] | None:
-        stream_message = ""
+    def openai_to_cohere_event_chunk(event: ChatCompletionChunk, previous_response: Optional[str] = None, function_triggered: str = 'none', chat_request: CohereChatRequest = None, generation_id: Optional[str] = "", build_template: bool = False) -> list[StreamedChatResponse] | None:
         
         if build_template:
-            if event.choices:
-                stream_message = event.choices[0].text
-            
-            if event.content:
-                stream_message = event.content
+            stream_message = event.choices[0].text
         else:
             stream_message = event.choices[0].delta.content
         
@@ -126,9 +120,6 @@ class CohereToOpenAI:
 
                 new_chat_history = CohereToOpenAI.convert_backend_message_to_openai_message(chat_request.chat_history)
                 if function_triggered == 'none':
-                    if event.choices[0].finish_reason == "stop":
-                        response = NonStreamedChatResponse(text=stream_message or '')
-                        return [StreamEndStreamedChatResponse(event_type = "stream-end",finish_reason="COMPLETE", response=response)]
                     # if chat_request:
                     tool_call_message = ChatbotMessage(role='CHATBOT', message="", tool_calls=[tool_call_class])
                     # {"message":"", "role":"CHATBOT","tool_calls":[tool_call_class]}
@@ -145,25 +136,23 @@ class CohereToOpenAI:
                             ToolCallsGenerationStreamedChatResponse(event_type = "tool-calls-generation", tool_calls=[tool_call_class], text="I will read the document to find the names of all the chapters."),
                             end_response
                             ]
-                else:
-                    return [TextGenerationStreamedChatResponse(event_type = "text-generation", text=stream_message or '')]
+                    
                 # if function_triggered == 'calling':
                 #     return [ToolCallsGenerationStreamedChatResponse(event_type = "tool-calls-generation", tool_calls=[tool_call], text="I will read the document to find the names of all the chapters.")]
         
         
         print("OllamaChunk: ",event)
-        if (not build_template):
-            if (event.choices[0].finish_reason == "tool_calls" or event.choices[0].finish_reason == "function_call" or (hasattr(event.choices[0], "delta") and event.choices[0].delta.function_call)):
-                if (event.choices[0].delta.tool_calls):
-                    for tool_call_dict in event.choices[0].delta.tool_calls:
-                        return [ToolCallsGenerationStreamedChatResponse(event_type = "tool-calls-chunk", tool_call_delta=CohereToOpenAI.convert_tool_call_delta(tool_call_dict))]
-                else:
-                    return [TextGenerationStreamedChatResponse(event_type = "text-generation", text=stream_message or '')]
-            elif event.choices[0].finish_reason == "stop":
-                response = NonStreamedChatResponse(text=stream_message or '')
-                return [StreamEndStreamedChatResponse(event_type = "stream-end",finish_reason="COMPLETE", response=response)]
+        if (event.choices[0].finish_reason == "tool_calls" or event.choices[0].finish_reason == "function_call" or (hasattr(event.choices[0], "delta") and event.choices[0].delta.function_call)):
+            if (event.choices[0].delta.tool_calls):
+                for tool_call_dict in event.choices[0].delta.tool_calls:
+                    return [ToolCallsGenerationStreamedChatResponse(event_type = "tool-calls-chunk", tool_call_delta=CohereToOpenAI.convert_tool_call_delta(tool_call_dict))]
             else:
                 return [TextGenerationStreamedChatResponse(event_type = "text-generation", text=stream_message or '')]
+        elif event.choices[0].finish_reason == "stop":
+            response = NonStreamedChatResponse(text=stream_message or '')
+            return [StreamEndStreamedChatResponse(event_type = "stream-end",finish_reason="COMPLETE", response=response)]
+        else:
+            return [TextGenerationStreamedChatResponse(event_type = "text-generation", text=stream_message or '')]
     
     @staticmethod
     def check_if_tool_call_in_text_chunk_is_complete(full_text: str) -> bool:

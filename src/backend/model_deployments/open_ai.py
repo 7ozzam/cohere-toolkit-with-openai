@@ -170,12 +170,9 @@ class OpenAIDeployment(BaseDeployment):
                 logger.info("OpenAI chat stream started")
                 for event in stream:
                     logger.debug(f"Received event: {event}")  # Log each event received
-                    stream_message = ""
+
                     if build_template:
-                        if event.choices:
-                            stream_message = event.choices[0].text
-                        if event.content:
-                            stream_message = event.content
+                        stream_message = event.choices[0].text
                     else:
                         stream_message = event.choices[0].delta.content
                     

@@ -77,11 +77,17 @@ class CohereToOpenAI:
         else:
             return ""  # Return None if no valid JSON structure is found
     
+    # ChatCompletionChunk
     @staticmethod
-    def openai_to_cohere_event_chunk(event: ChatCompletionChunk, previous_response: Optional[str] = None, function_triggered: str = 'none', chat_request: CohereChatRequest = None, generation_id: Optional[str] = "", build_template: bool = False) -> list[StreamedChatResponse] | None:
+    def openai_to_cohere_event_chunk(event: Any , previous_response: Optional[str] = None, function_triggered: str = 'none', chat_request: CohereChatRequest = None, generation_id: Optional[str] = "", build_template: bool = False) -> list[StreamedChatResponse] | None:
         
         if build_template:
-            stream_message = event.choices[0].text
+            if event.choices:
+                stream_message = event.choices[0].text
+            elif event.content:
+                stream_message = event.content
+            else:
+                stream_message = ""
         else:
             stream_message = event.choices[0].delta.content
         

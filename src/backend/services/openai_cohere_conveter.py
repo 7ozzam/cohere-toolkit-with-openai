@@ -148,18 +148,18 @@ class CohereToOpenAI:
         
         
         print("OllamaChunk: ",event)
-    
-        if (not build_template and event.choices[0].finish_reason == "tool_calls" or event.choices[0].finish_reason == "function_call" or (hasattr(event.choices[0], "delta") and event.choices[0].delta.function_call)):
-            if (event.choices[0].delta.tool_calls):
-                for tool_call_dict in event.choices[0].delta.tool_calls:
-                    return [ToolCallsGenerationStreamedChatResponse(event_type = "tool-calls-chunk", tool_call_delta=CohereToOpenAI.convert_tool_call_delta(tool_call_dict))]
+        if (not build_template):
+            if (event.choices[0].finish_reason == "tool_calls" or event.choices[0].finish_reason == "function_call" or (hasattr(event.choices[0], "delta") and event.choices[0].delta.function_call)):
+                if (event.choices[0].delta.tool_calls):
+                    for tool_call_dict in event.choices[0].delta.tool_calls:
+                        return [ToolCallsGenerationStreamedChatResponse(event_type = "tool-calls-chunk", tool_call_delta=CohereToOpenAI.convert_tool_call_delta(tool_call_dict))]
+                else:
+                    return [TextGenerationStreamedChatResponse(event_type = "text-generation", text=stream_message or '')]
+            elif event.choices[0].finish_reason == "stop":
+                response = NonStreamedChatResponse(text=stream_message or '')
+                return [StreamEndStreamedChatResponse(event_type = "stream-end",finish_reason="COMPLETE", response=response)]
             else:
                 return [TextGenerationStreamedChatResponse(event_type = "text-generation", text=stream_message or '')]
-        elif event.choices[0].finish_reason == "stop":
-            response = NonStreamedChatResponse(text=stream_message or '')
-            return [StreamEndStreamedChatResponse(event_type = "stream-end",finish_reason="COMPLETE", response=response)]
-        else:
-            return [TextGenerationStreamedChatResponse(event_type = "text-generation", text=stream_message or '')]
     
     @staticmethod
     def check_if_tool_call_in_text_chunk_is_complete(full_text: str) -> bool:

@@ -172,7 +172,12 @@ class OpenAIDeployment(BaseDeployment):
                     logger.debug(f"Received event: {event}")  # Log each event received
 
                     if build_template:
-                        stream_message = event.choices[0].text
+                        if event.choices:
+                            stream_message = event.choices[0].text
+                        elif event.content:
+                            stream_message = event.content
+                        else:
+                            stream_message = ""
                     else:
                         stream_message = event.choices[0].delta.content
                     

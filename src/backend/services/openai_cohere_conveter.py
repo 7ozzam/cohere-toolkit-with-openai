@@ -133,6 +133,21 @@ class CohereToOpenAI:
 
             new_chat_history = CohereToOpenAI.convert_backend_message_to_openai_message(chat_request.chat_history)
 
+            # Handle tool call completion or stop signals
+        
+
+            if finish_reason in ["tool_calls", "function_call"] or (delta and delta.function_call):
+                tool_calls = getattr(delta, 'tool_calls', None)
+                if tool_calls:
+                    tool_call_deltas = [CohereToOpenAI.convert_tool_call_delta(tc) for tc in tool_calls]
+                    return [ToolCallsGenerationStreamedChatResponse(event_type="tool-calls-chunk", tool_call_delta=tool_call_deltas[0])]
+                return [TextGenerationStreamedChatResponse(event_type="text-generation", text=stream_message or '')]
+            
+            if finish_reason == "stop":
+                response = NonStreamedChatResponse(text=stream_message or '')
+                return [StreamEndStreamedChatResponse(event_type="stream-end", finish_reason="COMPLETE", response=response)]
+            
+            
             # Handle response based on function_triggered status
             if function_triggered == 'none':
                 tool_call_message = ChatbotMessage(role='CHATBOT', message="", tool_calls=[tool_call_class])
@@ -163,19 +178,7 @@ class CohereToOpenAI:
                     end_response
                 ]
 
-        # Handle tool call completion or stop signals
         
-
-        if finish_reason in ["tool_calls", "function_call"] or (delta and delta.function_call):
-            tool_calls = getattr(delta, 'tool_calls', None)
-            if tool_calls:
-                tool_call_deltas = [CohereToOpenAI.convert_tool_call_delta(tc) for tc in tool_calls]
-                return [ToolCallsGenerationStreamedChatResponse(event_type="tool-calls-chunk", tool_call_delta=tool_call_deltas[0])]
-            return [TextGenerationStreamedChatResponse(event_type="text-generation", text=stream_message or '')]
-        
-        if finish_reason == "stop":
-            response = NonStreamedChatResponse(text=stream_message or '')
-            return [StreamEndStreamedChatResponse(event_type="stream-end", finish_reason="COMPLETE", response=response)]
 
         return [TextGenerationStreamedChatResponse(event_type="text-generation", text=stream_message or '')]
 

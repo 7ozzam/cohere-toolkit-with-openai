@@ -183,7 +183,8 @@ class OpenAIDeployment(BaseDeployment):
                             stream_message = event.choices[0].text
                             finish_reason = event.choices[0].finish_reason
                             delta = getattr(event.choices[0], 'delta', None)
-                        elif event.content:
+                        
+                        if event.content or event.content != None:
                             print("I'm in Content Condition")
                             stream_message = event.content
                             print('======== event_dict.get("stop")')

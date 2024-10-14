@@ -111,8 +111,10 @@ class CohereToOpenAI:
         # If message exists, append to the previous response
         # if stream_message:
         #     previous_response = (previous_response or "") + stream_message
-
-
+        print("==================================")
+        print("stream_message:", stream_message)
+        print("finish_reason:", finish_reason)
+        print("delta:", delta)
         # Handle tool call completion or stop signals
         if finish_reason in ["tool_calls", "function_call"] or (delta and delta.function_call):
             tool_calls = getattr(delta, 'tool_calls', None)

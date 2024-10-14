@@ -1,7 +1,7 @@
 from typing import Any, AsyncGenerator, Dict, Iterable, List
 
 from cohere import ChatSearchQuery, ChatSearchResult, ChatSearchResultConnector, ChatbotMessage, SearchResultsStreamedChatResponse, StreamStartStreamedChatResponse
-from openai import OpenAI, Stream
+from openai import OpenAI
 
 import asyncio
 import logging
@@ -130,7 +130,7 @@ class OpenAIDeployment(BaseDeployment):
         if build_template:
             openAi_chat_request = CohereToOpenAI.cohere_to_openai_completion_request_body(chat_request)
             try:
-                stream: Stream[Any] = await asyncio.wait_for(asyncio.to_thread(
+                stream = await asyncio.wait_for(asyncio.to_thread(
                     self.openai.completions.create,
                     **openAi_chat_request,
                     stream=True
@@ -146,7 +146,7 @@ class OpenAIDeployment(BaseDeployment):
         else:
             openAi_chat_request = CohereToOpenAI.cohere_to_openai_chat_request_body(chat_request)
             try:
-                stream: Stream[Any] = await asyncio.wait_for(asyncio.to_thread(
+                stream = await asyncio.wait_for(asyncio.to_thread(
                     self.openai.chat.completions.create,
                     **openAi_chat_request,
                     stream=True
@@ -172,7 +172,7 @@ class OpenAIDeployment(BaseDeployment):
                     logger.debug(f"Received event: {event}")  # Log each event received
 
                     # Extract the message from the event
-                    event_dict = to_dict(event)
+                    event_dict = event.model_dump(serialize_as_any=True)
                     print("Event Dict: ", event_dict)
                     stream_message = ""
                     finish_reason = None

@@ -90,28 +90,28 @@ class CohereToOpenAI:
         delta: Optional[ChoiceDeltaToolCall] = None
     ) -> list[StreamedChatResponse] | None:
 
-        # # Extract the message from the event
-        # stream_message = ""
-        # finish_reason = None
-        # delta = None
-        # if build_template:
-        #     if event.choices:
-        #         stream_message = event.choices[0].text
-        #         finish_reason = event.choices[0].finish_reason
-        #         delta = getattr(event.choices[0], 'delta', None)
-        #     elif event.content:
-        #         stream_message = event.content
-        #         if event.stop:
-        #             finish_reason = "stop" 
-        # else:
-        #     stream_message = event.choices[0].delta.content
-        #     finish_reason = event.choices[0].finish_reason
-        #     delta = getattr(event.choices[0], 'delta', None)
+        # # # # Extract the message from the event
+        # # # stream_message = ""
+        # # # finish_reason = None
+        # # # delta = None
+        # # # if build_template:
+        # # #     if event.choices:
+        # # #         stream_message = event.choices[0].text
+        # # #         finish_reason = event.choices[0].finish_reason
+        # # #         delta = getattr(event.choices[0], 'delta', None)
+        # # #     elif event.content:
+        # # #         stream_message = event.content
+        # # #         if event.stop:
+        # # #             finish_reason = "stop" 
+        # # # else:
+        # # #     stream_message = event.choices[0].delta.content
+        # # #     finish_reason = event.choices[0].finish_reason
+        # # #     delta = getattr(event.choices[0], 'delta', None)
         
-        # If message exists, append to the previous response
-        # if stream_message:
-        #     previous_response = (previous_response or "") + stream_message
-        print("==================================")
+        # # # If message exists, append to the previous response
+        # # # if stream_message:
+        # # #     previous_response = (previous_response or "") + stream_message
+        
         print("stream_message:", stream_message)
         print("finish_reason:", finish_reason)
         print("delta:", delta)

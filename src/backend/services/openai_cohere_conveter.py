@@ -112,6 +112,20 @@ class CohereToOpenAI:
         # if stream_message:
         #     previous_response = (previous_response or "") + stream_message
 
+
+        # Handle tool call completion or stop signals
+        if finish_reason in ["tool_calls", "function_call"] or (delta and delta.function_call):
+            tool_calls = getattr(delta, 'tool_calls', None)
+            if tool_calls:
+                tool_call_deltas = [CohereToOpenAI.convert_tool_call_delta(tc) for tc in tool_calls]
+                return [ToolCallsGenerationStreamedChatResponse(event_type="tool-calls-chunk", tool_call_delta=tool_call_deltas[0])]
+            return [TextGenerationStreamedChatResponse(event_type="text-generation", text=stream_message or '')]
+        
+        if finish_reason == "stop":
+            response = NonStreamedChatResponse(text=stream_message or '')
+            return [StreamEndStreamedChatResponse(event_type="stream-end", finish_reason="COMPLETE", response=response)]
+        
+        
         # Extract JSON from the response
         extracted_json_string = CohereToOpenAI.extract_json_from_string(previous_response)
         print("extracted_json_string:", extracted_json_string)
@@ -132,20 +146,6 @@ class CohereToOpenAI:
             tool_call_delta = ToolCallDelta(name=func_name, index=0, parameters=str(func_params))
 
             new_chat_history = CohereToOpenAI.convert_backend_message_to_openai_message(chat_request.chat_history)
-
-            # Handle tool call completion or stop signals
-        
-
-            if finish_reason in ["tool_calls", "function_call"] or (delta and delta.function_call):
-                tool_calls = getattr(delta, 'tool_calls', None)
-                if tool_calls:
-                    tool_call_deltas = [CohereToOpenAI.convert_tool_call_delta(tc) for tc in tool_calls]
-                    return [ToolCallsGenerationStreamedChatResponse(event_type="tool-calls-chunk", tool_call_delta=tool_call_deltas[0])]
-                return [TextGenerationStreamedChatResponse(event_type="text-generation", text=stream_message or '')]
-            
-            if finish_reason == "stop":
-                response = NonStreamedChatResponse(text=stream_message or '')
-                return [StreamEndStreamedChatResponse(event_type="stream-end", finish_reason="COMPLETE", response=response)]
             
             
             # Handle response based on function_triggered status

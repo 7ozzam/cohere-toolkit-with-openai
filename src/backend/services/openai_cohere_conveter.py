@@ -126,6 +126,9 @@ class CohereToOpenAI:
 
                 new_chat_history = CohereToOpenAI.convert_backend_message_to_openai_message(chat_request.chat_history)
                 if function_triggered == 'none':
+                    if event.choices[0].finish_reason == "stop":
+                        response = NonStreamedChatResponse(text=stream_message or '')
+                        return [StreamEndStreamedChatResponse(event_type = "stream-end",finish_reason="COMPLETE", response=response)]
                     # if chat_request:
                     tool_call_message = ChatbotMessage(role='CHATBOT', message="", tool_calls=[tool_call_class])
                     # {"message":"", "role":"CHATBOT","tool_calls":[tool_call_class]}
@@ -142,7 +145,8 @@ class CohereToOpenAI:
                             ToolCallsGenerationStreamedChatResponse(event_type = "tool-calls-generation", tool_calls=[tool_call_class], text="I will read the document to find the names of all the chapters."),
                             end_response
                             ]
-                    
+                else:
+                    return [TextGenerationStreamedChatResponse(event_type = "text-generation", text=stream_message or '')]
                 # if function_triggered == 'calling':
                 #     return [ToolCallsGenerationStreamedChatResponse(event_type = "tool-calls-generation", tool_calls=[tool_call], text="I will read the document to find the names of all the chapters.")]
         

@@ -148,7 +148,8 @@ class CohereToOpenAI:
         
         
         print("OllamaChunk: ",event)
-        if (event.choices[0].finish_reason == "tool_calls" or event.choices[0].finish_reason == "function_call" or (hasattr(event.choices[0], "delta") and event.choices[0].delta.function_call)):
+    
+        if (not build_template and event.choices[0].finish_reason == "tool_calls" or event.choices[0].finish_reason == "function_call" or (hasattr(event.choices[0], "delta") and event.choices[0].delta.function_call)):
             if (event.choices[0].delta.tool_calls):
                 for tool_call_dict in event.choices[0].delta.tool_calls:
                     return [ToolCallsGenerationStreamedChatResponse(event_type = "tool-calls-chunk", tool_call_delta=CohereToOpenAI.convert_tool_call_delta(tool_call_dict))]

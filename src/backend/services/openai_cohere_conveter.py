@@ -173,7 +173,7 @@ class CohereToOpenAI:
                 return [ToolCallsGenerationStreamedChatResponse(event_type="tool-calls-chunk", tool_call_delta=tool_call_deltas[0])]
             return [TextGenerationStreamedChatResponse(event_type="text-generation", text=stream_message or '')]
         
-        elif finish_reason == "stop":
+        if finish_reason == "stop":
             response = NonStreamedChatResponse(text=stream_message or '')
             return [StreamEndStreamedChatResponse(event_type="stream-end", finish_reason="COMPLETE", response=response)]
 

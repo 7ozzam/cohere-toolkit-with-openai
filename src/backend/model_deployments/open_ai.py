@@ -184,8 +184,8 @@ class OpenAIDeployment(BaseDeployment):
                             delta = getattr(event.choices[0], 'delta', None)
                         elif event.content:
                             stream_message = event.content
-                            print('event_dict.get("stop")', event_dict.get("stop"))
-                            if event_dict.get("stop"):
+                            print('======== event_dict.get("stop")', event_dict['stop'])
+                            if event_dict['stop']:
                                 finish_reason = "stop" 
                     else:
                         stream_message = event.choices[0].delta.content

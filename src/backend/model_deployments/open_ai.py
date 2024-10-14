@@ -173,6 +173,7 @@ class OpenAIDeployment(BaseDeployment):
 
                     # Extract the message from the event
                     event_dict = to_dict(event)
+                    print("Event Dict: ", event_dict)
                     stream_message = ""
                     finish_reason = None
                     delta = None

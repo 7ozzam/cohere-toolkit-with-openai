@@ -29,6 +29,9 @@ class Llama31TemplateBuilder(BaseTemplateBuilder):
             - If invoking any functions, use the format:
               {{'name': 'function_name', 'parameters': As Defined in the function}}
             You SHOULD NOT include any other text in the response.
+            
+            You have access to the following functions:
+            {self.build_tools_section(full_body=False)}
 
             Reminder:
                 - Function calls MUST follow the specified format.

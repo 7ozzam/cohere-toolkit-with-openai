@@ -177,18 +177,18 @@ class OpenAIDeployment(BaseDeployment):
                     finish_reason = None
                     delta = None
                     if build_template:
-                        if event_dict.choices:
-                            stream_message = event_dict.choices[0].text
-                            finish_reason = event_dict.choices[0].finish_reason
-                            delta = getattr(event_dict.choices[0], 'delta', None)
-                        elif event_dict.content:
-                            stream_message = event_dict.content
-                            if event_dict.stop:
+                        if event.choices:
+                            stream_message = event.choices[0].text
+                            finish_reason = event.choices[0].finish_reason
+                            delta = getattr(event.choices[0], 'delta', None)
+                        elif event.content:
+                            stream_message = event.content
+                            if event.stop:
                                 finish_reason = "stop" 
                     else:
-                        stream_message = event_dict.choices[0].delta.content
-                        finish_reason = event_dict.choices[0].finish_reason
-                        delta = getattr(event_dict.choices[0], 'delta', None)
+                        stream_message = event.choices[0].delta.content
+                        finish_reason = event.choices[0].finish_reason
+                        delta = getattr(event.choices[0], 'delta', None)
                     
                     if stream_message:
                         full_previous_response += stream_message

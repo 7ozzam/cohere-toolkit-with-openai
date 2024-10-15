@@ -25,8 +25,9 @@ from openai.types.completion_create_params import CompletionCreateParams
 OPENAI_URL_ENV_VAR = "OPENAI_ENDPOINT_URL"
 OPENAI_API_KEY_ENV_VAR = "OPENAI_API_KEY"
 OPENAI_DEFAULT_MODEL_ENV_VAR = "OPENAI_DEFAULT_MODEL"
+OPENAI_DEFAULT_USE_LEGACY_API_ENV_VAR = "OPENAI_DEFAULT_USE_LEGACY_API"
 
-OPENAI_ENV_VARS = [OPENAI_API_KEY_ENV_VAR, OPENAI_URL_ENV_VAR, OPENAI_DEFAULT_MODEL_ENV_VAR]
+OPENAI_ENV_VARS = [OPENAI_API_KEY_ENV_VAR, OPENAI_URL_ENV_VAR, OPENAI_DEFAULT_MODEL_ENV_VAR, OPENAI_DEFAULT_USE_LEGACY_API_ENV_VAR]
 
 class OpenAIDeployment(BaseDeployment):
     """
@@ -40,6 +41,7 @@ class OpenAIDeployment(BaseDeployment):
     default_api_key = openai_config.api_key 
     default_endpoint = openai_config.endpoint_url 
     default_model = openai_config.default_model
+    default_use_legacy_api = openai_config.default_use_legacy_api
     openai = OpenAI(
         api_key=default_api_key,
         base_url=default_endpoint,
@@ -108,7 +110,9 @@ class OpenAIDeployment(BaseDeployment):
         self, chat_request: CohereChatRequest, ctx: Context, **kwargs: Any
     ) -> AsyncGenerator[Any, Any]:
         
-        build_template = True
+        
+        print("Default use legacy API: ", self.default_use_legacy_api)
+        build_template = self.default_use_legacy_api
         
         """Invoke chat stream using the OpenAI-compatible API."""
         generation_id = uuid.uuid4().hex
@@ -172,29 +176,33 @@ class OpenAIDeployment(BaseDeployment):
                     logger.debug(f"Received event: {event}")  # Log each event received
 
                     # Extract the message from the event
-                    event_dict = event.model_dump(serialize_as_any=True)
+                    try:
+                        event_dict = event.model_dump(serialize_as_any=True)
+                    except Exception as e:
+                        event_dict = event
+                        
                     print("Event Dict: ", event_dict)
                     stream_message = ""
                     finish_reason = None
                     delta = None
                     if build_template:
-                        if event.choices:
+                        if event_dict.choices:
                             print("I'm in Choices Condition")
-                            stream_message = event.choices[0].text
-                            finish_reason = event.choices[0].finish_reason
-                            delta = getattr(event.choices[0], 'delta', None)
+                            stream_message = event_dict.choices[0].text
+                            finish_reason = event_dict.choices[0].finish_reason
+                            delta = getattr(event_dict.choices[0], 'delta', None)
                         
-                        if event.content or event.content != None:
+                        if event_dict.content or event_dict.content != None:
                             print("I'm in Content Condition")
-                            stream_message = event.content
+                            stream_message = event_dict.content
                             print('======== event_dict.get("stop")')
                             print(event_dict['stop'])
                             if event_dict['stop']:
                                 finish_reason = "stop" 
                     else:
-                        stream_message = event.choices[0].delta.content
-                        finish_reason = event.choices[0].finish_reason
-                        delta = getattr(event.choices[0], 'delta', None)
+                        stream_message = event_dict.choices[0].delta.content
+                        finish_reason = event_dict.choices[0].finish_reason
+                        delta = getattr(event_dict.choices[0], 'delta', None)
                     
                     if stream_message:
                         full_previous_response += stream_message

@@ -4,7 +4,7 @@ from openai.types.chat import ChatCompletionSystemMessageParam
 from datetime import datetime as Datetime
 import json
 
-class Llama31TemplateBuilder(BaseTemplateBuilder):
+class Llama32TemplateBuilder(BaseTemplateBuilder):
     def __init__(self, chat_messages: List[ChatCompletionSystemMessageParam], tools: List[dict] = [], system_message: ChatCompletionSystemMessageParam | None = None, tool_response: Any = None):
         super().__init__(chat_messages, tools, tool_response)
         

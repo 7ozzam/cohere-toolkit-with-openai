@@ -1,6 +1,6 @@
 from typing import Any, AsyncGenerator, Dict, Iterable, List
 
-from cohere import ChatSearchQuery, ChatSearchResult, ChatSearchResultConnector, ChatbotMessage, SearchResultsStreamedChatResponse, StreamStartStreamedChatResponse
+from cohere import ChatSearchQuery, ChatSearchResult, ChatSearchResultConnector, ChatbotMessage, SearchResultsStreamedChatResponse, StreamStartStreamedChatResponse, ChatDocument, ToolResult
 from openai import OpenAI
 
 import asyncio
@@ -173,36 +173,42 @@ class OpenAIDeployment(BaseDeployment):
             if stream:
                 logger.info("OpenAI chat stream started")
                 for event in stream:
-                    logger.debug(f"Received event: {event}")  # Log each event received
+                    print(f"Received event: {event}")  # Log each event received
 
-                    # Extract the message from the event
+                    # Attempt to convert event to a dictionary
                     try:
-                        event_dict = event.model_dump(serialize_as_any=True)
+                        event_dict: Any = event.model_dump(serialize_as_any=False)
                     except Exception as e:
-                        event_dict = event
-                        
+                        logger.error(f"Failed to convert event to dict: {e}")
+                        event_dict = {}
+
                     print("Event Dict: ", event_dict)
                     stream_message = ""
                     finish_reason = None
                     delta = None
+
                     if build_template:
-                        if event_dict.choices:
+                        choices = event_dict.get("choices", [])
+                        if choices and len(choices) > 0:
                             print("I'm in Choices Condition")
-                            stream_message = event_dict.choices[0].text
-                            finish_reason = event_dict.choices[0].finish_reason
-                            delta = getattr(event_dict.choices[0], 'delta', None)
-                        
-                        if event_dict.content or event_dict.content != None:
+                            stream_message = choices[0].get("text", "")
+                            finish_reason = choices[0].get("finish_reason", "")
+                            delta = choices[0].get('delta', None)
+
+                        content = event_dict.get("content")
+                        if content is not None:
                             print("I'm in Content Condition")
-                            stream_message = event_dict.content
-                            print('======== event_dict.get("stop")')
-                            print(event_dict['stop'])
-                            if event_dict['stop']:
-                                finish_reason = "stop" 
+                            stream_message = content
+                            stop_signal = event_dict.get('stop')
+                            if stop_signal:
+                                finish_reason = "stop"
                     else:
-                        stream_message = event_dict.choices[0].delta.content
-                        finish_reason = event_dict.choices[0].finish_reason
-                        delta = getattr(event_dict.choices[0], 'delta', None)
+                        choices = getattr(event, 'choices', [])
+                        if choices and len(choices) > 0:
+                            stream_message = getattr(choices[0].delta, 'content', "")
+                            finish_reason = getattr(choices[0], 'finish_reason', "")
+                            delta = getattr(choices[0], 'delta', None)
+
                     
                     if stream_message:
                         full_previous_response += stream_message
@@ -237,14 +243,15 @@ class OpenAIDeployment(BaseDeployment):
 
                     if chat_request.tool_results and not result_sent:
                         for tool_result in chat_request.tool_results:
-                            if chat_request.tool_results and len(chat_request.tool_results):
-                                output_str = CohereToOpenAI.clean_string(str(tool_result))
-                                chat_search_query = ChatSearchQuery(text=output_str, generation_id=generation_id)
-                                connector = ChatSearchResultConnector(id="")
-                                search_result = ChatSearchResult(document_ids=chat_request.file_ids or [], search_query=chat_search_query, connector=connector)
-                                search_event = SearchResultsStreamedChatResponse(event_type="search-results", documents=[], search_results=[search_result])
-                                result_sent = True
-                                yield to_dict(search_event)
+                            tool_result_parse: ToolResult = ToolResult.model_validate(tool_result)
+                            
+                            if tool_result_parse:
+                                output_dict = CohereToOpenAI.process_tool_results_as_text(tool_results=[tool_result_parse])
+                                if output_dict:                                    
+                                    document: ChatDocument = {"id": output_dict.get("file_id", "") ,"text": output_dict.get("text_outputs", ""), "title": "Cannot get filename"} 
+                                    search_event = SearchResultsStreamedChatResponse(event_type="search-results", documents=[document], search_results=[])
+                                    result_sent = True
+                                    yield to_dict(search_event)
             else:
                 logger.error("Stream is undefined")
         except Exception as e:

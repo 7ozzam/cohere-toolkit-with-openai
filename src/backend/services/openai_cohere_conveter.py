@@ -250,7 +250,7 @@ class CohereToOpenAI:
         # Process tool results
         tools_response = None
         if cohere_request.tool_results and len(cohere_request.tool_results):
-            tools_response = str(CohereToOpenAI.process_tool_results_as_text(cohere_request.tool_results)['text_outputs'])
+            tools_response = str(CohereToOpenAI.process_tool_results_as_text(cohere_request.tool_results))
         
         tools = CohereToOpenAI.convert_tools(cohere_request.tools)
         openai_request = CohereToOpenAI._create_request_with_template(cohere_request, messages, tools, tool_response=tools_response)
@@ -290,7 +290,7 @@ class CohereToOpenAI:
         return messages
 
     @staticmethod
-    def process_tool_results_as_text(tool_results: List[ToolResult]) -> Dict[str, Any]:
+    def process_tool_results_as_text(tool_results: List[ToolResult]) -> str | None:
         text_outputs: str = ""
         
         if len(tool_results):
@@ -298,7 +298,7 @@ class CohereToOpenAI:
                 tool_result_dict = dict(tool_result)
                 # print("tool_result_dict: ", tool_result_dict)
                 outputs: List[Any]  = tool_result_dict.get("outputs", [])
-                call: Dict[str, Any]  = tool_result_dict.get("call", {})
+                call: Any  = tool_result_dict.get("call", [])
                 if len(outputs) > 0:
                     for output in outputs:
                         if output and type(output) == "dict" and output.get("text"):
@@ -307,26 +307,12 @@ class CohereToOpenAI:
                             text = str(output)
                             
                         text_outputs += f"\nThe result of the tool call: {call} \n is: {text}" or ""
-                        
-            file_name = "Failed to get filename"
-            file_id = "default"
-            parameters = {}
-            if type(call) != "dict":
-                parameters = dict(call)["parameters"]
-            else:
-                parameters = call.get("parameters", {})
-                
             
-            if parameters:
-                file_name = parameters.get("file_name") or parameters.get("filename") or parameters.get("file_name")
-                file_id = parameters.get("file_id") or parameters.get("id") or parameters.get("fileid") or parameters.get("file")
-                
-            output = {"text_outputs": text_outputs, "file_id": file_id, "file_name":  file_name} or {"text_outputs": "", "file_id": "", "file_name": ""}
-        return output
+        return text_outputs
     @staticmethod
     def process_tool_results_as_message(tool_results: List[ToolResult]) -> List[ChatCompletionMessageParam]:
         messages = []
-        tool_response = CohereToOpenAI.process_tool_results_as_text(tool_results)['text_outputs']
+        tool_response = CohereToOpenAI.process_tool_results_as_text(tool_results)
         if tool_response and len(tool_response):
             message = CohereToOpenAI.generate_tool_reponse_message(f"{tool_response}")
             messages.append(message)

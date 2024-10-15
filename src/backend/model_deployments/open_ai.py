@@ -1,6 +1,6 @@
 from typing import Any, AsyncGenerator, Dict, Iterable, List
 
-from cohere import ChatSearchQuery, ChatSearchResult, ChatSearchResultConnector, ChatbotMessage, SearchResultsStreamedChatResponse, StreamStartStreamedChatResponse, ChatDocument, ToolResult
+from cohere import ChatSearchQuery, ChatSearchResult, ChatSearchResultConnector, ChatbotMessage, SearchResultsStreamedChatResponse, StreamStartStreamedChatResponse, ChatDocument
 from openai import OpenAI
 
 import asyncio
@@ -243,15 +243,15 @@ class OpenAIDeployment(BaseDeployment):
 
                     if chat_request.tool_results and not result_sent:
                         for tool_result in chat_request.tool_results:
-                            tool_result_parse: ToolResult = ToolResult.model_validate(tool_result)
-                            
-                            if tool_result_parse:
-                                output_dict = CohereToOpenAI.process_tool_results_as_text(tool_results=[tool_result_parse])
-                                if output_dict:                                    
-                                    document: ChatDocument = {"id": output_dict.get("file_id", "") ,"text": output_dict.get("text_outputs", ""), "title": "Cannot get filename"} 
-                                    search_event = SearchResultsStreamedChatResponse(event_type="search-results", documents=[document], search_results=[])
-                                    result_sent = True
-                                    yield to_dict(search_event)
+                            if chat_request.tool_results and len(chat_request.tool_results):
+                                output_str = CohereToOpenAI.process_tool_results_as_text(tool_results=chat_request.tool_results)
+                                chat_search_query = ChatSearchQuery(text=output_str, generation_id=generation_id)
+                                connector = ChatSearchResultConnector(id="")
+                                search_result = ChatSearchResult(document_ids=chat_request.file_ids or [], search_query=chat_search_query, connector=connector)
+                                # document: ChatDocument = {"text": output_str, "title": } 
+                                search_event = SearchResultsStreamedChatResponse(event_type="search-results", documents=[], search_results=[search_result])
+                                result_sent = True
+                                yield to_dict(search_event)
             else:
                 logger.error("Stream is undefined")
         except Exception as e:

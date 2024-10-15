@@ -19,10 +19,10 @@ class Model(BaseModel):
 class ModelCreate(BaseModel):
     name: str
     cohere_name: Optional[str]
-    description: Optional[str]
+    description: Optional[str] = ""
     deployment_id: str
-    use_compelation: Optional[str]
-    prompt_template: Optional[str]
+    use_compelation: Optional[str] = None
+    prompt_template: Optional[str] = None
 
 
 class ModelUpdate(BaseModel):

@@ -6,10 +6,12 @@ from fastapi import File as RequestFile
 from fastapi import UploadFile as FastAPIUploadFile
 
 from backend.config.routers import RouterName
+from backend.crud import model as model_crud
 from backend.crud import agent as agent_crud
 from backend.crud import agent_tool_metadata as agent_tool_metadata_crud
 from backend.crud import snapshot as snapshot_crud
 from backend.database_models.agent import Agent as AgentModel
+from backend.schemas.model import ModelCreate as ModelCreate
 from backend.database_models.agent_tool_metadata import (
     AgentToolMetadata as AgentToolMetadataModel,
 )
@@ -93,14 +95,23 @@ async def create_agent(
         is_private=agent.is_private,
     )
     deployment_db, model_db = get_deployment_model_from_agent(agent, session)
+    print("deployment_db: ", deployment_db)
+    print("model_db: ", model_db)
     try:
+        
+        # if not model_db:
+        #     model_data = ModelCreate(cohere_name=agent.model, name=agent.model, deployment_id=deployment_db.id) 
+        #     model_db = model_crud.create_model(session,model_data)
+            
         created_agent = agent_crud.create_agent(session, agent_data)
-
+        print("created_agent: ", created_agent)
         if agent.tools_metadata:
             for tool_metadata in agent.tools_metadata:
                 await update_or_create_tool_metadata(
                     created_agent, tool_metadata, session, ctx
                 )
+                
+ 
 
         if deployment_db and model_db:
             deployment_config = (

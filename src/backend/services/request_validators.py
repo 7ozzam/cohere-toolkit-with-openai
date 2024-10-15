@@ -5,7 +5,9 @@ from fastapi import HTTPException, Request
 import backend.crud.user as user_crud
 from backend.config.deployments import AVAILABLE_MODEL_DEPLOYMENTS
 from backend.config.tools import AVAILABLE_TOOLS
+from backend.schemas.model import ModelCreate
 from backend.crud import agent as agent_crud
+from backend.crud import model as model_crud
 from backend.crud import conversation as conversation_crud
 from backend.crud import deployment as deployment_crud
 from backend.crud import organization as organization_crud
@@ -48,11 +50,23 @@ def validate_deployment_model(deployment: str, model: str, session: DBSessionDep
         ),
         None,
     )
+    
+    
+    # logger.error(event=deployment)
+    # logger.error(event=deployment_model)
+    # logger.error(event=model)
+    # logger.error(event=deployment_db.id)
     if not deployment_model:
-        raise HTTPException(
-            status_code=404,
-            detail=f"Model {model} not found for deployment {deployment}.",
-        )
+        try:
+            model_data = ModelCreate(cohere_name=model, name=model, deployment_id=deployment_db.id)
+            logger.info(event="Creating model", model=model_data)
+            deployment_model = model_crud.create_model(session,model_data)
+        except Exception as e:
+            logger.error(event=e)
+            raise HTTPException(
+                status_code=404,
+                detail=f"Model {model} not found for deployment {deployment}.",
+            )
 
     return deployment_db, deployment_model
 

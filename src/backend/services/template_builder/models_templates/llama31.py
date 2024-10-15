@@ -18,11 +18,14 @@ class Llama31TemplateBuilder(BaseTemplateBuilder):
         return {
             "content": f"""
             Environment: ipython
+            Tools: brave_search, wolfram_alpha
             Cutting Knowledge Date: December 2023
             Today Date: {current_date}
             
             # Tool Instructions
             - When the user asks you a question, you can answer without tools.
+            - You don't need tools if you can answer the user's question.
+            - Don't try to call any tool or function that the system didn't told you about.
             - When looking for information, use relevant functions if available.
             - When you receive a result from the tool, do not call it again.
             - If invoking any functions, use the format:

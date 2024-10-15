@@ -9,7 +9,9 @@ class Model(BaseModel):
     deployment_id: str
     cohere_name: Optional[str]
     description: Optional[str]
-
+    use_compelation: Optional[str]
+    prompt_template: Optional[str]
+    
     class Config:
         from_attributes = True
 
@@ -19,6 +21,8 @@ class ModelCreate(BaseModel):
     cohere_name: Optional[str]
     description: Optional[str]
     deployment_id: str
+    use_compelation: Optional[str]
+    prompt_template: Optional[str]
 
 
 class ModelUpdate(BaseModel):
@@ -26,6 +30,8 @@ class ModelUpdate(BaseModel):
     cohere_name: Optional[str] = None
     description: Optional[str] = None
     deployment_id: Optional[str] = None
+    use_compelation: Optional[str] = None
+    prompt_template: Optional[str] = None
 
 
 class DeleteModel(BaseModel):

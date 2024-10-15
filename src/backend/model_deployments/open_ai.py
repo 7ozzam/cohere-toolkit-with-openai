@@ -65,12 +65,12 @@ class OpenAIDeployment(BaseDeployment):
         return False
 
     @classmethod
-    def list_models(cls) -> List[str]: 
+    def list_models(cls) -> List[Any]: 
         """List available models."""
         if not cls.is_available():
             return []
         try:
-            models_list = [model.id for model in cls.openai.models.list().data]
+            models_list = [model.to_dict().get("id") for model in cls.openai.models.list().data]
         except Exception as e:
             models_list = []
             

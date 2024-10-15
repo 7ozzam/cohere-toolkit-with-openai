@@ -25,6 +25,9 @@ class TemplateBuilderFactory:
         :param tool_response: The response from the tools (if any).
         :return: An instance of the selected template class or DefaultTemplateBuilder.
         """
+        if not template_name:
+            template_name = "llama3.1"
+            
         template_class: Type[BaseTemplateBuilder] = cls.templates.get(template_name, DefaultTemplateBuilder)
         return template_class(chat_messages=chat_messages, tools=tools, tool_response=tool_response)
 

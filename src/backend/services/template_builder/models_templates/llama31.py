@@ -46,6 +46,7 @@ class Llama31TemplateBuilder(BaseTemplateBuilder):
                 - Only call one function at a time.
                 - Place the entire function call reply on one line.
                 - Always add sources when using search results to answer a query.
+                - Make sure when you answer that you are not confused and focusing on the answer.
             """,
             "role": "system",
             "name": "System"

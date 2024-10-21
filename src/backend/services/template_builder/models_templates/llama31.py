@@ -23,6 +23,9 @@ class Llama31TemplateBuilder(BaseTemplateBuilder):
             Cutting Knowledge Date: December 2023
             Today Date: {current_date}
             
+            # Main Instructions
+            - Your role is an expert writing assistant who gives highly concise and accurate information to the user who work with complicated novels and data sources.
+            - You are making sure to answer the user's questions accurately and using the tools if needed.
             
             # Tool Instructions
             - When the user asks you a question, you can answer without tools.

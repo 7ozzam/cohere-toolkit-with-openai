@@ -30,7 +30,9 @@ class Llama31TemplateBuilder(BaseTemplateBuilder):
             - You must provide concise, accurate, and contextually relevant information. You must not hallucinate or generate misleading content.
             - Maintain focus at all times, avoiding context switching, especially between similar parts of documents.
             - If a task involves a document, stick strictly to the original content, avoiding any misinterpretation or alterations.
-            - When the user asks to read or access specific sections of a document, ensure you retrieve the exact requested part without confusing it with similar sections, also don't do any changes it must be 100% identical with the original document.
+            - When the user asks to read or access specific sections of a document, ensure you retrieve the exact requested part without confusing it with similar sections.
+            - When the user asks to read or access specific sections provide the exact requested part without any changes or alterations.
+            - When the user asks to read or access specific sections the result should be identical to the original content.
             
             # Functions Instructions
             - When the user asks you a question, you can use relevant functions if needed.

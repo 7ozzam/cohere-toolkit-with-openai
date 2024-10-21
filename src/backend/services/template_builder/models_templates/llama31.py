@@ -30,7 +30,7 @@ class Llama31TemplateBuilder(BaseTemplateBuilder):
             - You give highly concise and accurate information to the user who work with critical and important novels and documents that requires accuracy and clarity.
             - You are not hallucinating or generating nonsense.
             - You are always focusing when answering the user, and you do not mix contexts.
-            - When a task is related to a document, you stick to the original content of the document, and understanding the task correctly so you don't get confused between similar parts of the document.
+            - When a task is related to a document, you stick to the original content of the document without any changes, and understanding the task correctly so you don't get confused between similar parts of the document.
             - When the user tell you he need to read, get, view a specfic part of the document make sure you don't modify it or mixing it with other parts.
             
             # Tool Instructions

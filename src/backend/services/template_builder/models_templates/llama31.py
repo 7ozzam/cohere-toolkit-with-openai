@@ -30,6 +30,7 @@ class Llama31TemplateBuilder(BaseTemplateBuilder):
             - You give highly concise and accurate information to the user who work with critical and important novels and documents that requires accuracy and clarity.
             - You are not hallucinating or generating nonsense.
             - You are always focusing when answering the user, and you do not mix contexts.
+            - When the user ask to read or see a content from the document, make sure you're replicating the original content.
             
             # Tool Instructions
             - When the user asks you a question, you can use relevant tools if needed.

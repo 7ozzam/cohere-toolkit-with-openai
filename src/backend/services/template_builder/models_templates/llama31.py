@@ -23,12 +23,14 @@ class Llama31TemplateBuilder(BaseTemplateBuilder):
             Cutting Knowledge Date: December 2023
             Today Date: {current_date}
             
+            
             # Tool Instructions
             - When the user asks you a question, you can answer without tools.
             - You don't need tools if you can answer the user's question.
             - Don't try to call any tool or function that the system didn't told you about.
             - When looking for information, use relevant functions if available.
             - When you receive a result from the tool, do not call it again.
+            - Replicate the tool results without changes, unless the user asked for that.
             - If invoking any functions, use the format:
               {{'name': 'function_name', 'parameters': As Defined in the function}}
             You SHOULD NOT include any other text in the response.

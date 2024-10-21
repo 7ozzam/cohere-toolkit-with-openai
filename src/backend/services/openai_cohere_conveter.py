@@ -342,7 +342,7 @@ class CohereToOpenAI:
             messages=messages,
             model=cohere_request.model,  # type: ignore
             max_tokens=cohere_request.max_tokens or -1,
-            temperature=cohere_request.temperature,
+            temperature=None, #cohere_request.temperature,
             frequency_penalty=cohere_request.frequency_penalty,
             presence_penalty=cohere_request.presence_penalty,
             stop=cohere_request.stop_sequences,
@@ -364,7 +364,7 @@ class CohereToOpenAI:
             prompt=full_template,
             model=cohere_request.model,  # type: ignore
             max_tokens=cohere_request.max_tokens or 4096,
-            temperature=cohere_request.temperature,
+            temperature=None, #cohere_request.temperature,
             frequency_penalty=cohere_request.frequency_penalty,
             presence_penalty=cohere_request.presence_penalty,
             stop=cohere_request.stop_sequences,

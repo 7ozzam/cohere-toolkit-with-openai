@@ -16,6 +16,8 @@ class Llama31TemplateBuilder(BaseTemplateBuilder):
         Create the default system message for LLaMA.
         """
         current_date = Datetime.now().strftime("%d %B %Y")
+        # Main Instructions
+        # - Your role is an expert writing assistant who gives highly concise and accurate information to the user who work with critical and important novels and documents that requires accuracy and clarity.
         return {
             "content": f"""
             Environment: ipython
@@ -23,8 +25,7 @@ class Llama31TemplateBuilder(BaseTemplateBuilder):
             Cutting Knowledge Date: December 2023
             Today Date: {current_date}
             
-            # Main Instructions
-            - Your role is an expert writing assistant who gives highly concise and accurate information to the user who work with critical and important novels and documents that requires accuracy and clarity.
+            Your role is an expert ai writing assistant capable of using tools to answer questions. Your role is an expert who gives highly concise and accurate information to the user who work with critical and important novels and documents that requires accuracy and clarity.
             
             # Tool Instructions
             - When the user asks you a question, you can answer without tools.

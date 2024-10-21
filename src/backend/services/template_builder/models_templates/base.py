@@ -9,7 +9,7 @@ class BaseTemplateBuilder(ABC):
         self.tool_response = tool_response
 
     @abstractmethod
-    def create_default_system_message(self, current_date: str) -> dict:
+    def create_default_system_message(self) -> dict:
         """
         Create the default system message.
         This must be implemented by any class that inherits from BaseTemplateBuilder.

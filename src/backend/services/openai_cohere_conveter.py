@@ -235,7 +235,12 @@ class CohereToOpenAI:
 
         # Prepare OpenAI request parameters
         tools = CohereToOpenAI.convert_tools(cohere_request.tools)
-        openai_request = CohereToOpenAI._create_request_without_template(cohere_request, messages, tools)
+        
+        builder = TemplateBuilder.get_template_builder(template_name="llama3.1",chat_messages=messages, tools=tools)
+        system_message = builder.create_default_system_message()
+        messages.insert(0, system_message)
+        
+        openai_request = CohereToOpenAI._create_request_without_template(cohere_request, messages)
 
         return openai_request
     
@@ -330,9 +335,9 @@ class CohereToOpenAI:
     def _create_request_without_template(
         cohere_request: CohereChatRequest,
         messages: List[ChatCompletionMessageParam],
-        tools: Any
     ) -> ChatCompletionCreateParamsBase:
         """Create OpenAI request parameters without building a template."""
+        
         return ChatCompletionCreateParamsBase(
             messages=messages,
             model=cohere_request.model,  # type: ignore
@@ -341,7 +346,7 @@ class CohereToOpenAI:
             frequency_penalty=cohere_request.frequency_penalty,
             presence_penalty=cohere_request.presence_penalty,
             stop=cohere_request.stop_sequences,
-            tools=tools
+            # tools=tools
         )
 
     @staticmethod

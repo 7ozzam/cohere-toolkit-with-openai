@@ -230,7 +230,7 @@ class OpenAISettings(BaseSettings, BaseModel):
         default=None, validation_alias=AliasChoices("OPENAI_DEFAULT_MODEL", "default_model")
     )
     default_use_legacy_api: Optional[bool] = Field(
-        default=True, validation_alias=AliasChoices("OPENAI_DEFAULT_USE_LEGACY_API_ENV_VAR", "default_use_legacy_api")
+        default=False, validation_alias=AliasChoices("OPENAI_DEFAULT_USE_LEGACY_API_ENV_VAR", "default_use_legacy_api")
     )
 
 

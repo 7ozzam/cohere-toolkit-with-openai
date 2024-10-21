@@ -133,6 +133,7 @@ class OpenAIDeployment(BaseDeployment):
 
         if build_template:
             openAi_chat_request = CohereToOpenAI.cohere_to_openai_completion_request_body(chat_request)
+            print("openAi_chat_request: ", openAi_chat_request)
             try:
                 stream = await asyncio.wait_for(asyncio.to_thread(
                     self.openai.completions.create,
@@ -149,6 +150,7 @@ class OpenAIDeployment(BaseDeployment):
                 
         else:
             openAi_chat_request = CohereToOpenAI.cohere_to_openai_chat_request_body(chat_request)
+            print("openAi_chat_request: ", openAi_chat_request)
             try:
                 stream = await asyncio.wait_for(asyncio.to_thread(
                     self.openai.chat.completions.create,

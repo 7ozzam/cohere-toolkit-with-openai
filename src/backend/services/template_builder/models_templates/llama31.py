@@ -8,13 +8,14 @@ class Llama31TemplateBuilder(BaseTemplateBuilder):
     def __init__(self, chat_messages: List[ChatCompletionSystemMessageParam], tools: List[dict] = [], system_message: ChatCompletionSystemMessageParam | None = None, tool_response: Any = None):
         super().__init__(chat_messages, tools, tool_response)
         
-        current_date = Datetime.now().strftime("%d %B %Y")
-        self.system_message = system_message or self.create_default_system_message(current_date)
+        
+        self.system_message = system_message or self.create_default_system_message()
 
-    def create_default_system_message(self, current_date: str) -> dict:
+    def create_default_system_message(self) -> dict:
         """
         Create the default system message for LLaMA.
         """
+        current_date = Datetime.now().strftime("%d %B %Y")
         return {
             "content": f"""
             Environment: ipython

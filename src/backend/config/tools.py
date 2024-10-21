@@ -46,32 +46,32 @@ class ToolName(StrEnum):
 
 
 ALL_TOOLS = {
-    # ToolName.Search_File: ManagedTool(
-    #     display_name="Search File",
-    #     implementation=SearchFileTool,
-    #     parameter_definitions={
-    #         "search_query": {
-    #             "description": "Textual search query to search over the file's content for",
-    #             "type": "str",
-    #             "required": True,
-    #         },
-    #         "file_id": {
-    #             "description": "A file_id which is provided by the system when the user uploads a file",
-    #             "type": "str",
-    #             "required": False,
-    #         },
-    #         # "files": {
-    #         #     "description": "A list of files represented as tuples of (filename, file ID) to search over",
-    #         #     "type": "list[tuple[str, str]]",
-    #         #     "required": False,
-    #         # },
-    #     },
-    #     is_visible=True,
-    #     is_available=SearchFileTool.is_available(),
-    #     error_message="SearchFileTool not available.",
-    #     category=Category.FileLoader,
-    #     description="Performs a search over a list of one or more of the attached files for a textual search query",
-    # ),
+    ToolName.Search_File: ManagedTool(
+        display_name="Search File",
+        implementation=SearchFileTool,
+        parameter_definitions={
+            "search_query": {
+                "description": "Textual search query to search over the file's content for",
+                "type": "str",
+                "required": True,
+            },
+            "file_id": {
+                "description": "A file_id which is provided by the system when the user uploads a file",
+                "type": "str",
+                "required": False,
+            },
+            # "files": {
+            #     "description": "A list of files represented as tuples of (filename, file ID) to search over",
+            #     "type": "list[tuple[str, str]]",
+            #     "required": False,
+            # },
+        },
+        is_visible=True,
+        is_available=SearchFileTool.is_available(),
+        error_message="SearchFileTool not available.",
+        # category=Category.FileLoader,
+        description="Performs a search over a list of one or more of the attached files for a textual search query",
+    ),
     ToolName.Read_File: ManagedTool(
         display_name="Read Document",
         implementation=ReadFileTool,

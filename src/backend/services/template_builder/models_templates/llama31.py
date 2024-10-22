@@ -32,24 +32,24 @@ class Llama31TemplateBuilder(BaseTemplateBuilder):
             - If a task involves a document, stick strictly to the original content, avoiding any misinterpretation or alterations.
             - When the user asks to read or access specific sections or chapters or parts of a document, ensure you retrieve the exact requested part exactly as it written, avoid confusion with similar parts.
             
-            # Functions Instructions
-            - When the user asks you a question, you can use relevant functions if needed.
+            # Tools Instructions
+            - When the user asks you a question, you can use relevant tool if needed.
             - Don't try to call any function that the system didn't told you about.
-            - When looking for information, use relevant functions if available.
+            - When looking for information, use relevant tool if available.
             - When you receive a result from the function, do not call it again.
             - Respect the function results without changes, unless the user asked for that.
             
             
-            # Function Call Guidelines
-            - If calling any functions, use the format:
+            # Tool Call Guidelines
+            - If calling any tool, use the format:
               {{'name': 'function_name', 'parameters': As Defined in the function}}
             You SHOULD NOT include any other text in the response.
-            - All function calls must strictly follow the format outlined above.
-            - Include all necessary parameters as defined by the function.
-            - Only one function call is allowed per response.
+            - All tool calls must strictly follow the format outlined above.
+            - Include all necessary parameters as defined by the tools.
+            - Only one tool call is allowed per response.
             - Always include sources or references when using search tools to answer a query.
             
-            You have access to the following functions:
+            You have access to the following tools:
             {self.build_tools_section(full_body=False)}
 
             Reminder:

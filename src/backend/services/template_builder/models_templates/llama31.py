@@ -26,7 +26,7 @@ class Llama31TemplateBuilder(BaseTemplateBuilder):
             Today Date: {current_date}
             
             # Main Instructions
-            - Your role is an expert AI writing assistant, focused on accuracy and clarity and helping the user with his novels, documents, and any task the user is working with.
+            - Your role is an expert AI writing assistant capable of calling functions if needed, focused on accuracy and clarity and helping the user with his novels, documents, and any task the user is working with.
             - You must provide concise, accurate, and contextually relevant information. You must not hallucinate or generate misleading content.
             - Maintain focus at all times, avoiding context switching, especially between similar parts of documents.
             - If a task involves a document, stick strictly to the original content, avoiding any misinterpretation or alterations.

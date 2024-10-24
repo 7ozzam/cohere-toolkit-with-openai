@@ -306,12 +306,21 @@ class CohereToOpenAI:
                 call: Any  = tool_result_dict.get("call", [])
                 if len(outputs) > 0:
                     for output in outputs:
-                        if output and type(output) == "dict" and output.get("text"):
-                            text = dict(output).get("text")
+                        # print("OTYPE:", isinstance(output, dict))
+                        # print("OUTTEXT:", output["text"])
+                        if output and isinstance(output, dict) and output["text"] and False:
+                            text = output["text"]
                         else:
                             text = str(output)
                             
-                        text_outputs += f"\nThe result of the tool call: {call} \n is: {text}" or ""
+                        text_outputs += f"""Here's the tool response: 
+                        
+                        Tool Call:
+                        {call}
+                        
+                        Result: 
+                        {text}
+                        """ or ""
             
         return text_outputs
     @staticmethod

@@ -5,7 +5,8 @@ from abc import ABC, abstractmethod
 class BaseTemplateBuilder(ABC):
     def __init__(self, chat_messages: List[ChatCompletionSystemMessageParam], tools: List[dict] = [], tool_response: Any = None):
         self.chat_messages = chat_messages
-        self.tools = tools
+        print("toolso: ", tools)
+        self.tools = [tool for tool in tools if tool["function"]["name"] != "search_file"]
         self.tool_response = tool_response
 
     @abstractmethod

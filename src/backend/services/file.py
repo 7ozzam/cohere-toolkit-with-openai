@@ -1,4 +1,6 @@
 import io
+import re
+import os
 
 import pandas as pd
 from docx import Document
@@ -310,6 +312,14 @@ def validate_file(
             status_code=404,
             detail=f"File with ID: {file_id} not found.",
         )
+        
+        
+def sanitize_filename(filename: str) -> str:
+    # Remove or replace any characters that are not alphanumeric, dash, underscore, or dot
+    sanitized = re.sub(r'[^a-zA-Z0-9_\-\.]', '_', filename)
+    
+    # Optionally truncate if filename is too long for some file systems
+    return sanitized[:255] if len(sanitized) > 255 else sanitized
 
 
 async def insert_files_in_db(
@@ -333,7 +343,16 @@ async def insert_files_in_db(
         content = await get_file_content(file)
         cleaned_content = content.replace("\x00", "")
         filename = file.filename.encode("ascii", "ignore").decode("utf-8")
+        _, extension = os.path.splitext(filename)
+        
+        # I found that file name sometimes affect the accuracy of the model.
+        filename = content[0:128].replace(" ", "").encode("ascii", "ignore").decode("utf-8") + f".{extension}"
+        filename = sanitize_filename(filename)
+        
+        
 
+        
+        
         files_to_upload.append(
             FileModel(
                 file_name=filename,

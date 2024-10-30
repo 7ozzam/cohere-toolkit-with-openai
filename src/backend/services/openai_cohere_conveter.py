@@ -36,10 +36,13 @@ class CohereToOpenAI:
     def convert_backend_message_to_openai_message(chatMessages: List[ChatMessage]) -> List[Message]:
         new_chat_history = []
         for x in chatMessages:
-            if hasattr(x, "role") and hasattr(x, "message"):
+            if x and hasattr(x, "role") and hasattr(x, "message"):
                 if (x.role == ChatRole.CHATBOT):
-                    updated_dict = {**x.to_dict(), 'role': 'CHATBOT',"message": x.message}
-
+                    message_body = x.message
+                    if hasattr(x, "tool_calls"):
+                        message_body = str(x.tool_calls)
+                    
+                    updated_dict = {**x.to_dict(), 'role': 'CHATBOT',"message": message_body}
                     new_chat_history.append(ChatbotMessage(**updated_dict))
                 elif(x.role == ChatRole.USER):
                     updated_dict = {**x.to_dict(), 'role': 'USER', "message": x.message}

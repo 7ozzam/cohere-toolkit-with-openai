@@ -174,8 +174,8 @@ class CohereToOpenAI:
                     ToolCallsGenerationStreamedChatResponse(
                         event_type="tool-calls-generation", 
                         tool_calls=[tool_call_class], 
-                        # text=f"Retrieving tool response...\n{str(parsed_response)})"
-                        text=f"{str(parsed_response)})"
+                        text=f"Retrieving tool response...\n{str(parsed_response)})"
+                        # text=f"{str(parsed_response)})"
                     ),
                     end_response
                 ]

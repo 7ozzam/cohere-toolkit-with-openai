@@ -35,7 +35,6 @@ class QwenTemplateBuilder(BaseTemplateBuilder):
             - Always when the user question is related to a novel or document, you will call a function to read it every time before you respond.
             - If the user responed to a question you asked about the file, you will need to use `read_document` again to retrieve the content.
             - When the user tells you that he needs to read a specific part of the document, you will need to call `read_document` again to retrieve the content and replicate it from the tool result.
-            - Be logical, the start of a new chapter means the end of the previous one.
             - File title may not be relevant to its content.
             - When the user asks you a question, you can use relevant functions if needed.
             - Don't try to call any function that the system didn't told you about.
@@ -54,7 +53,7 @@ class QwenTemplateBuilder(BaseTemplateBuilder):
             - All function calls must strictly follow the format outlined above.
             - Include all necessary parameters as defined by the function.
             - Only one function call is allowed per response.
-            - Always include sources or references when using search tools to answer a query.
+            - Don't mix chapters or parts, just focus on user's request.
             
             You are provided with function signatures within <tools></tools> XML tags:
             <tools>

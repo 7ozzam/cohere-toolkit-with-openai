@@ -139,6 +139,10 @@ class CohereToOpenAI:
 
             new_chat_history = CohereToOpenAI.convert_backend_message_to_openai_message(chat_request.chat_history)
             
+            message_rest = ""
+            if type(previous_response) == str and  any(quote in previous_response for quote in ("```", "'", '"')) and not previous_response.endswith(("```", "'", '"')):
+                if "```" in previous_response:
+                    message_rest = "\n```\n"
             
             # Handle response based on function_triggered status
             if function_triggered == 'none':
@@ -160,12 +164,12 @@ class CohereToOpenAI:
                 )
 
                 return [
-                    TextGenerationStreamedChatResponse(event_type="text-generation", text=stream_message or ''),
+                    TextGenerationStreamedChatResponse(event_type="text-generation", text=message_rest),
                     ToolCallsChunkStreamedChatResponse(event_type="tool-calls-chunk", tool_call_delta=tool_call_delta),
                     ToolCallsGenerationStreamedChatResponse(
                         event_type="tool-calls-generation", 
                         tool_calls=[tool_call_class], 
-                        text="I will read the document to find the names of all the chapters."
+                        text="Retrieving tool response..."
                     ),
                     end_response
                 ]
@@ -236,7 +240,7 @@ class CohereToOpenAI:
         # Prepare OpenAI request parameters
         tools = CohereToOpenAI.convert_tools(cohere_request.tools)
         
-        builder = TemplateBuilder.get_template_builder(template_name="llama3.1",chat_messages=messages, tools=tools)
+        builder = TemplateBuilder.get_template_builder(template_name="qwen",chat_messages=messages, tools=tools)
         system_message = builder.create_default_system_message()
         messages.insert(0, system_message)
         
@@ -308,7 +312,7 @@ class CohereToOpenAI:
                     for output in outputs:
                         # print("OTYPE:", isinstance(output, dict))
                         # print("OUTTEXT:", output["text"])
-                        if output and isinstance(output, dict) and output["text"] and False:
+                        if output and isinstance(output, dict) and output["text"]:
                             text = output["text"]
                         else:
                             text = str(output)
@@ -321,6 +325,7 @@ class CohereToOpenAI:
                         Result: 
                         {text}
                         """ or ""
+                        # text_outputs += f'{{"output": "{text}"}}' or ""
             
         return text_outputs
     @staticmethod

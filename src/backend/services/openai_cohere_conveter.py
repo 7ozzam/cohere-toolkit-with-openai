@@ -40,7 +40,7 @@ class CohereToOpenAI:
                 if (x.role == ChatRole.CHATBOT):
                     message_body = x.message
                     if hasattr(x, "tool_calls"):
-                        message_body = str(x.tool_calls)
+                        message_body = (message_body or "") + str(x.tool_calls)
                     
                     updated_dict = {**x.to_dict(), 'role': 'CHATBOT',"message": message_body}
                     new_chat_history.append(ChatbotMessage(**updated_dict))
@@ -174,7 +174,8 @@ class CohereToOpenAI:
                     ToolCallsGenerationStreamedChatResponse(
                         event_type="tool-calls-generation", 
                         tool_calls=[tool_call_class], 
-                        text="Retrieving tool response..."
+                        # text=f"Retrieving tool response...\n{str(parsed_response)})"
+                        text=f"{str(parsed_response)})"
                     ),
                     end_response
                 ]

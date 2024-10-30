@@ -1,5 +1,6 @@
 from backend.services.template_builder.models_templates.llama31 import Llama31TemplateBuilder
 from backend.services.template_builder.models_templates.llama32 import Llama32TemplateBuilder
+from backend.services.template_builder.models_templates.qwen import QwenTemplateBuilder
 from backend.services.template_builder.models_templates.default_template import DefaultTemplateBuilder
 from backend.services.template_builder.models_templates.base import BaseTemplateBuilder
 
@@ -11,6 +12,7 @@ class TemplateBuilderFactory:
     templates = {
         "llama3.1": Llama31TemplateBuilder,
         "llama3.2": Llama32TemplateBuilder,
+        "qwen": QwenTemplateBuilder,
         # Add more templates here as needed
     }
 

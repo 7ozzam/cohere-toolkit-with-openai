@@ -72,7 +72,8 @@ class OpenAIDeployment(BaseDeployment):
         if not cls.is_available():
             return []
         try:
-            models_list = [model.to_dict().get("id") for model in cls.openai.models.list().data]
+            models = cls.openai.models.list().data
+            models_list = [model.to_dict().get("id") for model in models]
         except Exception as e:
             models_list = []
             

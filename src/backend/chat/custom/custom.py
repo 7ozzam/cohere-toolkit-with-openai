@@ -297,7 +297,7 @@ class CustomChat(BaseChat):
         if session is None or len(files) == 0:
             return chat_history
 
-        files_message = "The user uploaded the following attachments:\n"
+        files_message = "The user uploaded the following files:\n"
 
         for file in files:
             word_count = len(file.file_content.split())
@@ -306,7 +306,13 @@ class CustomChat(BaseChat):
             num_words = min(25, word_count)
             preview = " ".join(file.file_content.split()[:num_words])
 
-            files_message += f"Filename: {file.file_name}\nFile ID: {file.id}\nWord Count: {word_count} Preview: {preview}\n\n"
+            files_message += (
+                f'{{"filename": "{file.file_name}", '
+                f'"file_id": "{file.id}", '
+                f'"word_count": {word_count}, '
+                f'"preview": "{preview}"}}\n'
+            )
+            # files_message += f'Filename: "{file.file_name}"\nFile ID: "{file.id}"\nWord Count: {word_count} Preview: {preview}\n\n'
 
         chat_history.append(ChatMessage(message=files_message, role=ChatRole.SYSTEM))
         return chat_history

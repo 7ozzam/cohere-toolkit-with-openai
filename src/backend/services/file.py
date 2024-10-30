@@ -346,7 +346,7 @@ async def insert_files_in_db(
         _, extension = os.path.splitext(filename)
         
         # I found that file name sometimes affect the accuracy of the model.
-        filename = content[0:128].replace(" ", "").encode("ascii", "ignore").decode("utf-8") + f".{extension}"
+        filename = content[0:64].replace(" ", "").encode("ascii", "ignore").decode("utf-8") + f"{extension}"
         filename = sanitize_filename(filename)
         
         

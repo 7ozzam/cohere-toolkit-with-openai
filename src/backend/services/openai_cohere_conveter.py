@@ -143,6 +143,8 @@ class CohereToOpenAI:
             if type(previous_response) == str and  any(quote in previous_response for quote in ("```", "'", '"')) and not previous_response.endswith(("```", "'", '"')):
                 if "```" in previous_response:
                     message_rest = "\n```\n"
+                    
+            stream_message = stream_message + message_rest if stream_message else message_rest
             
             # Handle response based on function_triggered status
             if function_triggered == 'none':
@@ -164,7 +166,7 @@ class CohereToOpenAI:
                 )
 
                 return [
-                    TextGenerationStreamedChatResponse(event_type="text-generation", text=message_rest),
+                    TextGenerationStreamedChatResponse(event_type="text-generation", text=stream_message),
                     ToolCallsChunkStreamedChatResponse(event_type="tool-calls-chunk", tool_call_delta=tool_call_delta),
                     ToolCallsGenerationStreamedChatResponse(
                         event_type="tool-calls-generation", 

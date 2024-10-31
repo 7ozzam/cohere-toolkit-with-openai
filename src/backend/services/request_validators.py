@@ -68,27 +68,27 @@ def validate_deployment_model(deployment: str, model: str, session: DBSessionDep
         ),
         None,
     )
-    if not deployment_model:
-        deployment_model = model_crud.create_model_by_config(
-            session, deployment_db, deployment_config, model
-        )
-    
-    
-    # logger.error(event=deployment)
-    # logger.error(event=deployment_model)
-    # logger.error(event=model)
-    # logger.error(event=deployment_db.id)
     # if not deployment_model:
-    #     try:
-    #         model_data = ModelCreate(cohere_name=model, name=model, deployment_id=deployment_db.id)
-    #         logger.info(event="Creating model", model=model_data)
-    #         deployment_model = model_crud.create_model(session,model_data)
-    #     except Exception as e:
-    #         logger.error(event=e)
-    #         raise HTTPException(
-    #             status_code=404,
-    #             detail=f"Model {model} not found for deployment {deployment}.",
-    #         )
+    #     deployment_model = model_crud.create_model_by_config(
+    #         session, deployment_db, deployment_config, model
+    #     )
+    
+    
+    logger.error(event=deployment)
+    logger.error(event=deployment_model)
+    logger.error(event=model)
+    logger.error(event=deployment_db.id)
+    if not deployment_model:
+        try:
+            model_data = ModelCreate(cohere_name=model, name=model, deployment_id=deployment_db.id)
+            logger.info(event="Creating model", model=model_data)
+            deployment_model = model_crud.create_model(session,model_data)
+        except Exception as e:
+            logger.error(event=e)
+            raise HTTPException(
+                status_code=404,
+                detail=f"Model {model} not found for deployment {deployment}.",
+            )
 
     return deployment_db, deployment_model
 

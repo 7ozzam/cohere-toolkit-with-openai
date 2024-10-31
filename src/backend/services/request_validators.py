@@ -80,9 +80,11 @@ def validate_deployment_model(deployment: str, model: str, session: DBSessionDep
     logger.error(event=deployment_db.id)
     if not deployment_model:
         try:
-            model_data = ModelCreate(cohere_name=model, name=model, deployment_id=deployment_db.id)
-            logger.info(event="Creating model", model=model_data)
-            deployment_model = model_crud.create_model(session,model_data)
+            # model_data = ModelCreate(cohere_name=model, name=model, deployment_id=deployment_db.id)
+            # logger.info(event="Creating model", model=model_data)
+            # deployment_model = model_crud.create_model(session,model_data)
+            deployment_model = model_crud.create_model_by_config(session, deployment_db, deployment_config, model)
+            logger.info(event="Creating model", model=deployment_model)
         except Exception as e:
             logger.error(event=e)
             raise HTTPException(

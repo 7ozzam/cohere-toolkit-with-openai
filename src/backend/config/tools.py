@@ -256,6 +256,7 @@ def get_available_tools() -> dict[ToolName, dict]:
     use_community_tools = Settings().feature_flags.use_community_features
 
     tools = ALL_TOOLS.copy()
+    print("ALL_TOOLS: ", tools)
     if use_community_tools:
         try:
             from community.config.tools import COMMUNITY_TOOLS
@@ -276,6 +277,8 @@ def get_available_tools() -> dict[ToolName, dict]:
     enabled_tools = Settings().tools.enabled_tools
     if enabled_tools is not None and len(enabled_tools) > 0:
         tools = {key: value for key, value in tools.items() if key in enabled_tools}
+        
+    print("ALL_TOOLS_AFTER: ", tools)
     return tools
 
 

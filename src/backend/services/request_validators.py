@@ -302,6 +302,7 @@ async def validate_create_agent_request(session: DBSessionDep, request: Request)
 
     # Validate tools
     tools = body.get("tools")
+    print("AVAILABLE_TOOLS", AVAILABLE_TOOLS)
     if tools:
         for tool in tools:
             if tool not in AVAILABLE_TOOLS:
@@ -353,6 +354,7 @@ async def validate_update_agent_request(session: DBSessionDep, request: Request)
     body = await request.json()
     # Validate tools
     tools = body.get("tools")
+    print("AVAILABLE_TOOLS", AVAILABLE_TOOLS)
     if tools:
         for tool in tools:
             if tool not in AVAILABLE_TOOLS:

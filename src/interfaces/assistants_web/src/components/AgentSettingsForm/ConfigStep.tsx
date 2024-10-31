@@ -9,7 +9,6 @@ import { useListAllDeployments } from '@/hooks';
 
 type Props = {
   fields: AgentSettingsFields;
-  isNewAssistant: boolean;
   nameError?: string;
   setFields: (fields: AgentSettingsFields) => void;
 };

@@ -70,35 +70,6 @@ export const useAgent = ({ agentId }: { agentId?: string }) => {
   });
 };
 
-export const useAgentTasks = ({ agentId }: { agentId?: string }) => {
-  const cohereClient = useCohereClient();
-  return useQuery({
-    queryKey: ['agentTasks', agentId],
-    queryFn: async () => {
-      try {
-        if (!agentId) {
-          throw new Error('must have agent id');
-        }
-        return await cohereClient.getAgentTasks(agentId);
-      } catch (e) {
-        console.error(e);
-        throw e;
-      }
-    },
-  });
-};
-
-export const useDefaultAgent = (enabled?: boolean) => {
-  const cohereClient = useCohereClient();
-  return useQuery({
-    queryKey: ['defaultAgent'],
-    enabled: enabled,
-    queryFn: async () => {
-      return await cohereClient.getDefaultAgent();
-    },
-  });
-};
-
 /**
  * @description Returns a function to check if an agent name is unique.
  */
@@ -114,8 +85,11 @@ export const useIsAgentNameUnique = () => {
 export const useUpdateAgent = () => {
   const cohereClient = useCohereClient();
   const queryClient = useQueryClient();
+
   return useMutation<AgentPublic, ApiError, { request: UpdateAgentRequest; agentId: string }>({
-    mutationFn: ({ request, agentId }) => cohereClient.updateAgent(request, agentId),
+    mutationFn: ({ request, agentId }) => {
+      return cohereClient.updateAgent(request, agentId);
+    },
     onSettled: (agent) => {
       queryClient.invalidateQueries({ queryKey: ['agent', agent?.id] });
       queryClient.invalidateQueries({ queryKey: ['listAgents'] });

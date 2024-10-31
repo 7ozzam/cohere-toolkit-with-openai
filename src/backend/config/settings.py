@@ -234,6 +234,13 @@ class OpenAISettings(BaseSettings, BaseModel):
     )
 
 
+class GoogleCloudSettings(BaseSettings, BaseModel):
+    model_config = SETTINGS_CONFIG
+    api_key: Optional[str] = Field(
+        default=None, validation_alias=AliasChoices("GOOGLE_CLOUD_API_KEY", "api_key")
+    )
+
+
 class SageMakerSettings(BaseSettings, BaseModel):
     model_config = SETTINGS_CONFIG
     endpoint_name: Optional[str] = Field(
@@ -348,6 +355,7 @@ class Settings(BaseSettings):
     tools: Optional[ToolSettings] = Field(default=ToolSettings())
     database: Optional[DatabaseSettings] = Field(default=DatabaseSettings())
     redis: Optional[RedisSettings] = Field(default=RedisSettings())
+    google_cloud: Optional[GoogleCloudSettings] = Field(default=GoogleCloudSettings())
     deployments: Optional[DeploymentSettings] = Field(default=DeploymentSettings())
     logger: Optional[LoggerSettings] = Field(default=LoggerSettings())
 

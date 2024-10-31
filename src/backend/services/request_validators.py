@@ -3,13 +3,18 @@ from urllib.parse import unquote_plus
 from fastapi import HTTPException, Request
 
 import backend.crud.user as user_crud
-from backend.config.deployments import AVAILABLE_MODEL_DEPLOYMENTS
+from backend.config.deployments import (
+    AVAILABLE_MODEL_DEPLOYMENTS,
+    find_config_by_deployment_id,
+    find_config_by_deployment_name,
+)
 from backend.config.tools import AVAILABLE_TOOLS
 from backend.schemas.model import ModelCreate
 from backend.crud import agent as agent_crud
 from backend.crud import model as model_crud
 from backend.crud import conversation as conversation_crud
 from backend.crud import deployment as deployment_crud
+from backend.crud import model as model_crud
 from backend.crud import organization as organization_crud
 from backend.database_models.database import DBSessionDep
 from backend.model_deployments.utils import class_name_validator
@@ -36,6 +41,19 @@ def validate_deployment_model(deployment: str, model: str, session: DBSessionDep
     deployment_db = deployment_crud.get_deployment_by_name(session, deployment)
     if not deployment_db:
         deployment_db = deployment_crud.get_deployment(session, deployment)
+
+    # Check deployment config settings availability
+    deployment_config = find_config_by_deployment_id(deployment)
+    if not deployment_config:
+        deployment_config = find_config_by_deployment_name(deployment)
+    if not deployment_config:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Deployment {deployment} not found or is not available in the Database.",
+        )
+
+    if not deployment_db:
+        deployment_db = deployment_crud.create_deployment_by_config(session, deployment_config)
     if not deployment_db:
         raise HTTPException(
             status_code=400,
@@ -50,23 +68,27 @@ def validate_deployment_model(deployment: str, model: str, session: DBSessionDep
         ),
         None,
     )
+    if not deployment_model:
+        deployment_model = model_crud.create_model_by_config(
+            session, deployment_db, deployment_config, model
+        )
     
     
     # logger.error(event=deployment)
     # logger.error(event=deployment_model)
     # logger.error(event=model)
     # logger.error(event=deployment_db.id)
-    if not deployment_model:
-        try:
-            model_data = ModelCreate(cohere_name=model, name=model, deployment_id=deployment_db.id)
-            logger.info(event="Creating model", model=model_data)
-            deployment_model = model_crud.create_model(session,model_data)
-        except Exception as e:
-            logger.error(event=e)
-            raise HTTPException(
-                status_code=404,
-                detail=f"Model {model} not found for deployment {deployment}.",
-            )
+    # if not deployment_model:
+    #     try:
+    #         model_data = ModelCreate(cohere_name=model, name=model, deployment_id=deployment_db.id)
+    #         logger.info(event="Creating model", model=model_data)
+    #         deployment_model = model_crud.create_model(session,model_data)
+    #     except Exception as e:
+    #         logger.error(event=e)
+    #         raise HTTPException(
+    #             status_code=404,
+    #             detail=f"Model {model} not found for deployment {deployment}.",
+    #         )
 
     return deployment_db, deployment_model
 

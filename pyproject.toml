@@ -56,9 +56,13 @@ hyperframe = "^6.0.1"
 llama-index = "^0.11.10"
 llama-index-llms-cohere = "^0.3.0"
 llama-index-embeddings-cohere = "^0.2.1"
+<<<<<<< HEAD
 openai = "^1.51.0"
 partial-json-parser = "^0.2.1.1.post4"
 partialjson = "^0.0.8"
+=======
+google-cloud-texttospeech = "^2.18.0"
+>>>>>>> fd3fc8481f039a9fcebdd31f8de5bb7b1fb30442
 
 [tool.poetry.group.dev]
 optional = true

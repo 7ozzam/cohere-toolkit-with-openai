@@ -19,6 +19,7 @@ import {
 } from '@/cohere-client';
 
 import { mapToChatRequest } from './mappings';
+import { CohereFolderHandling } from './folderHandling';
 
 export class CohereClient {
   private readonly hostname: string;
@@ -26,6 +27,7 @@ export class CohereClient {
   private authToken?: string;
 
   public cohereService: CohereClientGenerated;
+  public folderHandling: CohereFolderHandling;
   public request?: any;
 
   constructor({
@@ -47,10 +49,13 @@ export class CohereClient {
 
     this.cohereService.request.config.interceptors.response.use((response) => {
       if (response.status === 401) {
-        throw new CohereUnauthorizedError();
+        throw new Error('Unauthorized');
       }
       return response;
     });
+
+    // Instantiate the CohereFolderHandling class
+    this.folderHandling = new CohereFolderHandling(this);
   }
 
   public batchUploadConversationFile(
@@ -342,4 +347,24 @@ export class CohereClient {
     };
     return headers;
   }
+
+
+
+  // Folder Handling
+  public getFolderHandling() {
+    return this.folderHandling;
+  }
+
+  public uploadFolderFiles({ folderId, conversationId, files }: { folderId: string; files: File[]; conversationId: string | undefined }) {
+    if (!conversationId) throw new Error('Conversation ID not found');
+    return this.folderHandling.uploadFolderFiles({ conversationId, folderId, files });
+  }
+  public createFolder({ folderName, conversationId }: { folderName: string; conversationId: string }) {
+    return this.folderHandling.createFolder({ folderName, conversationId });
+  }
+
+  public listFolders({ conversationId }: { conversationId: string }) {
+    return this.folderHandling.listFolders({ conversationId });
+  }
+
 }

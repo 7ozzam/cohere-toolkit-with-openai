@@ -90,7 +90,7 @@ export const ConversationPanel: React.FC<Props> = () => {
           className="flex h-auto flex-shrink-0 self-center lg:hidden"
         />
         <Text styleAs="p-sm" className="font-medium uppercase">
-          Knowledge
+          Knowledge Management
         </Text>
       </header>
       <div className="flex flex-col gap-y-10">
@@ -216,6 +216,87 @@ export const ConversationPanel: React.FC<Props> = () => {
             These files will only be accessible to you and won’t impact others.
           </Text>
         </section>
+          <hr/>
+          {agentId && (
+          <div className="flex flex-col gap-y-4">
+            <div className="flex items-center justify-between">
+              <span className="flex items-center gap-x-2">
+                <Text styleAs="label" className="font-medium">
+                  Knowledge Vault
+                </Text>
+                <Tooltip
+                  hover
+                  size="sm"
+                  placement="top-start"
+                  hoverDelay={250}
+                  label="Enables assistant knowledge based on folder to provide more accurate responses."
+                />
+              </span>
+              {/* @DEV_NOTE: This is disabled while we add the ability in BE to enable/disable assistant knowledge */}
+              {/* <Switch
+                theme={theme}
+                checked={!disabledAssistantKnowledge.includes(agentId)}
+                onChange={(checked) => setUseAssistantKnowledge(checked, agentId)}
+              /> */}
+            </div>
+            <Transition
+              show={!disabledAssistantKnowledge.includes(agentId) ?? false}
+              enter="duration-300 ease-in-out transition-all"
+              enterFrom="opacity-0 scale-90"
+              enterTo="opacity-100 scale-100"
+              leave="duration-200 ease-in-out transition-all"
+              leaveFrom="opacity-100 scale-100"
+              leaveTo="opacity-0 scale-90"
+              as="div"
+            >
+              {agentKnowledgeFiles.length === 0 && session.userId === agent?.user_id ? (
+                <Banner className="flex flex-col">
+                  Add a data source to expand the assistant’s knowledge.
+                  <Button
+                    theme={theme}
+                    className="mt-4 w-full"
+                    label="Add Data Source"
+                    stretch
+                    icon="add"
+                    href={`/edit/${agentId}?datasources=1`}
+                  />
+                </Banner>
+              ) : (
+                <div className="flex flex-col gap-y-3">
+                  <Text as="div" className="flex items-center gap-x-3">
+                    <Icon name="folder" kind="outline" className="flex-shrink-0" />
+                    {/*  This renders the number of folders and files in the agent's Google Drive.
+                    For example, if the agent has 2 folders and 3 files, it will render:
+                    - "2 folders and 3 files" */}
+                    {agentToolMetadataArtifacts.folders.length > 0 &&
+                      `${agentToolMetadataArtifacts.folders.length} ${pluralize(
+                        'folder',
+                        agentToolMetadataArtifacts.folders.length
+                      )} ${agentToolMetadataArtifacts.files.length > 0 ? 'and ' : ''}`}
+                    {agentToolMetadataArtifacts.files.length > 0 &&
+                      `${agentToolMetadataArtifacts.files.length} ${pluralize(
+                        'file',
+                        agentToolMetadataArtifacts.files.length
+                      )}`}
+                  </Text>
+                  <ol className="space-y-2">
+                    {agentKnowledgeFiles.map((file) => (
+                      <li key={file.id} className="ml-6 flex items-center gap-x-3">
+                        <Icon
+                          name={file.type === 'folder' ? 'folder' : 'file'}
+                          kind="outline"
+                          className="flex-shrink-0"
+                        />
+                        <Text>{file.name}</Text>
+                      </li>
+                    ))}
+                  </ol>
+                </div>
+              )}
+            </Transition>
+          </div>
+        )}
+        
       </div>
     </aside>
   );

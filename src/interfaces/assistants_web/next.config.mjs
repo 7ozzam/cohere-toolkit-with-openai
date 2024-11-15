@@ -31,6 +31,14 @@ const nextConfig = {
       },
     ],
   },
+  webpack: (config, context) => {
+    // Enable polling based on env variable being set
+      config.watchOptions = {
+        poll: 500,
+        aggregateTimeout: 300
+      }
+    return config
+  },
 };
 
 const getNextConfig = (phase) => {

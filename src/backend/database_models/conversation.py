@@ -15,6 +15,26 @@ from backend.database_models.base import Base
 from backend.database_models.message import Message
 
 
+class ConversationFolderAssociation(Base):
+    __tablename__ = "conversation_folders"
+
+    conversation_id: Mapped[str] = mapped_column(
+        ForeignKey("conversations.id", ondelete="CASCADE")
+    )
+    user_id: Mapped[str] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"))
+    folder_id: Mapped[int] = mapped_column(ForeignKey("folders.id", ondelete="CASCADE"))
+
+    conversation: Mapped["Conversation"] = relationship(
+        "Conversation", back_populates="conversation_folder_associations"
+    )
+    folder: Mapped["Folder"] = relationship(
+        "Folder", back_populates="conversation_folder_associations"
+    )
+
+    __table_args__ = (
+        UniqueConstraint("conversation_id", "folder_id", name="unique_conversation_folder"),
+    )
+    
 class ConversationFileAssociation(Base):
     __tablename__ = "conversation_files"
 
@@ -43,6 +63,9 @@ class Conversation(Base):
     conversation_file_associations: Mapped[List["ConversationFileAssociation"]] = (
         relationship("ConversationFileAssociation", back_populates="conversation")
     )
+    conversation_folder_associations: Mapped[List["ConversationFolderAssociation"]] = (
+        relationship("ConversationFolderAssociation", back_populates="conversation")
+    )
     agent_id: Mapped[str] = mapped_column(
         ForeignKey("agents.id", ondelete="CASCADE"), nullable=True
     )
@@ -64,6 +87,13 @@ class Conversation(Base):
         return [
             conversation_file_association.file_id
             for conversation_file_association in self.conversation_file_associations
+        ]
+
+    @property
+    def folder_ids(self):
+        return [
+            conversation_folder_association.folder_id
+            for conversation_folder_association in self.conversation_folder_associations
         ]
 
     __table_args__ = (

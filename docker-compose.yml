@@ -95,6 +95,7 @@ services:
       NEXT_PUBLIC_FRONTEND_HOSTNAME: ${NEXT_PUBLIC_FRONTEND_HOSTNAME}
       NEXT_PUBLIC_GOOGLE_DRIVE_CLIENT_ID: ${NEXT_PUBLIC_GOOGLE_DRIVE_CLIENT_ID}
       NEXT_PUBLIC_GOOGLE_DRIVE_DEVELOPER_KEY: ${NEXT_PUBLIC_GOOGLE_DRIVE_DEVELOPER_KEY}
+      WATCHPACK_POLLING: true
     restart: always
     networks:
       - proxynet
@@ -108,14 +109,14 @@ services:
           ignore:
             - node_modules/
 
-  terrarium:
-    image: ghcr.io/cohere-ai/terrarium:latest
-    ports:
-      - "8080:8080"
-    expose:
-      - "8080"
-    networks:
-      - proxynet
+  # terrarium:
+  #   image: ghcr.io/cohere-ai/terrarium:latest
+  #   ports:
+  #     - "8080:8080"
+  #   expose:
+  #     - "8080"
+  #   networks:
+  #     - proxynet
 
 volumes:
   db:

@@ -15,6 +15,7 @@ import {
 import { useConversationStore } from '@/stores';
 import { ConfigurableParams } from '@/stores/slices/paramsSlice';
 import { ChatMessage } from '@/types/message';
+import { useFolderActions, useUploadFolderFiles } from '@/hooks/use-folder';
 
 type Props = {
   startOptionsEnabled?: boolean;
@@ -29,6 +30,7 @@ type Props = {
  */
 export const Conversation: React.FC<Props> = ({ agent, tools, startOptionsEnabled = false }) => {
   const { uploadFiles } = useConversationFileActions();
+  const { uploadFolder } = useFolderActions();
   const { welcomeGuideState, finishWelcomeGuide } = useWelcomeGuideState();
   const {
     conversation: { messages, id: conversationId },
@@ -56,6 +58,13 @@ export const Conversation: React.FC<Props> = ({ agent, tools, startOptionsEnable
 
   const handleUploadFile = async (files: File[]) => {
     await uploadFiles(files, conversationId);
+  };
+
+  const handleAttachFolder = async (folder: FileSystemDirectoryHandle) => {
+    console.log(folder);
+    
+    await uploadFolder(folder, conversationId);
+    // await uploadFiles(files, conversationId);
   };
 
   const handleSend = (msg?: string, overrides?: Partial<ConfigurableParams>) => {
@@ -91,6 +100,7 @@ export const Conversation: React.FC<Props> = ({ agent, tools, startOptionsEnable
                   onSend={handleSend}
                   onStop={handleStop}
                   onUploadFile={handleUploadFile}
+                  onAttachFolder={handleAttachFolder}
                   lastUserMessage={messages.findLast((m) => m.type === 'user')}
                 />
               </>

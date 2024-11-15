@@ -1,0 +1,155 @@
+import { CohereClient } from '@/cohere-client';
+
+export class CohereFolderHandling {
+  private cohereClient: CohereClient;
+
+  constructor(cohereClient: CohereClient) {
+    this.cohereClient = cohereClient;
+  }
+
+  /**
+   * Create a folder.
+   * @param folderName The name of the folder to create.
+   * @param conversationId The conversation ID for the folder.
+   * @returns A promise resolving with the created folder details.
+   */
+  public async createFolder({
+    folderName,
+    conversationId,
+  }: {
+    folderName: string;
+    conversationId: string;
+  }) {
+    try {
+      const response = await this.cohereClient.cohereService.default.createFolderV1ConversationsConversationIdFoldersPost({
+        conversationId,
+        requestBody: { name: folderName },
+      });
+      return response;
+    } catch (error) {
+      console.error('Error creating folder:', error);
+      throw new Error('Failed to create folder');
+    }
+  }
+
+  /**
+   * Delete a folder.
+   * @param conversationId The conversation ID of the folder.
+   * @param folderId The ID of the folder to delete.
+   * @returns A promise resolving once the folder is deleted.
+   */
+  public async deleteFolder({
+    conversationId,
+    folderId,
+  }: {
+    conversationId: string;
+    folderId: string;
+  }) {
+    try {
+      const response = await this.cohereClient.cohereService.default.deleteFolderV1ConversationsConversationIdFoldersFolderIdDelete({
+        conversationId,
+        folderId,
+      });
+      return response;
+    } catch (error) {
+      console.error('Error deleting folder:', error);
+      throw new Error('Failed to delete folder');
+    }
+  }
+
+  /**
+   * List all folders for a conversation.
+   * @param conversationId The conversation ID to list folders for.
+   * @returns A promise resolving with the list of folders.
+   */
+  public async listFolders({
+    conversationId,
+  }: {
+    conversationId: string;
+  }) {
+    try {
+      const response = await this.cohereClient.cohereService.default.listFoldersV1ConversationsConversationIdFoldersGet({
+        conversationId,
+      });
+      return response;
+    } catch (error) {
+      console.error('Error listing folders:', error);
+      throw new Error('Failed to list folders');
+    }
+  }
+
+  /**
+   * Upload files to a folder.
+   * @param folderId The folder ID where files will be uploaded.
+   * @param files The files to upload.
+   * @returns A promise resolving once the files are uploaded.
+   */
+  public async uploadFolderFiles({
+    conversationId,
+    folderId,
+    files,
+  }: {
+    conversationId: string;
+    folderId: string;
+    files: File[];
+  }) {
+    try {
+      const formData = new FormData();
+      files.forEach((file) => formData.append('files', file));
+
+      const response = await this.cohereClient.cohereService.default.uploadFolderFilesV1ConversationsConversationIdFoldersFolderIdFilesPost(
+        { conversationId, folderId, files },
+        formData
+      );
+      return response;
+    } catch (error) {
+      console.error('Error uploading files to folder:', error);
+      throw new Error('Failed to upload files');
+    }
+  }
+
+  /**
+   * List files in a folder.
+   * @param folderId The folder ID to list files for.
+   * @returns A promise resolving with the list of files in the folder.
+   */
+  public async listFolderFiles({
+    folderId,
+  }: {
+    folderId: string;
+  }) {
+    try {
+      const response = await this.cohereClient.cohereService.default.listFolderFilesV1ConversationsConversationIdFoldersFolderIdFilesGet({
+        folderId,
+      });
+      return response;
+    } catch (error) {
+      console.error('Error listing files in folder:', error);
+      throw new Error('Failed to list files in folder');
+    }
+  }
+
+  /**
+   * Delete a file from a folder.
+   * @param folderId The folder ID.
+   * @param fileId The ID of the file to delete.
+   * @returns A promise resolving once the file is deleted.
+   */
+  public async deleteFolderFile({
+    folderId,
+    fileId,
+  }: {
+    folderId: string;
+    fileId: string;
+  }) {
+    try {
+      const response = await this.cohereClient.cohereService.default.deleteFolderFileV1ConversationsConversationIdFoldersFolderIdFilesFileIdDelete(
+        { folderId, fileId }
+      );
+      return response;
+    } catch (error) {
+      console.error('Error deleting file from folder:', error);
+      throw new Error('Failed to delete file from folder');
+    }
+  }
+}

@@ -20,6 +20,7 @@ type Props = {
   onSend: (message?: string, overrides?: Partial<ConfigurableParams>) => void;
   onChange: (message: string) => void;
   onUploadFile: (files: File[]) => void;
+  onAttachFolder: (folder: FileSystemDirectoryHandle) => void;
   agent?: AgentPublic;
   tools?: ManagedTool[];
   chatWindowRef?: React.RefObject<HTMLDivElement>;
@@ -35,6 +36,7 @@ export const Composer: React.FC<Props> = ({
   onChange,
   onStop,
   onUploadFile,
+  onAttachFolder,
   chatWindowRef,
   lastUserMessage,
 }) => {
@@ -190,7 +192,7 @@ export const Composer: React.FC<Props> = ({
           </button>
         </div>
         <ComposerFiles />
-        <ComposerToolbar onUploadFile={onUploadFile} agent={agent} tools={tools} />
+        <ComposerToolbar onUploadFile={onUploadFile} onAttachFolder={onAttachFolder} agent={agent} tools={tools} />
       </div>
       <ComposerError className="pt-2" />
     </div>

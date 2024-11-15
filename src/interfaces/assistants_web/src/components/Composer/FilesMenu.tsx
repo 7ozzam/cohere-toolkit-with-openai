@@ -8,9 +8,10 @@ import { cn, mapMimeTypeToExtension } from '@/utils';
 
 type Props = {
   onUploadFile: (files: File[]) => void;
+  onAttachFolder: (folder: FileSystemDirectoryHandle) => void;
 };
 
-export const FilesMenu: React.FC<Props> = ({ onUploadFile }) => {
+export const FilesMenu: React.FC<Props> = ({ onUploadFile, onAttachFolder }) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { agentId } = useChatRoutes();
   const { bg, contrastFill } = useBrandedColors(agentId);
@@ -25,6 +26,16 @@ export const FilesMenu: React.FC<Props> = ({ onUploadFile }) => {
     callback();
   };
 
+  const handleAttachFolder = async (callback: VoidFunction) => {
+    try {
+      const directoryHandle = await (window as any).showDirectoryPicker();
+      onAttachFolder(directoryHandle);
+      callback();
+    } catch (error) {
+      console.error('Error selecting folder:', error);
+    }
+  };
+
   return (
     <>
       <Popover className="relative">
@@ -33,7 +44,6 @@ export const FilesMenu: React.FC<Props> = ({ onUploadFile }) => {
           className={({ open }) =>
             cn(
               'flex items-center justify-center rounded p-1 outline-none dark:fill-marble-800',
-
               {
                 [bg]: open,
               }
@@ -80,6 +90,24 @@ export const FilesMenu: React.FC<Props> = ({ onUploadFile }) => {
                   <Icon name="upload" />
                   <Text as="span" className="ml-2">
                     Upload files
+                  </Text>
+                </button>
+              </Tooltip>
+
+              <Tooltip
+                label="Attach Folder / Directory / Obsidian Vault (Experimental)"
+                size="sm"
+                placement="top-start"
+                hover
+                hoverDelay={{ open: 250 }}
+              >
+                <button
+                  onClick={() => handleAttachFolder(close)}
+                  className="flex w-full items-center rounded p-2"
+                >
+                  <Icon name="upload" />
+                  <Text as="span" className="ml-2">
+                    Attach Folder (Experimental)
                   </Text>
                 </button>
               </Tooltip>

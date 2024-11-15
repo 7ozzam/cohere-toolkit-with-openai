@@ -10,12 +10,13 @@ type Props = {
   agent?: AgentPublic;
   tools?: ManagedTool[];
   onUploadFile: (files: File[]) => void;
+  onAttachFolder: (folder: FileSystemDirectoryHandle) => void;
 };
 
 /**
  * @description Renders the bottom toolbar of the composer that shows available and selected data sources.
  */
-export const ComposerToolbar: React.FC<Props> = ({ agent, tools, onUploadFile }) => {
+export const ComposerToolbar: React.FC<Props> = ({ agent, tools, onUploadFile, onAttachFolder }) => {
   return (
     <div
       className={cn(
@@ -24,7 +25,7 @@ export const ComposerToolbar: React.FC<Props> = ({ agent, tools, onUploadFile })
         'mx-2 py-2'
       )}
     >
-      <FilesMenu onUploadFile={onUploadFile} />
+      <FilesMenu onUploadFile={onUploadFile} onAttachFolder={onAttachFolder} />
       <DataSourceMenu agent={agent} tools={tools} />
     </div>
   );

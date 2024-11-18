@@ -1,13 +1,13 @@
 from sqlalchemy.orm import Session
 from sqlalchemy.exc import SQLAlchemyError
-from typing import List
+from typing import List, Optional
 from backend.database_models.folder import Folder
 from backend.database_models.conversation import ConversationFolderAssociation
 from backend.services.transaction import validate_transaction
 
 
 @validate_transaction
-def create_folder(db: Session, folder:Folder) -> Folder:
+def create_folder(db: Session, folder:Folder, conversation_id: str, user_id: str) -> Folder:
     """
     Create a new folder.
 
@@ -21,11 +21,43 @@ def create_folder(db: Session, folder:Folder) -> Folder:
         Folder: The created folder.
     """
     folder = Folder(name=folder.name, user_id=folder.user_id, description=folder.description)
+    
     db.add(folder)
     db.commit()
     db.refresh(folder)
+    
+   
+    
     return folder
 
+@validate_transaction
+def associate_folder_with_conversation(db: Session, folder_id:str, conversation_id: str, user_id: str) -> ConversationFolderAssociation:
+    """
+    Create a new folder.
+
+    Args:
+        db (Session): Database session.
+        folder_name (str): The name of the folder to create.
+        user_id (str): The user ID.
+        description (str, optional): Folder description. Defaults to "".
+
+    Returns:
+        Folder: The created folder.
+    """
+    conversation_folder_association = ConversationFolderAssociation(
+        folder_id=folder_id,
+        conversation_id=conversation_id,
+        user_id=user_id
+    )
+
+    # Add the association to the session
+    db.add(conversation_folder_association)
+    db.commit()
+    db.refresh(conversation_folder_association)
+    
+   
+    
+    return conversation_folder_association
 
 @validate_transaction
 def update_folder(

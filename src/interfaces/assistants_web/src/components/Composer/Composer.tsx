@@ -192,7 +192,12 @@ export const Composer: React.FC<Props> = ({
           </button>
         </div>
         <ComposerFiles />
-        <ComposerToolbar onUploadFile={onUploadFile} onAttachFolder={onAttachFolder} agent={agent} tools={tools} />
+        <ComposerToolbar
+          onUploadFile={onUploadFile}
+          onAttachFolder={onAttachFolder}
+          agent={agent}
+          tools={tools}
+        />
       </div>
       <ComposerError className="pt-2" />
     </div>

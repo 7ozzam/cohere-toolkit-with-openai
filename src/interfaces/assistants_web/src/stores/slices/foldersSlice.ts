@@ -1,5 +1,8 @@
 import { StateCreator } from 'zustand';
-import { StoreState } from '..';  // Adjust this path based on where StoreState is defined
+
+import { StoreState } from '..';
+
+// Adjust this path based on where StoreState is defined
 
 // Initial folders state
 const INITIAL_STATE: State = {
@@ -32,9 +35,9 @@ type Actions = {
   deleteUploadingFolder: (id: string) => void;
   clearUploadingFolderErrors: () => void;
   clearFolderFiles: () => void;
-  clearFolderErrors: () => void;  // Add `clearFolderErrors`
-  updateFolderError: (folderId: string, error: string) => void;  // Add `updateFolderError`
-  deleteFolderFile: (id: string) => void;  // Add `deleteFolderFile`
+  clearFolderErrors: () => void; // Add `clearFolderErrors`
+  updateFolderError: (folderId: string, error: string) => void; // Add `updateFolderError`
+  deleteFolderFile: (id: string) => void; // Add `deleteFolderFile`
 };
 
 // FoldersStore type combines State and Actions
@@ -146,9 +149,7 @@ export const createFoldersSlice: StateCreator<StoreState, [], [], FoldersStore> 
   updateFolderError(folderId, error) {
     set((state) => {
       const newFolderErrors = [...state.folders.folderErrors];
-      const existingErrorIndex = newFolderErrors.findIndex(
-        (err) => err.includes(folderId)
-      );
+      const existingErrorIndex = newFolderErrors.findIndex((err) => err.includes(folderId));
 
       if (existingErrorIndex !== -1) {
         newFolderErrors[existingErrorIndex] = `${folderId}: ${error}`;

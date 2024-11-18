@@ -140,6 +140,8 @@ import type {
   UpdateUserScimV2UsersUserIdPutResponse,
   UpdateUserV1UsersUserIdPutData,
   UpdateUserV1UsersUserIdPutResponse,
+  UploadFolderV1ConversationsUploadFolderPostData,
+  UploadFolderV1ConversationsUploadFolderPostResponse,
 } from './types.gen';
 
 export class DefaultService {
@@ -836,18 +838,7 @@ export class DefaultService {
 
   /**
    * List Files
-   * List all files from a conversation. Important - no pagination support yet.
-   *
-   * Args:
-   * conversation_id (str): Conversation ID.
-   * session (DBSessionDep): Database session.
-   * ctx (Context): Context object.
-   *
-   * Returns:
-   * list[ListConversationFile]: List of files from the conversation.
-   *
-   * Raises:
-   * HTTPException: If the conversation with the given ID is not found.
+   * List all files from a conversation. Merges files from folders and individual files.
    * @param data The data for the request.
    * @param data.conversationId
    * @returns ListConversationFile Successful Response
@@ -974,6 +965,38 @@ export class DefaultService {
         conversation_id: data.conversationId,
         message_id: data.messageId,
       },
+      errors: {
+        422: 'Validation Error',
+      },
+    });
+  }
+
+  /**
+   * Upload Folder
+   * Uploads a folder with multiple files.
+   *
+   * Args:
+   * session (DBSessionDep): Database session
+   * user_id (str): The user ID
+   * folder_name (str): The name of the folder
+   * files (List[FastAPIUploadFile]): List of files to be uploaded
+   * ctx (Context): Context object for additional request information
+   *
+   * Returns:
+   * List[UploadConversationFileResponse]: List of uploaded files with metadata
+   * @param data The data for the request.
+   * @param data.formData
+   * @returns unknown Successful Response
+   * @throws ApiError
+   */
+  public uploadFolderV1ConversationsUploadFolderPost(
+    data: UploadFolderV1ConversationsUploadFolderPostData
+  ): CancelablePromise<UploadFolderV1ConversationsUploadFolderPostResponse> {
+    return this.httpRequest.request({
+      method: 'POST',
+      url: '/v1/conversations/upload_folder',
+      formData: data.formData,
+      mediaType: 'multipart/form-data',
       errors: {
         422: 'Validation Error',
       },

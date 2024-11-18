@@ -56,6 +56,13 @@ export type Body_batch_upload_file_v1_conversations_batch_upload_file_post = {
   files: Array<Blob | File>;
 };
 
+export type Body_upload_folder_v1_conversations_upload_folder_post = {
+  conversation_id?: string;
+  folder_name?: string;
+  files: Array<Blob | File>;
+  paths: Array<string>;
+};
+
 export enum Category {
   DATA_LOADER = 'Data loader',
   FILE_LOADER = 'File loader',
@@ -368,7 +375,15 @@ export type ListConversationFile = {
   conversation_id: string;
   file_name: string;
   file_size?: number;
+  item_type?: 'file' | 'folder';
+  folder_id?: string | null;
+  files?: Array<unknown> | null;
 };
+
+export enum item_type {
+  FILE = 'file',
+  FOLDER = 'folder',
+}
 
 export type ListGroupResponse = {
   totalResults: number;
@@ -445,13 +460,17 @@ export type Model = {
   deployment_id: string;
   cohere_name: string | null;
   description: string | null;
+  use_compelation: string | null;
+  prompt_template: string | null;
 };
 
 export type ModelCreate = {
   name: string;
   cohere_name: string | null;
-  description: string | null;
+  description?: string | null;
   deployment_id: string;
+  use_compelation?: string | null;
+  prompt_template?: string | null;
 };
 
 export type ModelSimple = {
@@ -466,6 +485,8 @@ export type ModelUpdate = {
   cohere_name?: string | null;
   description?: string | null;
   deployment_id?: string | null;
+  use_compelation?: string | null;
+  prompt_template?: string | null;
 };
 
 export type Name = {
@@ -956,6 +977,12 @@ export type SynthesizeMessageV1ConversationsConversationIdSynthesizeMessageIdGet
 };
 
 export type SynthesizeMessageV1ConversationsConversationIdSynthesizeMessageIdGetResponse = unknown;
+
+export type UploadFolderV1ConversationsUploadFolderPostData = {
+  formData: Body_upload_folder_v1_conversations_upload_folder_post;
+};
+
+export type UploadFolderV1ConversationsUploadFolderPostResponse = unknown;
 
 export type ListToolsV1ToolsGetData = {
   agentId?: string | null;
@@ -1592,6 +1619,21 @@ export type $OpenApiTs = {
   '/v1/conversations/{conversation_id}/synthesize/{message_id}': {
     get: {
       req: SynthesizeMessageV1ConversationsConversationIdSynthesizeMessageIdGetData;
+      res: {
+        /**
+         * Successful Response
+         */
+        200: unknown;
+        /**
+         * Validation Error
+         */
+        422: HTTPValidationError;
+      };
+    };
+  };
+  '/v1/conversations/upload_folder': {
+    post: {
+      req: UploadFolderV1ConversationsUploadFolderPostData;
       res: {
         /**
          * Successful Response

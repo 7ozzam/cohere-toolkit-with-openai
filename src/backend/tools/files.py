@@ -3,6 +3,7 @@ from typing import Any, Dict, List
 
 import backend.crud.file as file_crud
 from backend.tools.base import BaseTool
+from backend.database_models import File
 
 
 class FileToolsArtifactTypes(StrEnum):
@@ -29,10 +30,11 @@ class ReadFileTool(BaseTool):
         file = parameters.get("file")
         _file_id = parameters.get("file_id") or parameters.get("id")
         _file_name = parameters.get("filename")
-        
+        _file_ids = parameters.get("file_ids")
+        print("Called_file_ids: ", _file_ids)
         session = kwargs.get("session")
         user_id = kwargs.get("user_id")
-        if not file and not _file_id and not _file_name:
+        if not file and not _file_id and not _file_name and not _file_ids:
             return []
         elif file:
             if isinstance(file, str):
@@ -46,7 +48,25 @@ class ReadFileTool(BaseTool):
             retrieved_file = file_crud.get_file_by_name(session, _file_name, user_id)
         elif _file_id:
             retrieved_file = file_crud.get_file(session, _file_id, user_id)
-            
+        elif _file_ids:
+            retrieved_files = file_crud.get_files_by_ids(session, _file_ids, user_id)
+            print("retrieved_files_ont: ", retrieved_files)
+            # Initialize a variable to hold the combined content
+            combined_file_name = "Compination of Files "
+            combined_content = ""
+
+            # Iterate through the retrieved files
+            for retrieved_file in retrieved_files:
+                # Assuming each retrieved file has 'filename' and 'content' attributes
+                filename = retrieved_file.file_name
+                combined_file_name += f"{filename}, "
+                file_content = retrieved_file.file_content
+                
+                # Append the content with the 'FILE START' and 'FILE END' markers
+                combined_content += f"FILE START {filename}\n"
+                combined_content += file_content + "\n"
+                combined_content += f"FILE END {filename}\n\n"  # Adding extra newline for separation
+            retrieved_file = File(file_name=combined_file_name,file_content=combined_content)
         
         
         

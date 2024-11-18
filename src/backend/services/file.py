@@ -2,11 +2,15 @@ import io
 import re
 import os
 
+from typing import Optional
 import pandas as pd
 from docx import Document
 from fastapi import Depends, HTTPException
 from fastapi import UploadFile as FastAPIUploadFile
 from python_calamine.pandas import pandas_monkeypatch
+
+
+
 
 import backend.crud.conversation as conversation_crud
 import backend.crud.file as file_crud
@@ -14,12 +18,21 @@ from backend.crud import message as message_crud
 from backend.database_models.conversation import ConversationFileAssociation
 from backend.database_models.database import DBSessionDep
 from backend.database_models.file import File as FileModel
+from backend.database_models.folder import Folder
+from backend.schemas.cohere_chat import CohereChatRequest
 from backend.schemas.context import Context
 from backend.schemas.file import ConversationFilePublic, File
 from backend.services import utils
 from backend.services.agent import validate_agent_exists
 from backend.services.context import get_context
 from backend.services.logger.utils import LoggerFactory
+from backend.services.chat import generate_chat_response
+# from backend.services.conversation import (
+#     validate_conversation,
+# )
+from backend.schemas.agent import Agent
+from backend.crud import agent as agent_crud
+
 
 MAX_FILE_SIZE = 20_000_000  # 20MB
 MAX_TOTAL_FILE_SIZE = 1_000_000_000  # 1GB
@@ -34,6 +47,27 @@ EXCEL_OLD_EXTENSION = "xls"
 JSON_EXTENSION = "json"
 DOCX_EXTENSION = "docx"
 PARQUET_EXTENSION = "parquet"
+
+
+DEFAULT_TITLE = ""
+FOLDER_INFO_PROMPT_PART="""
+This file is a part of a folder called {folder_name}.
+in the path: {file_path}
+"""
+GENERATE_FILE_NAME_PROMPT = """# TASK
+Given the following file information, write a short file name that summarizes the topic of file. Be concise and respond with just a generated file name that suites the file.
+
+## START FILE Information
+{folder_prompt_part}
+The Original File name is: {file_name}
+## END FILE Information
+
+## START File Content
+{file_content}
+## END File Content
+
+# TITLE
+"""
 
 # Monkey patch Pandas to use Calamine for Excel reading because Calamine is faster than Pandas
 pandas_monkeypatch()
@@ -85,7 +119,7 @@ class FileService:
         Returns:
             list[File]: The files that were created
         """
-        uploaded_files = await insert_files_in_db(session, files, user_id)
+        uploaded_files = await insert_files_in_db(session, files, user_id, conversation_id= conversation_id, ctx=ctx)
 
         for file in uploaded_files:
             conversation_crud.create_conversation_file_association(
@@ -193,6 +227,40 @@ class FileService:
             files = file_crud.get_files_by_ids(session, file_ids, user_id)
 
         return files
+    
+    def get_files_without_folders_by_conversation_id(
+        self, session: DBSessionDep, user_id: str, conversation_id: str, ctx: Context
+        ) -> list[FileModel]:
+        """
+        Get files by conversation ID that are not associated with any folder.
+
+        Args:
+            session (DBSessionDep): The database session
+            user_id (str): The user ID
+            conversation_id (str): The conversation ID
+
+        Returns:
+            list[FileModel]: The files that are not associated with any folder.
+        """
+        conversation = conversation_crud.get_conversation(
+            session, conversation_id, user_id
+        )
+        if not conversation:
+            raise HTTPException(
+                status_code=404,
+                detail=f"Conversation with ID: {conversation_id} not found.",
+            )
+        file_ids = conversation.file_ids
+
+        files = []
+        if file_ids is not None:
+            # Retrieve files by their IDs
+            all_files = file_crud.get_files_by_ids(session, file_ids, user_id)
+            # Filter files that do not have a folder_id
+            files = [file for file in all_files if not file.folder_id]
+
+        return files
+
 
     def delete_conversation_file_by_id(
         self,
@@ -285,7 +353,51 @@ class FileService:
             files = file_crud.get_files_by_ids(session, message.file_ids, user_id)
 
         return files
+    
+    # Files Folder Handling
+    async def associate_files_to_folder(
+        self,
+        session: DBSessionDep,
+        folder: Folder,
+        user_id: str,
+        files: list[FastAPIUploadFile],
+        paths: list[str],
+        conversation_id: str,
+        ctx: Context = Depends(get_context),
+    ) -> list:
+        """
+        Associates uploaded files to a specific folder.
 
+        Args:
+            session (DBSessionDep): The database session
+            folder_id (str): The folder ID to associate files with
+            user_id (str): The user ID
+            files (list[FastAPIUploadFile]): A list of files to associate with the folder
+
+        Returns:
+            list: List of file metadata
+        """
+        associated_files = []
+        
+        for index, file in enumerate(files):
+            # Check file extension
+            # _, extension = os.path.splitext(file.filename)
+            # extension = extension[1:].lower()  # Get the file extension and convert to lower case
+            
+            # if extension not in SUPPORTED_EXTENSIONS:
+            #     raise HTTPException(
+            #         status_code=400,
+            #         detail=f"File type {extension} is not supported."
+            #     )
+
+            # Save the file (You will need to implement this)
+            # await self.save_file(file, file_location)
+            saved_file = await insert_files_in_db(session, [file], user_id, folder=folder, path=paths[index], ctx=ctx, conversation_id=conversation_id)
+
+            # Create file record in the database
+            associated_files.append(saved_file)
+
+        return associated_files
 
 # Misc
 def validate_file(
@@ -326,6 +438,10 @@ async def insert_files_in_db(
     session: DBSessionDep,
     files: list[FastAPIUploadFile],
     user_id: str,
+    path: str = None,
+    conversation_id: str = None,
+    folder: Folder = None,
+    ctx: Context = Depends(get_context),
 ) -> list[File]:
     """
     Insert files into the database
@@ -346,9 +462,27 @@ async def insert_files_in_db(
         _, extension = os.path.splitext(filename)
         
         # I found that file name sometimes affect the accuracy of the model.
-        filename = content[0:64].replace(" ", "").encode("ascii", "ignore").decode("utf-8") + f"{extension}"
+        
         filename = sanitize_filename(filename)
         
+        conversation = conversation_crud.get_conversation(session, conversation_id, user_id)
+        print("Conversation O User: ", conversation)
+        agent_id = conversation.agent_id if conversation and conversation.agent_id else None
+
+        if agent_id:
+            agent = agent_crud.get_agent_by_id(session, agent_id, user_id)
+            agent_schema = Agent.model_validate(agent)
+            ctx.with_agent(agent_schema)
+            deployment = agent.deployments[0]
+            ctx.with_deployment_name(deployment.name)
+            
+        print("Agent ID GEN FILE: ", agent_id)
+        print("Agent GEN FILE: ", agent)
+        print("MODEL GEN FILE: ", agent.model)
+        generated_file_name, error = await generate_file_name(session,file_name=filename, folder_name=folder.name if folder else None, file_content=content, path=path,  agent_id=agent_id, ctx=ctx, model=agent.model)
+        file_generated_name = f"{generated_file_name}{extension}"
+        # file_generated_name = content[0:64].replace(" ", "").encode("ascii", "ignore").decode("utf-8") + f"{extension}"
+        file_generated_name = sanitize_filename(file_generated_name)
         
 
         
@@ -356,9 +490,12 @@ async def insert_files_in_db(
         files_to_upload.append(
             FileModel(
                 file_name=filename,
+                file_generated_name=file_generated_name,
                 file_size=file.size,
                 file_content=cleaned_content,
                 user_id=user_id,
+                folder_id=folder.id if folder else None,
+                path=path
             )
         )
 
@@ -476,3 +613,74 @@ async def get_file_content(file: FastAPIUploadFile) -> str:
         return read_excel(file_contents)
 
     raise ValueError(f"File extension {file_extension} is not supported")
+
+
+async def generate_file_name(
+    session: DBSessionDep,
+    file_name: str,
+    file_content: str,
+    agent_id: str,
+    path: str | None,
+    folder_name: str | None = None,
+    ctx: Context = Depends(get_context),
+    model: Optional[str] = "command-r",
+) -> tuple[str, str | None]:
+    """Generate a title for a conversation
+
+    Args:
+        request: Request object
+        session: Database session
+        conversation: Conversation object
+        model_config: Model configuration
+        agent_id: Agent ID
+        ctx: Context object
+        model: Model name
+
+    Returns:
+        str: Generated title
+        str: Error message
+    """
+    
+    from backend.chat.custom.custom import CustomChat
+    
+    user_id = ctx.get_user_id()
+    logger = ctx.get_logger()
+    generated_file_name = ""
+    error = None
+
+    # try:
+    folder_prompt_part = ""
+    if path and folder_name:
+        folder_prompt_part = FOLDER_INFO_PROMPT_PART.format(folder_name=folder_name, file_path=path)
+    prompt = GENERATE_FILE_NAME_PROMPT.format(file_content=file_content, file_path=path, file_name=file_name, folder_prompt_part=folder_prompt_part)
+    # prompt = GENERATE_FILE_NAME_PROMPT % file_content
+    chat_request = CohereChatRequest(
+        message=prompt,
+        model=model,
+    )
+
+    response = await generate_chat_response(
+        session,
+        CustomChat().chat(
+            chat_request,
+            stream=False,
+            agent_id=agent_id,
+            ctx=ctx,
+        ),
+        response_message=None,
+        conversation_id=None,
+        user_id=user_id,
+        should_store=False,
+        ctx=ctx,
+    )
+    
+    generated_file_name = response.text
+    error = response.error
+    # except Exception as e:
+    #     generated_file_name = DEFAULT_TITLE
+    #     error = str(e)
+    #     logger.error(
+    #         event=f"[Conversation] Error generating file name: File, {e}",
+    #     )
+
+    return generated_file_name, error

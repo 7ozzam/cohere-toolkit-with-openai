@@ -64,7 +64,7 @@ class CohereToOpenAI:
                     
                     
     @staticmethod
-    def extract_json_from_string(string_with_json: str):
+    def extract_json_from_string(string_with_json: str, keep_original: bool = False) -> str:
         # Find the position of the first '{'
         start = string_with_json.find('{')
         # Find the position of the last '}'
@@ -74,7 +74,8 @@ class CohereToOpenAI:
         if start != -1 and end != -1 and start < end:
             # Replace tuples with arrays
             json_string = string_with_json[start:end + 1]
-            json_string = json_string.replace('(', '[').replace(')', ']').replace("'", '"')
+            if not keep_original:           
+                json_string = json_string.replace('(', '[').replace(')', ']').replace("'", '"')
             
             return json_string
         else:
@@ -122,6 +123,7 @@ class CohereToOpenAI:
         
         
         # Extract JSON from the response
+        original_json_string = CohereToOpenAI.extract_json_from_string(previous_response, keep_original=True)
         extracted_json_string = CohereToOpenAI.extract_json_from_string(previous_response)
         print("extracted_json_string:", extracted_json_string)
 
@@ -168,6 +170,20 @@ class CohereToOpenAI:
                     response=response
                 )
 
+                # class RemoveResponse:
+                #     def __init__(self, extracted_json_string):
+                #         self.event_type = "remove-part"
+                #         self.part = extracted_json_string
+
+                
+                # removeResponse = ToolCallsChunkStreamedChatResponse(event_type="tool-calls-chunk", text="OAI_REMOVE", part=extracted_json_string)
+                removeResponse =  ToolCallsGenerationStreamedChatResponse(
+                        event_type="tool-calls-generation", 
+                        tool_calls=[], 
+                        text=f"OAI_REMOVE{original_json_string}"
+                        # text=f"{str(parsed_response)})"
+                    )
+
                 return [
                     TextGenerationStreamedChatResponse(event_type="text-generation", text=stream_message),
                     ToolCallsChunkStreamedChatResponse(event_type="tool-calls-chunk", tool_call_delta=tool_call_delta),
@@ -177,6 +193,8 @@ class CohereToOpenAI:
                         text=f"Retrieving tool response...\n{str(parsed_response)})"
                         # text=f"{str(parsed_response)})"
                     ),
+                   
+                    removeResponse,
                     end_response
                 ]
 

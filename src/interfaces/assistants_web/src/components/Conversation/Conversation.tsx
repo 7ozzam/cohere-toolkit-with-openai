@@ -12,10 +12,10 @@ import {
   useConversationFileActions,
   useWelcomeGuideState,
 } from '@/hooks';
+import { useFolderActions } from '@/hooks/use-folder';
 import { useConversationStore } from '@/stores';
 import { ConfigurableParams } from '@/stores/slices/paramsSlice';
 import { ChatMessage } from '@/types/message';
-import { useFolderActions, useUploadFolderFiles } from '@/hooks/use-folder';
 
 type Props = {
   startOptionsEnabled?: boolean;
@@ -62,7 +62,7 @@ export const Conversation: React.FC<Props> = ({ agent, tools, startOptionsEnable
 
   const handleAttachFolder = async (folder: FileSystemDirectoryHandle) => {
     console.log(folder);
-    
+    console.log(conversationId);
     await uploadFolder(folder, conversationId);
     // await uploadFiles(files, conversationId);
   };

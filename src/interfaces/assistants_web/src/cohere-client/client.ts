@@ -18,8 +18,8 @@ import {
   UpdateDeploymentEnv,
 } from '@/cohere-client';
 
-import { mapToChatRequest } from './mappings';
 import { CohereFolderHandling } from './folderHandling';
+import { mapToChatRequest } from './mappings';
 
 export class CohereClient {
   private readonly hostname: string;
@@ -348,23 +348,37 @@ export class CohereClient {
     return headers;
   }
 
-
-
   // Folder Handling
   public getFolderHandling() {
     return this.folderHandling;
   }
 
-  public uploadFolderFiles({ folderId, conversationId, files }: { folderId: string; files: File[]; conversationId: string | undefined }) {
+  public uploadFolderFiles({
+    folderName,
+    conversationId,
+    files,
+  }: {
+    folderName: string;
+    files: { path: string; file: File }[];
+    conversationId: string | undefined;
+  }) {
     if (!conversationId) throw new Error('Conversation ID not found');
-    return this.folderHandling.uploadFolderFiles({ conversationId, folderId, files });
+    if (!files.length) throw new Error('Folder is empty');
+    return this.folderHandling.uploadFolderFiles({ conversationId, folderName, files });
   }
-  public createFolder({ folderName, conversationId }: { folderName: string; conversationId: string }) {
-    return this.folderHandling.createFolder({ folderName, conversationId });
+  public createFolder({
+    folderName,
+    conversationId,
+    files,
+  }: {
+    folderName: string;
+    conversationId: string;
+    files: File[];
+  }) {
+    return this.folderHandling.createFolder({ folderName, conversationId, files });
   }
 
   public listFolders({ conversationId }: { conversationId: string }) {
     return this.folderHandling.listFolders({ conversationId });
   }
-
 }

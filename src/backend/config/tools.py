@@ -76,9 +76,9 @@ ALL_TOOLS = {
         display_name="Read Document",
         implementation=ReadFileTool,
         parameter_definitions={
-            "file_id": {
-                "description": "A file_id which is provided by the system when the user uploads a file",
-                "type": "str",
+            "file_ids": {
+                "description": "file_ids which is provided by the system when the user uploads files",
+                "type": "array",
                 "required": False,
             },
             # "file": {

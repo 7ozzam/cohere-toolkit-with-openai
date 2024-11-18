@@ -42,12 +42,9 @@ export const FilesMenu: React.FC<Props> = ({ onUploadFile, onAttachFolder }) => 
         <PopoverButton
           as="button"
           className={({ open }) =>
-            cn(
-              'flex items-center justify-center rounded p-1 outline-none dark:fill-marble-800',
-              {
-                [bg]: open,
-              }
-            )
+            cn('flex items-center justify-center rounded p-1 outline-none dark:fill-marble-800', {
+              [bg]: open,
+            })
           }
         >
           {({ open }) => <Icon className={cn({ [contrastFill]: open })} name="paperclip" />}

@@ -270,6 +270,37 @@ export const $Body_batch_upload_file_v1_conversations_batch_upload_file_post = {
   title: 'Body_batch_upload_file_v1_conversations_batch_upload_file_post',
 } as const;
 
+export const $Body_upload_folder_v1_conversations_upload_folder_post = {
+  properties: {
+    conversation_id: {
+      type: 'string',
+      title: 'Conversation Id',
+    },
+    folder_name: {
+      type: 'string',
+      title: 'Folder Name',
+    },
+    files: {
+      items: {
+        type: 'string',
+        format: 'binary',
+      },
+      type: 'array',
+      title: 'Files',
+    },
+    paths: {
+      items: {
+        type: 'string',
+      },
+      type: 'array',
+      title: 'Paths',
+    },
+  },
+  type: 'object',
+  required: ['files', 'paths'],
+  title: 'Body_upload_folder_v1_conversations_upload_folder_post',
+} as const;
+
 export const $Category = {
   type: 'string',
   enum: ['Data loader', 'File loader', 'Function', 'Web search'],
@@ -1827,6 +1858,35 @@ export const $ListConversationFile = {
       title: 'File Size',
       default: 0,
     },
+    item_type: {
+      type: 'string',
+      enum: ['file', 'folder'],
+      title: 'Item Type',
+      default: 'file',
+    },
+    folder_id: {
+      anyOf: [
+        {
+          type: 'string',
+        },
+        {
+          type: 'null',
+        },
+      ],
+      title: 'Folder Id',
+    },
+    files: {
+      anyOf: [
+        {
+          items: {},
+          type: 'array',
+        },
+        {
+          type: 'null',
+        },
+      ],
+      title: 'Files',
+    },
   },
   type: 'object',
   required: ['id', 'user_id', 'created_at', 'updated_at', 'conversation_id', 'file_name'],
@@ -2190,9 +2250,39 @@ export const $Model = {
       ],
       title: 'Description',
     },
+    use_compelation: {
+      anyOf: [
+        {
+          type: 'string',
+        },
+        {
+          type: 'null',
+        },
+      ],
+      title: 'Use Compelation',
+    },
+    prompt_template: {
+      anyOf: [
+        {
+          type: 'string',
+        },
+        {
+          type: 'null',
+        },
+      ],
+      title: 'Prompt Template',
+    },
   },
   type: 'object',
-  required: ['id', 'name', 'deployment_id', 'cohere_name', 'description'],
+  required: [
+    'id',
+    'name',
+    'deployment_id',
+    'cohere_name',
+    'description',
+    'use_compelation',
+    'prompt_template',
+  ],
   title: 'Model',
 } as const;
 
@@ -2223,14 +2313,37 @@ export const $ModelCreate = {
         },
       ],
       title: 'Description',
+      default: '',
     },
     deployment_id: {
       type: 'string',
       title: 'Deployment Id',
     },
+    use_compelation: {
+      anyOf: [
+        {
+          type: 'string',
+        },
+        {
+          type: 'null',
+        },
+      ],
+      title: 'Use Compelation',
+    },
+    prompt_template: {
+      anyOf: [
+        {
+          type: 'string',
+        },
+        {
+          type: 'null',
+        },
+      ],
+      title: 'Prompt Template',
+    },
   },
   type: 'object',
-  required: ['name', 'cohere_name', 'description', 'deployment_id'],
+  required: ['name', 'cohere_name', 'deployment_id'],
   title: 'ModelCreate',
 } as const;
 
@@ -2317,6 +2430,28 @@ export const $ModelUpdate = {
         },
       ],
       title: 'Deployment Id',
+    },
+    use_compelation: {
+      anyOf: [
+        {
+          type: 'string',
+        },
+        {
+          type: 'null',
+        },
+      ],
+      title: 'Use Compelation',
+    },
+    prompt_template: {
+      anyOf: [
+        {
+          type: 'string',
+        },
+        {
+          type: 'null',
+        },
+      ],
+      title: 'Prompt Template',
     },
   },
   type: 'object',

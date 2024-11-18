@@ -90,20 +90,52 @@ class OpenAIDeployment(BaseDeployment):
         """Check if the deployment is available based on the API key."""
         return cls.default_api_key is not None
 
-    async def invoke_chat(self, chat_request: Any) -> Any: 
+    async def invoke_chat(self, chat_request: Any) -> Any:
         """Invoke chat completion using the OpenAI-compatible API."""
         try:
+            # Append user message if needed
+            appended_user_message = False
+            if not appended_user_message and chat_request.message:
+                user_message = ChatMessage(role=ChatRole.USER, message=chat_request.message)
+                if chat_request.chat_history and len(chat_request.chat_history) > 0:
+                    chat_request.chat_history.append(user_message)
+                else:
+                    chat_request.chat_history = [user_message]
+                appended_user_message = True
+
+            # Prepare request body
+            openAi_chat_request = CohereToOpenAI.cohere_to_openai_chat_request_body(chat_request)
+            print("openAi_chat_request: ", openAi_chat_request)
+
+            # Invoke OpenAI API for non-streamed response
             response = await asyncio.to_thread(
                 self.openai.chat.completions.create,
-                model=chat_request.model,
-                messages=chat_request.model_dump(exclude={"stream", "file_ids", "agent_id"})["messages"],
-                # extra_body={"options": {"num_ctx": 128000}},
+                **openAi_chat_request,
                 stream=False
             )
-            return to_dict(response)
+
+            # Extract and process the response
+            response_dict = to_dict(response)
+            full_message = ""
+
+            # Process response content
+            choices = response_dict.get("choices", [])
+            if choices and len(choices) > 0:
+                full_message = choices[0].get("message", {}).get("content", "")
+
+            # Construct final output
+            if full_message:
+                print("Full Response Message: ", full_message)
+                return {"message": full_message, "raw_response": response_dict}
+
+            # Log and raise an error if no message is present
+            logger.error("No message content found in the response")
+            raise ValueError("Invalid response: Missing content")
+
         except Exception as e:
             logger.error(f"Error invoking chat: {e}")
             raise
+
 
     
   
@@ -226,12 +258,33 @@ class OpenAIDeployment(BaseDeployment):
                         cohere_events = []
 
                     if cohere_events and len(cohere_events) > 0:
+                                    
                         for cohere_event in cohere_events:
+                            if cohere_event.event_type == "tool-calls-generation" and cohere_event.text and "OAI_REMOVE" in cohere_event.text:
+                                to_remove = cohere_event.text.replace("OAI_REMOVE", "")  # Strip any leading/trailing spaces
+                                print("BEFORE REMOVED TOOL CALL", full_previous_response)
+                                print("REMOVING", f"""{to_remove}""")
+                                
+                                # Check if the text to remove exists in the previous response before attempting to replace
+                                if to_remove in full_previous_response:
+                                    full_previous_response = full_previous_response.replace(f"""{to_remove}""", "")
+                                    print("REMOVED TOOL CALL", full_previous_response)
+                                else:
+                                    print(f"Text '{to_remove}' not found in the previous response.")
+
+                                
                             if (cohere_event.event_type == "tool-calls-generation" or cohere_event.event_type == "tool-calls-chunk"):
                                 function_triggered = "calling"
+                                    
+                                    
                                 if cohere_event.event_type == "tool-calls-generation" and cohere_event.tool_calls and len(cohere_event.tool_calls) > 0:
                                     for tool_call in cohere_event.tool_calls:
+                                        
                                         tool_call_dict = {f"{str(tool_call.name)}": tool_call.parameters}
+                                        
+                                        
+                                        
+                                        
                                         tool_call_message = ChatMessage(role=ChatRole.CHATBOT, message="I'm calling a system tool to retrieve information", tool_calls=[tool_call_dict])
                                         if chat_request.chat_history and len(chat_request.chat_history) > 0:
                                             chat_request.chat_history.append(tool_call_message)

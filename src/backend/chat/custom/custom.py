@@ -15,6 +15,7 @@ from backend.schemas.context import Context
 from backend.schemas.tool import Category, Tool
 from backend.services.chat import check_death_loop
 from backend.services.file import get_file_service
+from backend.services.folder import get_folder_service
 from backend.tools.utils.tools_checkers import tool_has_category
 from backend.crud import model as model_crud
 from backend.database_models import Model
@@ -205,6 +206,10 @@ class CustomChat(BaseChat):
                 files = get_file_service().get_files_by_conversation_id(
                     session, user_id, ctx.get_conversation_id(), ctx
                 )
+                
+                folders = get_folder_service().get_folders_by_conversation_id(
+                    session, user_id, ctx.get_conversation_id(), ctx)
+                folders_files = [file for folder in folders for file in folder.files]
 
                 agent_files = []
                 if agent_id:
@@ -212,15 +217,15 @@ class CustomChat(BaseChat):
                         session, user_id, agent_id, ctx
                     )
 
-                all_files = files + agent_files
-
+                all_files = files + agent_files + folders_files
+        print("all_files: ", all_files)
         # Add files to chat history if there are any
         # Otherwise, remove the Read_File and Search_File tools and all other FileReader tools
         if all_files:
             chat_request.chat_history = self.add_files_to_chat_history(
                 chat_request.chat_history,
                 session,
-                files + agent_files,
+                files + agent_files + folders_files,
             )
         else:
             chat_request.tools = [

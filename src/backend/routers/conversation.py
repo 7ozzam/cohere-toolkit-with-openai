@@ -1,6 +1,6 @@
-from typing import Optional
+from typing import List, Optional
 
-from fastapi import APIRouter, Depends, Form, HTTPException, Request
+from fastapi import APIRouter, Depends, File, Form, HTTPException, Request, UploadFile
 from fastapi import File as RequestFile
 from fastapi import UploadFile as FastAPIUploadFile
 from starlette.responses import Response
@@ -41,6 +41,12 @@ from backend.services.file import (
     get_file_service,
     validate_file,
 )
+
+from backend.services.folder import (
+    get_folder_service
+)
+
+
 from backend.services.synthesizer import synthesize
 
 router = APIRouter(
@@ -437,28 +443,68 @@ async def list_files(
     conversation_id: str, session: DBSessionDep, ctx: Context = Depends(get_context)
 ) -> list[ListConversationFile]:
     """
-    List all files from a conversation. Important - no pagination support yet.
-
-    Args:
-        conversation_id (str): Conversation ID.
-        session (DBSessionDep): Database session.
-        ctx (Context): Context object.
-
-    Returns:
-        list[ListConversationFile]: List of files from the conversation.
-
-    Raises:
-        HTTPException: If the conversation with the given ID is not found.
+    List all files from a conversation. Merges files from folders and individual files.
     """
     user_id = ctx.get_user_id()
     _ = validate_conversation(session, conversation_id, user_id)
 
-    files = get_file_service().get_files_by_conversation_id(
+    # Retrieve individual files
+    files = get_file_service().get_files_without_folders_by_conversation_id(
         session, user_id, conversation_id, ctx
     )
-    files_with_conversation_id = attach_conversation_id_to_files(
-        conversation_id, files)
-    return files_with_conversation_id
+
+    # Retrieve folders and their files
+    folders = get_folder_service().get_folders_by_conversation_id(
+        session, user_id, conversation_id, ctx
+    )
+
+    # Prepare folder files by serializing folder.files
+    folder_files = [
+        {
+            "id": folder.id,
+            "user_id": folder.user_id,
+            "created_at": folder.created_at,
+            "updated_at": folder.updated_at,
+            "file_name": folder.name,
+            "folder_id": folder.id,  # Use folder's ID from the folder object
+            "item_type": "folder",
+            "conversation_id": conversation_id,
+            "files": [
+                {
+                    "id": file.id,
+                    "user_id": file.user_id,
+                    "created_at": file.created_at,
+                    "updated_at": file.updated_at,
+                    "file_name": file.file_name,
+                    "folder_id": folder.id,
+                    "item_type": "file",
+                }
+                for file in folder.files or []  # Serialize files in the folder
+            ],
+        }
+        for folder in folders
+    ]
+
+    # Merge individual files with folder files
+    all_files = [
+        {
+            "id": file.id,
+            "user_id": file.user_id,
+            "created_at": file.created_at,
+            "updated_at": file.updated_at,
+            "conversation_id": conversation_id,
+            "file_name": file.file_name,
+            "folder_id": None,
+            "item_type": "file",
+        }
+        for file in files
+    ] + folder_files
+
+    # Return as Pydantic models
+    return [ListConversationFile(**file) for file in all_files]
+
+
+
 
 
 @router.delete("/{conversation_id}/files/{file_id}")
@@ -490,6 +536,7 @@ async def delete_file(
     get_file_service().delete_conversation_file_by_id(
         session, conversation_id, file_id, user_id, ctx
     )
+    
 
     return DeleteConversationFileResponse()
 
@@ -548,6 +595,18 @@ async def generate_title(
     )
 
 
+@router.get("/{conversation_id}/files")
+async def list_conversation_files(
+    conversation_id: str,
+    message_id: str,
+    session: DBSessionDep,
+    ctx: Context = Depends(get_context),
+) -> Response:
+    files = get_file_service().get_files_by_conversation_id(
+        session, "user-id", conversation_id, ctx)
+    
+    return Response(files)
+    
 # SYNTHESIZE
 @router.get("/{conversation_id}/synthesize/{message_id}")
 async def synthesize_message(
@@ -588,3 +647,41 @@ async def synthesize_message(
         )
 
     return Response(synthesized_audio, media_type="audio/mp3")
+
+
+# Folder Handling
+@router.post("/upload_folder")
+async def upload_folder(
+    session: DBSessionDep,
+    conversation_id: str = Form(None),
+    folder_name: str = Form(None),
+    files: list[FastAPIUploadFile] = RequestFile(...),
+    paths: list[str] = Form(...),
+    ctx: Context = Depends(get_context)
+):
+    """
+    Uploads a folder with multiple files. 
+
+    Args:
+        session (DBSessionDep): Database session
+        user_id (str): The user ID
+        folder_name (str): The name of the folder
+        files (List[FastAPIUploadFile]): List of files to be uploaded
+        ctx (Context): Context object for additional request information
+
+    Returns:
+        List[UploadConversationFileResponse]: List of uploaded files with metadata
+    """
+    user_id = ctx.get_user_id()
+    
+    
+    
+    created_folder = await get_folder_service().create_folder(
+        session, folder_name, user_id, conversation_id
+    )
+    
+    uploaded_files = await get_file_service().associate_files_to_folder(
+        session, files=files, paths=paths, folder=created_folder, user_id=user_id, ctx=ctx, conversation_id=conversation_id
+    )
+
+    return uploaded_files

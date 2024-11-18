@@ -1,5 +1,5 @@
 import datetime
-from typing import Optional
+from typing import List, Literal, Optional
 
 from pydantic import BaseModel, Field
 
@@ -13,7 +13,10 @@ class File(BaseModel):
     conversation_id: Optional[str] = ""
     file_content: Optional[str] = ""
     file_name: str
+    file_path: str
     file_size: int = Field(default=0, ge=0)
+    # folder_id: Optional[str]
+    
 
     class Config:
         from_attributes = True
@@ -40,7 +43,9 @@ class AgentFilePublic(BaseModel):
     file_size: int = Field(default=0, ge=0)
 
 class ListConversationFile(ConversationFilePublic):
-    pass
+    item_type: Literal["file", "folder"] = "file"
+    folder_id: Optional[str] = None
+    files: Optional[list] = None
 
 
 class UploadConversationFileResponse(ConversationFilePublic):

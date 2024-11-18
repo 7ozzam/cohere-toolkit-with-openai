@@ -6,6 +6,7 @@ import { CitationsStore, createCitationsSlice } from '@/stores/slices/citationsS
 import { ConversationStore, createConversationSlice } from '@/stores/slices/conversationSlice';
 import { FilesStore, createFilesSlice } from '@/stores/slices/filesSlice';
 import { ParamStore, createParamsSlice } from '@/stores/slices/paramsSlice';
+
 import { FoldersStore, createFoldersSlice } from './slices/foldersSlice';
 
 export type ChatSettingsDefaultsValue = {
@@ -15,7 +16,11 @@ export type ChatSettingsDefaultsValue = {
   tools?: Tool[];
 };
 
-export type StoreState = CitationsStore & ConversationStore & FilesStore & ParamStore & FoldersStore;
+export type StoreState = CitationsStore &
+  ConversationStore &
+  FilesStore &
+  ParamStore &
+  FoldersStore;
 
 const useStore = create<StoreState>((...a) => ({
   ...createCitationsSlice(...a),
@@ -68,7 +73,6 @@ export const useFilesStore = () => {
     shallow
   );
 };
-
 
 export const useFoldersStore = () => {
   return useStore(

@@ -16,7 +16,12 @@ type Props = {
 /**
  * @description Renders the bottom toolbar of the composer that shows available and selected data sources.
  */
-export const ComposerToolbar: React.FC<Props> = ({ agent, tools, onUploadFile, onAttachFolder }) => {
+export const ComposerToolbar: React.FC<Props> = ({
+  agent,
+  tools,
+  onUploadFile,
+  onAttachFolder,
+}) => {
   return (
     <div
       className={cn(

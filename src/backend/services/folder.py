@@ -1,8 +1,9 @@
 import os
-from fastapi import HTTPException
+from fastapi import HTTPException, UploadFile
 import backend.crud.folder as folder_crud
 import backend.crud.file as file_crud
 from backend.database_models.folder import Folder
+from backend.database_models.file import File
 from backend.services.file import sanitize_filename
 from backend.database_models.conversation import ConversationFolderAssociation
 # from backend.database_models.agent import AgentFolderAssociation
@@ -13,6 +14,20 @@ from backend.schemas.context import Context
 
 logger = LoggerFactory().get_logger()
 
+folder_service = None
+
+def get_folder_service():
+    """
+    Initialize a singular instance of FileService if not initialized yet
+
+    Returns:
+        FileService: The singleton FileService instance
+    """
+    global folder_service
+    if folder_service is None:
+        folder_service = FolderService()
+    return folder_service
+
 class FolderService:
     """
     FolderService class to manage folder operations
@@ -22,7 +37,7 @@ class FolderService:
         pass
 
     async def create_folder(
-        self, session: DBSessionDep, folder_name: str, user_id: str, ctx: Context
+        self, session: DBSessionDep, folder_name: str, user_id: str, conversation_id: str
     ) -> Folder:
         """
         Create a new folder
@@ -37,9 +52,12 @@ class FolderService:
             Folder: The created folder
         """
         sanitized_folder_name = sanitize_filename(folder_name)
-        folder = Folder(folder_name=sanitized_folder_name, user_id=user_id)
-
-        folder = folder_crud.create_folder(session, folder)
+        folder = Folder(name=sanitized_folder_name, user_id=user_id)
+        
+        folder = folder_crud.create_folder(session, folder, conversation_id, user_id)
+        associate = folder_crud.associate_folder_with_conversation(session, folder.id, conversation_id, user_id)
+        
+       
 
         return folder
 
@@ -59,6 +77,9 @@ class FolderService:
         folders = folder_crud.get_folders_by_user_id(session, user_id)
 
         return folders
+
+
+  
 
     def get_folders_by_conversation_id(
         self, session: DBSessionDep, user_id: str, conversation_id: str, ctx: Context
@@ -80,6 +101,39 @@ class FolderService:
         folders = folder_crud.get_folders_by_ids(session, folder_ids, user_id)
 
         return folders
+    
+    def get_folders_files_by_conversation_id(self, session: DBSessionDep, user_id: str, conversation_id: str, ctx: Context) -> list[File]:
+        """
+        Get all files from folders associated with a conversation.
+
+        Args:
+            session (DBSessionDep): The database session.
+            user_id (str): The user ID.
+            conversation_id (str): The conversation ID.
+            ctx (Context): The context object.
+
+        Returns:
+            list[File]: The files associated with the conversation's folders.
+        """
+
+
+        # Retrieve folders by IDs
+        folders = self.get_folders_by_conversation_id(
+                session, user_id, conversation_id, ctx
+            )
+        
+        if not folders:
+            return []  # No associated folders, return empty list
+
+        # Safely collect files from all retrieved folders
+        folder_files = [
+            file
+            for folder in folders
+            for file in folder.files  # Here folder.files is a list of File objects
+        ]
+
+        return folder_files
+
 
     async def associate_folder_with_conversation(
         self,
@@ -161,7 +215,7 @@ class FolderService:
 
     # def attach_conversation_id_to_folders(
     #     self, conversation_id: str, folders: list[Folder]
-    # ) -> list[ConversationFolderPublic]:
+    # ) -> list:
     #     """
     #     Attach conversation ID to folders for response
 

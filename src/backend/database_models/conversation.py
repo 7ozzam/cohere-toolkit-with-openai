@@ -24,6 +24,7 @@ class ConversationFolderAssociation(Base):
     user_id: Mapped[str] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"))
     folder_id: Mapped[int] = mapped_column(ForeignKey("folders.id", ondelete="CASCADE"))
 
+    # Define the relationship with Folder and Conversation
     conversation: Mapped["Conversation"] = relationship(
         "Conversation", back_populates="conversation_folder_associations"
     )

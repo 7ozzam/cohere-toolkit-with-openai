@@ -38,17 +38,20 @@ class QwenTemplateBuilder(BaseTemplateBuilder):
             - Avoid rephrasing the function results.
             - Avoid adding any additional information that doesn't belong in the function results.
             - Don't fix any missworded or incorrect words in the function results.
+            - Don't mix chapters or parts, just focus on user's request.
+            - Do NOT modify or rephrase or complete any retrieved content even if it has mistakes or incomplete or incorrect words.
             
             
             # Tools
             - For each function call, return a json object like this:
               {{'name': 'function_name', 'parameters': As Defined in the function}}
+            - Don't call any function that the system didn't tell you about.
             - You SHOULD NOT include any other text in the response of function call.
             - All function calls must strictly follow the format outlined above.
             - Include all necessary parameters as defined by the function.
             - Only one function call is allowed per response.
-            - Don't mix chapters or parts, just focus on user's request.
-            
+            - The tool response per call is consumed once and then disappears.
+                
             You are provided with function signatures within <tools></tools> XML tags:
             <tools>
             {self.build_tools_section(full_body=False)}
@@ -57,6 +60,7 @@ class QwenTemplateBuilder(BaseTemplateBuilder):
 
             Reminder:
                 - Function calls MUST follow the specified format.
+                - DO NOT call any function that the system didn't tell you about.
                 - Required parameters MUST be specified.
                 - Only call one function at a time.
                 - Place the entire function call reply on one line.

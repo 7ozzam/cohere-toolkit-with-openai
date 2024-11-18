@@ -14,7 +14,9 @@ type Props = {
 };
 
 export const ConfigStep: React.FC<Props> = ({ fields, setFields }) => {
-  const [selectedDeploymentValue, setSelectedDeploymentValue] = useState<string | undefined>(DEFAULT_AGENT_MODEL);
+  const [selectedDeploymentValue, setSelectedDeploymentValue] = useState<string | undefined>(
+    DEFAULT_AGENT_MODEL
+  );
   const [selectedValue, setSelectedValue] = useState<string | undefined>(DEFAULT_AGENT_MODEL);
   const { data: deployments } = useListAllDeployments();
 
@@ -22,16 +24,24 @@ export const ConfigStep: React.FC<Props> = ({ fields, setFields }) => {
   //   ({ name }) => name === fields.deployment
   // )?.models;
 
-  const filteredDeployments = deployments?.filter((dep)=> dep.is_available)
-  
-  const deploymentOptions: DropdownOption[] = filteredDeployments?.map((deployment) => ({ value: deployment.name, label: deployment.name })) || [];
+  const filteredDeployments = deployments?.filter((dep) => dep.is_available);
+
+  const deploymentOptions: DropdownOption[] =
+    filteredDeployments?.map((deployment) => ({
+      value: deployment.name,
+      label: deployment.name,
+    })) || [];
   console.log(deploymentOptions);
-  let modelOptions: DropdownOption[] = []
-  
+  let modelOptions: DropdownOption[] = [];
+
   function getModelOptions(deployment: string | undefined) {
-    if (!deployment) return []
-    modelOptions = filteredDeployments?.filter((dep) => dep.name === deployment)?.map(({ models }) => models.map((model) => ({ value: model, label: model }))).flat() || []
-    return modelOptions ?? []
+    if (!deployment) return [];
+    modelOptions =
+      filteredDeployments
+        ?.filter((dep) => dep.name === deployment)
+        ?.map(({ models }) => models.map((model) => ({ value: model, label: model })))
+        .flat() || [];
+    return modelOptions ?? [];
   }
   return (
     <div className="flex flex-col space-y-4">
@@ -44,7 +54,7 @@ export const ConfigStep: React.FC<Props> = ({ fields, setFields }) => {
           setSelectedDeploymentValue(deployment);
         }}
       />
-      
+
       <Dropdown
         label="Model"
         options={getModelOptions(selectedDeploymentValue)}

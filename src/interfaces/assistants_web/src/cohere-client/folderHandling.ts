@@ -108,7 +108,11 @@ export class CohereFolderHandling {
       const filesPayload: (File | Blob)[] = [];
       const pathsPayload: string[] = [];
       const originalFilesNamesPayload: string[] = [];
-      files.forEach((file) => {
+
+      // Sort files array by path before processing
+      const sortedFiles = [...files].sort((a, b) => a.path.localeCompare(b.path));
+      
+      sortedFiles.forEach((file) => {
         formData.append('files', file.file);
         filesPayload.push(file.file);
         formData.append('paths', file.path);

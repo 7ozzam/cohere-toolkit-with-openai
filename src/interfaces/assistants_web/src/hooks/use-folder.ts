@@ -3,6 +3,9 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useCohereClient } from '@/cohere-client';
 import { useNotify, useSession } from '@/hooks';
 import { useConversationStore, useFilesStore, useFoldersStore, useParamsStore } from '@/stores';
+import {FileSystemDirectoryHandle} from 'file-system-access'
+import { getFileExtension, mapExtensionToMimeType } from '@/utils';
+import { ACCEPTED_FILE_TYPES } from '@/constants';
 
 // Adjust this import based on your cohere client
 
@@ -147,7 +150,7 @@ export const useFolderActions = () => {
   };
 
   const getAllFiles = async (
-    directoryHandle: FileSystemDirectoryHandle | any,
+    directoryHandle: FileSystemDirectoryHandle,
     relativePath = ''
   ): Promise<{ path: string; file: File }[]> => {
     const files: { path: string; file: File }[] = [];
@@ -157,7 +160,20 @@ export const useFolderActions = () => {
 
       if (entry.kind === 'file') {
         const file = await entry.getFile();
-        files.push({ path: fullPath, file });
+        if (file.type.length === 0) {
+          const fileExtension = getFileExtension(file.name)!;
+          Object.defineProperty(file, 'type', {
+            value: mapExtensionToMimeType(fileExtension),
+          });
+        }
+
+        const isAcceptedExtension = ACCEPTED_FILE_TYPES.some(
+          (acceptedFile) => file.type === acceptedFile
+        );
+        
+        if (isAcceptedExtension) {
+          files.push({ path: fullPath, file });
+        }
       } else if (entry.kind === 'directory') {
         const subFiles = await getAllFiles(entry, fullPath);
         files.push(...subFiles);

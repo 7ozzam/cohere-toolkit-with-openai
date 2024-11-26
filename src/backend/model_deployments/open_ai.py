@@ -282,7 +282,7 @@ class OpenAIDeployment(BaseDeployment):
                                 
                                 # Check if the text to remove exists in the previous response before attempting to replace
                                 if to_remove in full_previous_response:
-                                    full_previous_response = full_previous_response.replace(f"""{to_remove}""", "").
+                                    full_previous_response = full_previous_response.replace(f"""{to_remove}""", "")
                                     print("REMOVED TOOL CALL", full_previous_response)
                                 else:
                                     print(f"Text '{to_remove}' not found in the previous response.")

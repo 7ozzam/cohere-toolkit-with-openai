@@ -5,6 +5,7 @@ import { Icon, Text, Tooltip } from '@/components/UI';
 import { ACCEPTED_FILE_TYPES } from '@/constants';
 import { useBrandedColors, useChatRoutes } from '@/hooks';
 import { cn, mapMimeTypeToExtension } from '@/utils';
+import { showDirectoryPicker } from 'file-system-access';
 
 type Props = {
   onUploadFile: (files: File[]) => void;
@@ -28,7 +29,7 @@ export const FilesMenu: React.FC<Props> = ({ onUploadFile, onAttachFolder }) => 
 
   const handleAttachFolder = async (callback: VoidFunction) => {
     try {
-      const directoryHandle = await (window as any).showDirectoryPicker();
+      const directoryHandle = await showDirectoryPicker();
       onAttachFolder(directoryHandle);
       callback();
     } catch (error) {

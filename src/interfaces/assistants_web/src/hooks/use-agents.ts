@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { uniq } from 'lodash';
-import { useCallback, useMemo } from 'react';
+import { usePathname, useRouter } from 'next/navigation';
+import { useCallback, useEffect, useMemo } from 'react';
 
 import {
   AgentPublic,
@@ -10,7 +11,8 @@ import {
   useCohereClient,
 } from '@/cohere-client';
 import { BASE_AGENT } from '@/constants';
-import { useConversations } from '@/hooks';
+import { useChatRoutes, useConversationFileActions, useConversations } from '@/hooks';
+import { useCitationsStore, useConversationStore, useParamsStore } from '@/stores';
 
 export const useListAgents = () => {
   const cohereClient = useCohereClient();
@@ -18,7 +20,7 @@ export const useListAgents = () => {
     queryKey: ['listAgents'],
     queryFn: async () => {
       const agents = await cohereClient.listAgents({});
-      return agents.concat(BASE_AGENT);
+      return agents;
     },
   });
 };
@@ -54,14 +56,63 @@ export const useDeleteAgent = () => {
 
 export const useAgent = ({ agentId }: { agentId?: string }) => {
   const cohereClient = useCohereClient();
+  const { conversationId } = useChatRoutes();
+  const listAgents = useListAgents();
+  const pathname = usePathname();
+  const router = useRouter();
+
+  const { resetConversation } = useConversationStore();
+  const { resetCitations } = useCitationsStore();
+  const { resetFileParams } = useParamsStore();
+  const { clearComposerFiles } = useConversationFileActions();
+
+  const resetConversationSettings = useCallback(() => {
+    clearComposerFiles();
+    resetConversation();
+    resetCitations();
+    resetFileParams();
+  }, [clearComposerFiles, resetConversation, resetCitations, resetFileParams]);
+
+  // Handle navigation logic in a separate effect
+  useEffect(() => {
+    const handleNavigation = async () => {
+      // Skip navigation if we're already on the correct agent path
+      if (pathname.includes(`/a/${agentId}`)) {
+        return;
+      }
+
+      let targetAgentId = agentId;
+
+      // Use optional chaining and provide empty array as fallback
+      const agents = listAgents.data ?? [];
+      if (!targetAgentId && agents.length) {
+        targetAgentId = agents[0].id;
+      }
+
+      if (targetAgentId) {
+        let url = `/a/${targetAgentId}`;
+        if (conversationId) {
+          url += `/c/${conversationId}`;
+        }
+        router.push(url);
+        resetConversationSettings();
+      } else {
+        router.push('/new');
+      }
+    };
+
+    handleNavigation();
+  }, [agentId, conversationId, pathname, router, resetConversationSettings, listAgents.data]);
+
+  // Simplified query function that focuses only on data fetching
   return useQuery({
     queryKey: ['agent', agentId],
     queryFn: async () => {
       try {
-        if (!agentId) {
-          return BASE_AGENT;
+        if (agentId) {
+          return await cohereClient.getAgent(agentId);
         }
-        return await cohereClient.getAgent(agentId);
+        return BASE_AGENT;
       } catch (e) {
         console.error(e);
         throw e;
@@ -126,7 +177,7 @@ export const useRecentAgents = (limit: number = 5) => {
 
     // if still there are less than `limit` recent agents, fill with base agent
     if (recent.length < limit && recent.every((agent) => agent?.id !== BASE_AGENT.id)) {
-      recent = recent.concat(BASE_AGENT);
+      recent = recent;
     }
 
     return recent;

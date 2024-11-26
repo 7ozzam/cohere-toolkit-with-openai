@@ -15,7 +15,7 @@ import {
 } from '@/hooks';
 import { useParamsStore, useSettingsStore } from '@/stores';
 
-import { KnowledgeItem } from './KnowledgeItemView';
+import { KnowledgeItem } from './FolderUpload/KnowledgeItemView';
 
 export const ConversationPanel: React.FC = () => {
   const [isDeletingFile, setIsDeletingFile] = useState(false);

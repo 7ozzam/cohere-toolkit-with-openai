@@ -93,11 +93,13 @@ export class CohereFolderHandling {
    * @returns A promise resolving once the files are uploaded.
    */
   public async uploadFolderFiles({
+    agentId,
     conversationId,
     folderName,
     files,
   }: {
-    conversationId: string;
+    agentId: string;
+    conversationId?: string;
     folderName: string;
     files: { path: string; file: Blob | File }[];
   }) {
@@ -115,6 +117,7 @@ export class CohereFolderHandling {
       const response =
         await this.cohereClient.cohereService.default.uploadFolderV1ConversationsUploadFolderPost({
           formData: {
+            agent_id: agentId,
             conversation_id: conversationId,
             folder_name: folderName,
             files: filesPayload,

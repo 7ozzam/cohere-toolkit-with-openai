@@ -91,13 +91,13 @@ import type {
   ListAgentToolMetadataV1AgentsAgentIdToolMetadataGetResponse,
   ListAgentsV1AgentsGetData,
   ListAgentsV1AgentsGetResponse,
+  ListConversationFilesV1ConversationsConversationIdFilesGetData,
+  ListConversationFilesV1ConversationsConversationIdFilesGetResponse,
   ListConversationsV1ConversationsGetData,
   ListConversationsV1ConversationsGetResponse,
   ListDeploymentsV1DeploymentsGetData,
   ListDeploymentsV1DeploymentsGetResponse,
   ListExperimentalFeaturesV1ExperimentalFeaturesGetResponse,
-  ListFilesV1ConversationsConversationIdFilesGetData,
-  ListFilesV1ConversationsConversationIdFilesGetResponse,
   ListModelsV1ModelsGetData,
   ListModelsV1ModelsGetResponse,
   ListOrganizationsV1OrganizationsGetResponse,
@@ -837,16 +837,15 @@ export class DefaultService {
   }
 
   /**
-   * List Files
-   * List all files from a conversation. Merges files from folders and individual files.
+   * List Conversation Files
    * @param data The data for the request.
    * @param data.conversationId
-   * @returns ListConversationFile Successful Response
+   * @returns unknown Successful Response
    * @throws ApiError
    */
-  public listFilesV1ConversationsConversationIdFilesGet(
-    data: ListFilesV1ConversationsConversationIdFilesGetData
-  ): CancelablePromise<ListFilesV1ConversationsConversationIdFilesGetResponse> {
+  public listConversationFilesV1ConversationsConversationIdFilesGet(
+    data: ListConversationFilesV1ConversationsConversationIdFilesGetData
+  ): CancelablePromise<ListConversationFilesV1ConversationsConversationIdFilesGetResponse> {
     return this.httpRequest.request({
       method: 'GET',
       url: '/v1/conversations/{conversation_id}/files',
@@ -986,7 +985,7 @@ export class DefaultService {
    * List[UploadConversationFileResponse]: List of uploaded files with metadata
    * @param data The data for the request.
    * @param data.formData
-   * @returns unknown Successful Response
+   * @returns ListConversationFile Successful Response
    * @throws ApiError
    */
   public uploadFolderV1ConversationsUploadFolderPost(

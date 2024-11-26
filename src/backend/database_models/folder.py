@@ -12,8 +12,7 @@ class Folder(Base):
     user_id: Mapped[str] = mapped_column(String, nullable=True)
     name: Mapped[str]
     description: Mapped[str] = mapped_column(default="")
-    created_at: Mapped[int] = mapped_column(default=0)
-    updated_at: Mapped[int] = mapped_column(default=0)
+    
 
     # Define the relationships with unique backref names to avoid conflict
     conversation_folder_associations: Mapped[List[ConversationFolderAssociation]] = relationship(

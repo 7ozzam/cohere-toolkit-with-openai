@@ -331,6 +331,27 @@ export const useChat = (config?: { onSend?: (msg: string) => void }) => {
                 toolEvents.push(toolEvent);
               }
 
+              console.log('Need to remove:', data.part_to_remove);
+
+              if (!!data?.part_to_remove?.length) {
+                const escapeRegex = function (jsonString: string): string {
+                  return jsonString.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); // Escapes regex special characters
+                };
+
+                const PartToRemove = data?.part_to_remove;
+                const escapedPartToRemove = escapeRegex(PartToRemove);
+                const pattern = new RegExp(
+                  `\`\`\`\\s*\\{\\s*${escapedPartToRemove}\\s*\\}\\s*\`\`\`|` +
+                    `\`\\s*\\{\\s*${escapedPartToRemove}\\s*\\}\\s*\`|` +
+                    `\\{\\s*${escapedPartToRemove}\\s*\\}`,
+                  'g'
+                );
+                botResponse = botResponse.replace(pattern, '');
+                // botResponse = botResponse
+                //   .replace('```' + `${data?.part_to_remove}` + '```', '')
+                //   .replace(data?.part_to_remove, '');
+              }
+
               setStreamingMessage({
                 type: MessageType.BOT,
                 state: BotState.TYPING,

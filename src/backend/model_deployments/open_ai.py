@@ -1,6 +1,11 @@
 from typing import Any, AsyncGenerator, Dict, Iterable, List
 
 from cohere import ChatSearchQuery, ChatSearchResult, ChatSearchResultConnector, ChatbotMessage, SearchResultsStreamedChatResponse, StreamStartStreamedChatResponse, ChatDocument
+
+from backend.schemas.chat import SearchQuery
+from backend.schemas.chat_native import StreamSearchResults, StreamStart
+from cohere import ChatSearchResult, ChatSearchResultConnector
+from fastapi import Depends
 from openai import OpenAI
 
 import asyncio
@@ -14,6 +19,12 @@ from backend.model_deployments.utils import get_model_config_var
 from backend.chat.collate import to_dict
 from backend.services.openai_cohere_conveter import CohereToOpenAI
 from backend.schemas.chat import ChatRole, ChatMessage
+from backend.chat.enums import StreamEvent
+from backend.schemas.document import Document
+from backend.services.file import get_file_service
+from backend.database_models.database import DBSessionDep, get_session
+from backend.services.context import Context, get_context
+
 # Set up logging
 logger = logging.getLogger(__name__)
 import uuid
@@ -105,7 +116,6 @@ class OpenAIDeployment(BaseDeployment):
 
             # Prepare request body
             openAi_chat_request = CohereToOpenAI.cohere_to_openai_chat_request_body(chat_request)
-            print("openAi_chat_request: ", openAi_chat_request)
 
             # Invoke OpenAI API for non-streamed response
             response = await asyncio.to_thread(
@@ -143,12 +153,13 @@ class OpenAIDeployment(BaseDeployment):
         self, chat_request: CohereChatRequest, ctx: Context, **kwargs: Any
     ) -> AsyncGenerator[Any, Any]:
         
-        
+        session = kwargs.get("session")
         print("Default use legacy API: ", self.default_use_legacy_api)
         build_template = self.default_use_legacy_api
         
         """Invoke chat stream using the OpenAI-compatible API."""
         generation_id = uuid.uuid4().hex
+        # conversation_id = chat_request.conversation_id
         
         appended_user_message = False
         first_request_is_sent = False
@@ -166,7 +177,11 @@ class OpenAIDeployment(BaseDeployment):
 
         if build_template:
             openAi_chat_request = CohereToOpenAI.cohere_to_openai_completion_request_body(chat_request)
-            print("openAi_chat_request: ", openAi_chat_request)
+            print("==============================================")
+            print(f"Cohere Original chat request: {chat_request}")
+            print("==============================================")
+            print(f"OpenAI chat request: {openAi_chat_request}")
+            print("==============================================")
             try:
                 stream = await asyncio.wait_for(asyncio.to_thread(
                     self.openai.completions.create,
@@ -183,7 +198,6 @@ class OpenAIDeployment(BaseDeployment):
                 
         else:
             openAi_chat_request = CohereToOpenAI.cohere_to_openai_chat_request_body(chat_request)
-            print("openAi_chat_request: ", openAi_chat_request)
             try:
                 stream = await asyncio.wait_for(asyncio.to_thread(
                     self.openai.chat.completions.create,
@@ -198,11 +212,11 @@ class OpenAIDeployment(BaseDeployment):
                 logger.error(f"Failed to initiate OpenAI chat stream: {e}")
                 raise
                 
-        logger.debug("==============================================")
-        logger.debug(f"Cohere Original chat request: {chat_request}")
-        logger.debug("==============================================")
-        logger.debug(f"OpenAI chat request: {openAi_chat_request}")
-        logger.debug("==============================================")
+        print("==============================================")
+        print(f"Cohere Original chat request: {chat_request}")
+        print("==============================================")
+        print(f"OpenAI chat request: {openAi_chat_request}")
+        print("==============================================")
 
         try:
             if stream:
@@ -251,7 +265,8 @@ class OpenAIDeployment(BaseDeployment):
                     if function_triggered != 'calling':
                         print("==================================")
                         print("OpenAi_Event: ", event)
-                        cohere_events = CohereToOpenAI.openai_to_cohere_event_chunk(event=event, previous_response=full_previous_response, function_triggered=function_triggered, chat_request=chat_request, build_template=build_template, stream_message=stream_message, finish_reason=finish_reason, delta=delta, generation_id=generation_id)
+                        cohere_events = CohereToOpenAI.openai_to_cohere_event_chunk(event=event, previous_response=full_previous_response, function_triggered=function_triggered, chat_request=chat_request, build_template=build_template, stream_message=stream_message, finish_reason=finish_reason, delta=delta, generation_id=generation_id, ctx=ctx)
+                        
                         print("cohere_events: ", cohere_events)
                         print("==================================")
                     else:
@@ -260,8 +275,8 @@ class OpenAIDeployment(BaseDeployment):
                     if cohere_events and len(cohere_events) > 0:
                                     
                         for cohere_event in cohere_events:
-                            if cohere_event.event_type == "tool-calls-generation" and cohere_event.text and "OAI_REMOVE" in cohere_event.text:
-                                to_remove = cohere_event.text.replace("OAI_REMOVE", "")  # Strip any leading/trailing spaces
+                            if cohere_event.event_type == StreamEvent.INLINE_FIX and cohere_event.text and "REMOVE" in cohere_event.text:
+                                to_remove = cohere_event.text.replace("REMOVE", "")  # Strip any leading/trailing spaces
                                 print("BEFORE REMOVED TOOL CALL", full_previous_response)
                                 print("REMOVING", f"""{to_remove}""")
                                 
@@ -273,11 +288,11 @@ class OpenAIDeployment(BaseDeployment):
                                     print(f"Text '{to_remove}' not found in the previous response.")
 
                                 
-                            if (cohere_event.event_type == "tool-calls-generation" or cohere_event.event_type == "tool-calls-chunk"):
+                            if (cohere_event.event_type == StreamEvent.TOOL_CALLS_GENERATION or cohere_event.event_type == StreamEvent.TOOL_CALLS_CHUNK):
                                 function_triggered = "calling"
                                     
                                     
-                                if cohere_event.event_type == "tool-calls-generation" and cohere_event.tool_calls and len(cohere_event.tool_calls) > 0:
+                                if cohere_event.event_type == StreamEvent.TOOL_CALLS_GENERATION and cohere_event.tool_calls and len(cohere_event.tool_calls) > 0:
                                     for tool_call in cohere_event.tool_calls:
                                         
                                         tool_call_dict = {f"{str(tool_call.name)}": tool_call.parameters}
@@ -292,22 +307,29 @@ class OpenAIDeployment(BaseDeployment):
                                             chat_request.chat_history = [tool_call_message]
 
                             if not first_request_is_sent:
-                                stream_start = StreamStartStreamedChatResponse(event_type="stream-start", generation_id=generation_id)
+                                stream_start = StreamStart(event_type=StreamEvent.STREAM_START, generation_id=generation_id)
                                 yield to_dict(stream_start)
 
                             yield to_dict(cohere_event)
 
                     if chat_request.tool_results and not result_sent:
-                        for tool_result in chat_request.tool_results:
-                            if chat_request.tool_results and len(chat_request.tool_results):
-                                output_str = CohereToOpenAI.process_tool_results_as_text(tool_results=chat_request.tool_results)
-                                chat_search_query = ChatSearchQuery(text=output_str, generation_id=generation_id)
-                                connector = ChatSearchResultConnector(id="")
-                                search_result = ChatSearchResult(document_ids=chat_request.file_ids or [], search_query=chat_search_query, connector=connector)
-                                # document: ChatDocument = {"text": output_str, "title": } 
-                                search_event = SearchResultsStreamedChatResponse(event_type="search-results", documents=[], search_results=[search_result])
+                        if chat_request.tool_results and len(chat_request.tool_results):
+                            print("Original tool results: ", chat_request.tool_results)
+                            
+                            for result in chat_request.tool_results:
+                                tool_call = dict(result['call'])
+                                tool_call_parameters = dict(tool_call['parameters'])
+                                file_ids = tool_call_parameters.get('file_ids')
+                                output_str = CohereToOpenAI.process_tool_result_entry_as_text(chat_request.tool_results)
+                                search_event = self.process_tool_result_event(output_str=output_str, generation_id=generation_id, file_ids=file_ids, ctx=ctx)
                                 result_sent = True
                                 yield to_dict(search_event)
+                                  
+                            # output_str = CohereToOpenAI.process_tool_results_as_text(tool_results=chat_request.tool_results)
+                            # if output_str and len(output_str) > 0:
+                            #     search_event = self.process_tool_result_event(output_str=output_str, generation_id=generation_id, file_ids=chat_request.file_ids, ctx=ctx)
+                            #     result_sent = True
+                            #     yield to_dict(search_event)
             else:
                 logger.error("Stream is undefined")
         except Exception as e:
@@ -316,6 +338,24 @@ class OpenAIDeployment(BaseDeployment):
             logger.error(f"OpenAI chat request: {openAi_chat_request}")
             raise
 
+    @staticmethod
+    def process_tool_result_event(generation_id: str,file_ids=None, output_str="", ctx: Context = Depends(get_context)):
+        
+        chat_search_query = ChatSearchQuery(text=output_str, generation_id=generation_id)
+        connector = ChatSearchResultConnector(id="")
+        search_result = ChatSearchResult(document_ids=file_ids or [], search_query=chat_search_query, connector=connector)
+        
+        with next(get_session()) as db:
+            file_service = get_file_service()
+            files = file_service.get_files_by_ids( files_ids=file_ids or [], ctx=ctx, session=db)
+            
+            documents = [Document(id=file.id, text=file.file_content, title=file.file_name) for file in files]
+
+        # document: ChatDocument = {"text": output_str, "title": } 
+        search_event = StreamSearchResults(event_type=StreamEvent.SEARCH_RESULTS, documents=documents, search_results=[dict(search_result)])
+        
+        return search_event
+    
     async def invoke_rerank(
         self, query: str, documents: List[Dict[str, Any]], ctx: Context, **kwargs: Any
     ) -> Any:

@@ -16,7 +16,7 @@ import backend.crud.conversation as conversation_crud
 import backend.crud.file as file_crud
 from backend.crud import message as message_crud
 from backend.database_models.conversation import ConversationFileAssociation
-from backend.database_models.database import DBSessionDep
+from backend.database_models.database import DBSessionDep, get_session
 from backend.database_models.file import File as FileModel
 from backend.database_models.folder import Folder
 from backend.schemas.cohere_chat import CohereChatRequest
@@ -195,6 +195,13 @@ class FileService:
             )
 
             files = file_crud.get_files_by_ids(session, file_ids, user_id)
+
+        return files
+    
+    
+    def get_files_by_ids(self, files_ids: list[str], session: DBSessionDep = Depends(get_session), ctx: Context = Depends(get_context)):
+        user_id = ctx.get_user_id()
+        files = file_crud.get_files_by_ids(session, files_ids, user_id)
 
         return files
 
@@ -377,7 +384,7 @@ class FileService:
         Returns:
             list: List of file metadata
         """
-        associated_files = []
+        associated_files: list[File] = []
         
         for index, file in enumerate(files):
             # Check file extension
@@ -393,9 +400,8 @@ class FileService:
             # Save the file (You will need to implement this)
             # await self.save_file(file, file_location)
             saved_file = await insert_files_in_db(session, [file], user_id, folder=folder, path=paths[index], ctx=ctx, conversation_id=conversation_id)
-
-            # Create file record in the database
-            associated_files.append(saved_file)
+            for file in saved_file:
+                associated_files.append(file)
 
         return associated_files
 
@@ -467,19 +473,25 @@ async def insert_files_in_db(
         
         conversation = conversation_crud.get_conversation(session, conversation_id, user_id)
         print("Conversation O User: ", conversation)
-        agent_id = conversation.agent_id if conversation and conversation.agent_id else None
+        try:
+            agent_id = conversation.agent_id if conversation and conversation.agent_id else None
 
-        if agent_id:
-            agent = agent_crud.get_agent_by_id(session, agent_id, user_id)
-            agent_schema = Agent.model_validate(agent)
-            ctx.with_agent(agent_schema)
-            deployment = agent.deployments[0]
-            ctx.with_deployment_name(deployment.name)
-            
-        print("Agent ID GEN FILE: ", agent_id)
-        print("Agent GEN FILE: ", agent)
-        print("MODEL GEN FILE: ", agent.model)
-        generated_file_name, error = await generate_file_name(session,file_name=filename, folder_name=folder.name if folder else None, file_content=content, path=path,  agent_id=agent_id, ctx=ctx, model=agent.model)
+            if agent_id:
+                agent = agent_crud.get_agent_by_id(session, agent_id, user_id)
+                agent_schema = Agent.model_validate(agent)
+                ctx.with_agent(agent_schema)
+                deployment = agent.deployments[0]
+                ctx.with_deployment_name(deployment.name)
+                
+            print("Agent ID GEN FILE: ", agent_id)
+            print("Agent GEN FILE: ", agent)
+            print("MODEL GEN FILE: ", agent.model)
+        
+        
+            generated_file_name, error = await generate_file_name(session,file_name=filename, folder_name=folder.name if folder else None, file_content=content, path=path,  agent_id=agent_id, ctx=ctx, model=agent.model)
+        except Exception as e:
+            print("Error generating file name: ", e)
+            generated_file_name = filename
         file_generated_name = f"{generated_file_name}{extension}"
         # file_generated_name = content[0:64].replace(" ", "").encode("ascii", "ignore").decode("utf-8") + f"{extension}"
         file_generated_name = sanitize_filename(file_generated_name)

@@ -1,8 +1,9 @@
 'use client';
 
+import { useRouter } from 'next/router';
 import { useEffect } from 'react';
 
-import { Document, ManagedTool } from '@/cohere-client';
+import { Document, ManagedTool, useCohereClient } from '@/cohere-client';
 import { Conversation, ConversationError } from '@/components/Conversation';
 import { TOOL_PYTHON_INTERPRETER_ID } from '@/constants';
 import { useAgent, useAvailableTools, useConversation, useListTools } from '@/hooks';
@@ -19,13 +20,12 @@ const Chat: React.FC<{ agentId?: string; conversationId?: string }> = ({
   agentId,
   conversationId,
 }) => {
-  const { data: agent } = useAgent({ agentId });
+  const { data: agent, isLoading: isLoadingAgent } = useAgent({ agentId });
   const { data: tools } = useListTools();
   const { setConversation } = useConversationStore();
   const { addCitation, saveOutputFiles } = useCitationsStore();
   const { setParams, resetFileParams } = useParamsStore();
   const { availableTools } = useAvailableTools({ agent, managedTools: tools });
-
   const {
     data: conversation,
     isError,
@@ -33,6 +33,8 @@ const Chat: React.FC<{ agentId?: string; conversationId?: string }> = ({
   } = useConversation({
     conversationId: conversationId,
   });
+
+  // resetConversationSettings();
 
   // Reset citations and file params when switching between conversations
   useEffect(() => {
@@ -107,6 +109,10 @@ const Chat: React.FC<{ agentId?: string; conversationId?: string }> = ({
 
     saveOutputFiles(outputFilesMap);
   }, [conversation?.id, conversation?.messages.length, setConversation]);
+
+  if (isLoadingAgent) {
+    return <div>Loading...</div>;
+  }
 
   return isError ? (
     <ConversationError error={error} />

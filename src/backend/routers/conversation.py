@@ -368,6 +368,7 @@ async def search_conversations(
 async def batch_upload_file(
     session: DBSessionDep,
     conversation_id: str = Form(None),
+    agent_id: str = Form(None),
     files: list[FastAPIUploadFile] = RequestFile(...),
     ctx: Context = Depends(get_context),
 ) -> UploadConversationFileResponse:
@@ -395,7 +396,7 @@ async def batch_upload_file(
     if not conversation_id:
         conversation = conversation_crud.create_conversation(
             session,
-            ConversationModel(user_id=user_id),
+            ConversationModel(user_id=user_id, agent_id=agent_id),
         )
     # Check for existing conversation
     else:
@@ -414,7 +415,7 @@ async def batch_upload_file(
             # Create new conversation
             conversation = conversation_crud.create_conversation(
                 session,
-                ConversationModel(user_id=user_id),
+                ConversationModel(user_id=user_id, agent_id=agent_id),
             )
 
     # TODO: check if file already exists in DB once we have files per agents
@@ -436,6 +437,8 @@ async def batch_upload_file(
         conversation.id, uploaded_files
     )
     return files_with_conversation_id
+
+
 
 
 @router.get("/{conversation_id}/files", response_model=list[ListConversationFile])
@@ -598,7 +601,6 @@ async def generate_title(
 @router.get("/{conversation_id}/files")
 async def list_conversation_files(
     conversation_id: str,
-    message_id: str,
     session: DBSessionDep,
     ctx: Context = Depends(get_context),
 ) -> Response:
@@ -654,11 +656,12 @@ async def synthesize_message(
 async def upload_folder(
     session: DBSessionDep,
     conversation_id: str = Form(None),
+    agent_id: str = Form(None),
     folder_name: str = Form(None),
     files: list[FastAPIUploadFile] = RequestFile(...),
     paths: list[str] = Form(...),
     ctx: Context = Depends(get_context)
-):
+) -> list[ListConversationFile]:
     """
     Uploads a folder with multiple files. 
 
@@ -672,16 +675,39 @@ async def upload_folder(
     Returns:
         List[UploadConversationFileResponse]: List of uploaded files with metadata
     """
+    # Create new conversation
+    
     user_id = ctx.get_user_id()
+    
+    if not user_id:
+            raise HTTPException(
+                status_code=400,
+                detail="user_id is required if no valid conversation is provided.",
+            )
+            
+    if not conversation_id:
+        
+        conversation = conversation_crud.create_conversation(
+            session,
+            ConversationModel(user_id=user_id, agent_id=agent_id)
+        )
+    # Check for existing conversation
+    else:
+        conversation = conversation_crud.get_conversation(
+            session, conversation_id, user_id
+        )
     
     
     
     created_folder = await get_folder_service().create_folder(
-        session, folder_name, user_id, conversation_id
+        session, folder_name, user_id, conversation.id
     )
     
     uploaded_files = await get_file_service().associate_files_to_folder(
-        session, files=files, paths=paths, folder=created_folder, user_id=user_id, ctx=ctx, conversation_id=conversation_id
+        session, files=files, paths=paths, folder=created_folder, user_id=user_id, ctx=ctx, conversation_id=conversation.id
     )
+    
+    
+    folder_response = ListConversationFile(id=created_folder.id, file_name=created_folder.name, files=uploaded_files, item_type="folder", conversation_id=conversation.id, user_id=user_id,created_at=created_folder.created_at, updated_at=created_folder.updated_at)
 
-    return uploaded_files
+    return [folder_response]

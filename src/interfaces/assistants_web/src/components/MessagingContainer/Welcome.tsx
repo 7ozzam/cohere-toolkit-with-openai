@@ -26,7 +26,7 @@ export const Welcome: React.FC<Props> = ({ show, agentId }) => {
 
   return (
     <Transition
-      show={show && !isToolsLoading && !isAgentsLoading}
+      show={show && !isToolsLoading && !isAgentsLoading && !isBaseAgent}
       enter="transition-all duration-300 ease-out delay-300"
       enterFrom="opacity-0"
       enterTo="opacity-100"

@@ -5,7 +5,7 @@ from backend.services.template_builder.models_templates.default_template import 
 from backend.services.template_builder.models_templates.base import BaseTemplateBuilder
 
 from typing import Any, List, Type
-from openai.types.chat import ChatCompletionSystemMessageParam
+from openai.types.chat import ChatCompletionSystemMessageParam, ChatCompletionMessageParam
 
 class TemplateBuilderFactory:
     # Map of template names to their respective classes
@@ -17,7 +17,7 @@ class TemplateBuilderFactory:
     }
 
     @classmethod
-    def get_template_builder(cls, template_name: str, chat_messages: List[ChatCompletionSystemMessageParam], tools: List[dict] = [], tool_response: Any = None) -> BaseTemplateBuilder:
+    def get_template_builder(cls, template_name: str, chat_messages: List[ChatCompletionSystemMessageParam | ChatCompletionMessageParam], tools: List[dict] = [], tool_response: Any = None) -> BaseTemplateBuilder:
         """
         Retrieve the template class by name, or fallback to DefaultTemplateBuilder.
         

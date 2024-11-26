@@ -1,5 +1,5 @@
 from typing import Any, List
-from openai.types.chat import ChatCompletionSystemMessageParam
+from openai.types.chat import ChatCompletionSystemMessageParam, ChatCompletionMessageParam
 from abc import ABC, abstractmethod
 
 class BaseTemplateBuilder(ABC):
@@ -10,7 +10,7 @@ class BaseTemplateBuilder(ABC):
         self.tool_response = tool_response
 
     @abstractmethod
-    def create_default_system_message(self) -> dict:
+    def create_default_system_message(self) -> dict | ChatCompletionMessageParam:
         """
         Create the default system message.
         This must be implemented by any class that inherits from BaseTemplateBuilder.

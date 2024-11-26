@@ -80,8 +80,8 @@ export class CohereClient {
   }
 
   public listFiles({ conversationId }: { conversationId: string }) {
-    return this.cohereService.default.listFilesV1ConversationsConversationIdFilesGet({
-      conversationId,
+    return this.cohereService.default.listConversationFilesV1ConversationsConversationIdFilesGet({
+      conversationId
     });
   }
 
@@ -353,18 +353,19 @@ export class CohereClient {
     return this.folderHandling;
   }
 
-  public uploadFolderFiles({
+  public async uploadFolderFiles({
     folderName,
     conversationId,
     files,
+    agentId,
   }: {
     folderName: string;
     files: { path: string; file: File }[];
     conversationId: string | undefined;
+    agentId: string;
   }) {
-    if (!conversationId) throw new Error('Conversation ID not found');
     if (!files.length) throw new Error('Folder is empty');
-    return this.folderHandling.uploadFolderFiles({ conversationId, folderName, files });
+    return this.folderHandling.uploadFolderFiles({ conversationId, folderName, files, agentId });
   }
   public createFolder({
     folderName,

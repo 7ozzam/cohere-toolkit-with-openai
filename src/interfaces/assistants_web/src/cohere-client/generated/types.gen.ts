@@ -53,11 +53,13 @@ export type Body_batch_upload_file_v1_agents_batch_upload_file_post = {
 
 export type Body_batch_upload_file_v1_conversations_batch_upload_file_post = {
   conversation_id?: string;
+  agent_id: string;
   files: Array<Blob | File>;
 };
 
 export type Body_upload_folder_v1_conversations_upload_folder_post = {
   conversation_id?: string;
+  agent_id?: string;
   folder_name?: string;
   files: Array<Blob | File>;
   paths: Array<string>;
@@ -306,20 +308,33 @@ export type DeploymentWithModels = {
 };
 
 export type Document = {
-  text: string;
-  document_id: string;
-  title: string | null;
-  url: string | null;
-  fields: {
+  document_id?: string | null;
+  id?: string | null;
+  text?: string;
+  title?: string | null;
+  url?: string | null;
+  fields?: {
     [key: string]: unknown;
   } | null;
-  tool_name: string | null;
+  tool_name?: string | null;
 };
 
 export type Email = {
   primary: boolean;
   value?: string | null;
   type: string;
+};
+
+export type File = {
+  id: string;
+  created_at: string | null;
+  updated_at: string | null;
+  user_id: string;
+  conversation_id?: string | null;
+  file_content?: string | null;
+  file_name: string;
+  file_path?: string | null;
+  file_size?: number;
 };
 
 export type GenerateTitleResponse = {
@@ -375,9 +390,10 @@ export type ListConversationFile = {
   conversation_id: string;
   file_name: string;
   file_size?: number;
+  file_path?: string | null;
   item_type?: 'file' | 'folder';
   folder_id?: string | null;
-  files?: Array<unknown> | null;
+  files?: Array<File> | null;
 };
 
 export enum item_type {
@@ -602,6 +618,7 @@ export enum StreamEvent {
   TOOL_INPUT = 'tool-input',
   TOOL_RESULT = 'tool-result',
   TEXT_GENERATION = 'text-generation',
+  INLINE_FIX = 'inline-fix',
   CITATION_GENERATION = 'citation-generation',
   STREAM_END = 'stream-end',
   NON_STREAMED_CHAT_RESPONSE = 'non-streamed-chat-response',
@@ -949,11 +966,11 @@ export type BatchUploadFileV1ConversationsBatchUploadFilePostData = {
 export type BatchUploadFileV1ConversationsBatchUploadFilePostResponse =
   Array<UploadConversationFileResponse>;
 
-export type ListFilesV1ConversationsConversationIdFilesGetData = {
+export type ListConversationFilesV1ConversationsConversationIdFilesGetData = {
   conversationId: string;
 };
 
-export type ListFilesV1ConversationsConversationIdFilesGetResponse = Array<ListConversationFile>;
+export type ListConversationFilesV1ConversationsConversationIdFilesGetResponse = unknown;
 
 export type DeleteFileV1ConversationsConversationIdFilesFileIdDeleteData = {
   conversationId: string;
@@ -982,7 +999,7 @@ export type UploadFolderV1ConversationsUploadFolderPostData = {
   formData: Body_upload_folder_v1_conversations_upload_folder_post;
 };
 
-export type UploadFolderV1ConversationsUploadFolderPostResponse = unknown;
+export type UploadFolderV1ConversationsUploadFolderPostResponse = Array<ListConversationFile>;
 
 export type ListToolsV1ToolsGetData = {
   agentId?: string | null;
@@ -1573,12 +1590,12 @@ export type $OpenApiTs = {
   };
   '/v1/conversations/{conversation_id}/files': {
     get: {
-      req: ListFilesV1ConversationsConversationIdFilesGetData;
+      req: ListConversationFilesV1ConversationsConversationIdFilesGetData;
       res: {
         /**
          * Successful Response
          */
-        200: Array<ListConversationFile>;
+        200: unknown;
         /**
          * Validation Error
          */
@@ -1638,7 +1655,7 @@ export type $OpenApiTs = {
         /**
          * Successful Response
          */
-        200: unknown;
+        200: Array<ListConversationFile>;
         /**
          * Validation Error
          */

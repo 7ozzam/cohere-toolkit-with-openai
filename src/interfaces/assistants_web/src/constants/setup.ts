@@ -1,4 +1,4 @@
-export const DEPLOYMENT_COHERE_PLATFORM = 'Cohere Platform';
+export const DEPLOYMENT_COHERE_PLATFORM = 'OpenAI';
 export const DEPLOYMENT_SINGLE_CONTAINER = 'Single Container';
 
 export const CHAT_COMPOSER_TEXTAREA_ID = 'composer';

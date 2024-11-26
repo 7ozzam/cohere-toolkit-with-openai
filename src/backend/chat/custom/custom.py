@@ -324,12 +324,25 @@ class CustomChat(BaseChat):
             num_words = min(25, word_count)
             preview = " ".join(file.file_content.split()[:num_words])
 
+            if file.folder and file.folder.name and file.path:
+            # Construct folder info
+                folder_info = f'"folder_name": "{file.folder.name}", '
+                if file.path:
+                    folder_info += f'"file_path": "{file.path}", '
+            else:
+                # Empty folder info if the condition is not met
+                folder_info = ""
+
+            # Construct the file message
             files_message += (
                 f'{{"filename": "{file.file_name}", '
                 f'"file_id": "{file.id}", '
+                f'{folder_info}'  # Append folder info dynamically
+                f'"file_path": "{file.path}", '
                 f'"word_count": {word_count}, '
                 f'"preview": "{preview}"}}\n'
             )
+
             # files_message += f'Filename: "{file.file_name}"\nFile ID: "{file.id}"\nWord Count: {word_count} Preview: {preview}\n\n'
 
         chat_history.append(ChatMessage(message=files_message, role=ChatRole.SYSTEM))

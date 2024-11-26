@@ -18,6 +18,11 @@ type ChatResponseEventStreamStart = {
   data: StreamStart;
 };
 
+type ChatResponseEventInlineFix = {
+  event: StreamEvent.INLINE_FIX;
+  data: StreamStart;
+};
+
 type ChatResponseEventTextGeneration = {
   event: StreamEvent.TEXT_GENERATION;
   data: StreamTextGeneration;
@@ -79,4 +84,5 @@ export type ChatResponseEvent =
   | ChatResponseEventToolResult
   | ChatResponseEventToolCallsGeneration
   | ChatResponseEventStreamEnd
-  | ChatResponseEventNonStreamedChatResponse;
+  | ChatResponseEventNonStreamedChatResponse
+  | ChatResponseEventInlineFix;

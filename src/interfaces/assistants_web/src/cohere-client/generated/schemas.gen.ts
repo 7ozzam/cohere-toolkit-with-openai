@@ -256,6 +256,10 @@ export const $Body_batch_upload_file_v1_conversations_batch_upload_file_post = {
       type: 'string',
       title: 'Conversation Id',
     },
+    agent_id: {
+      type: 'string',
+      title: 'Agent Id',
+    },
     files: {
       items: {
         type: 'string',
@@ -275,6 +279,10 @@ export const $Body_upload_folder_v1_conversations_upload_folder_post = {
     conversation_id: {
       type: 'string',
       title: 'Conversation Id',
+    },
+    agent_id: {
+      type: 'string',
+      title: 'Agent Id',
     },
     folder_name: {
       type: 'string',
@@ -1560,13 +1568,32 @@ export const $DeploymentWithModels = {
 
 export const $Document = {
   properties: {
+    document_id: {
+      anyOf: [
+        {
+          type: 'string',
+        },
+        {
+          type: 'null',
+        },
+      ],
+      title: 'Document Id',
+    },
+    id: {
+      anyOf: [
+        {
+          type: 'string',
+        },
+        {
+          type: 'null',
+        },
+      ],
+      title: 'Id',
+    },
     text: {
       type: 'string',
       title: 'Text',
-    },
-    document_id: {
-      type: 'string',
-      title: 'Document Id',
+      default: '',
     },
     title: {
       anyOf: [
@@ -1578,6 +1605,7 @@ export const $Document = {
         },
       ],
       title: 'Title',
+      default: '',
     },
     url: {
       anyOf: [
@@ -1614,7 +1642,6 @@ export const $Document = {
     },
   },
   type: 'object',
-  required: ['text', 'document_id', 'title', 'url', 'fields', 'tool_name'],
   title: 'Document',
 } as const;
 
@@ -1643,6 +1670,92 @@ export const $Email = {
   type: 'object',
   required: ['primary', 'type'],
   title: 'Email',
+} as const;
+
+export const $File = {
+  properties: {
+    id: {
+      type: 'string',
+      title: 'Id',
+    },
+    created_at: {
+      anyOf: [
+        {
+          type: 'string',
+          format: 'date-time',
+        },
+        {
+          type: 'null',
+        },
+      ],
+      title: 'Created At',
+    },
+    updated_at: {
+      anyOf: [
+        {
+          type: 'string',
+          format: 'date-time',
+        },
+        {
+          type: 'null',
+        },
+      ],
+      title: 'Updated At',
+    },
+    user_id: {
+      type: 'string',
+      title: 'User Id',
+    },
+    conversation_id: {
+      anyOf: [
+        {
+          type: 'string',
+        },
+        {
+          type: 'null',
+        },
+      ],
+      title: 'Conversation Id',
+      default: '',
+    },
+    file_content: {
+      anyOf: [
+        {
+          type: 'string',
+        },
+        {
+          type: 'null',
+        },
+      ],
+      title: 'File Content',
+      default: '',
+    },
+    file_name: {
+      type: 'string',
+      title: 'File Name',
+    },
+    file_path: {
+      anyOf: [
+        {
+          type: 'string',
+        },
+        {
+          type: 'null',
+        },
+      ],
+      title: 'File Path',
+      default: '',
+    },
+    file_size: {
+      type: 'integer',
+      minimum: 0,
+      title: 'File Size',
+      default: 0,
+    },
+  },
+  type: 'object',
+  required: ['id', 'created_at', 'updated_at', 'user_id', 'file_name'],
+  title: 'File',
 } as const;
 
 export const $GenerateTitleResponse = {
@@ -1858,6 +1971,18 @@ export const $ListConversationFile = {
       title: 'File Size',
       default: 0,
     },
+    file_path: {
+      anyOf: [
+        {
+          type: 'string',
+        },
+        {
+          type: 'null',
+        },
+      ],
+      title: 'File Path',
+      default: '',
+    },
     item_type: {
       type: 'string',
       enum: ['file', 'folder'],
@@ -1878,7 +2003,9 @@ export const $ListConversationFile = {
     files: {
       anyOf: [
         {
-          items: {},
+          items: {
+            $ref: '#/components/schemas/File',
+          },
           type: 'array',
         },
         {
@@ -3016,6 +3143,7 @@ export const $StreamEvent = {
     'tool-input',
     'tool-result',
     'text-generation',
+    'inline-fix',
     'citation-generation',
     'stream-end',
     'non-streamed-chat-response',

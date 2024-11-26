@@ -6,14 +6,14 @@ from pydantic import BaseModel, Field
 
 class File(BaseModel):
     id: str
-    created_at: datetime.datetime
-    updated_at: datetime.datetime
+    created_at: Optional[datetime.datetime]
+    updated_at: Optional[datetime.datetime]
 
     user_id: str
     conversation_id: Optional[str] = ""
     file_content: Optional[str] = ""
     file_name: str
-    file_path: str
+    file_path: Optional[str] = Field(default="")
     file_size: int = Field(default=0, ge=0)
     # folder_id: Optional[str]
     
@@ -43,9 +43,10 @@ class AgentFilePublic(BaseModel):
     file_size: int = Field(default=0, ge=0)
 
 class ListConversationFile(ConversationFilePublic):
+    file_path: Optional[str] = Field(default="")
     item_type: Literal["file", "folder"] = "file"
     folder_id: Optional[str] = None
-    files: Optional[list] = None
+    files: Optional[list[File]] = None
 
 
 class UploadConversationFileResponse(ConversationFilePublic):

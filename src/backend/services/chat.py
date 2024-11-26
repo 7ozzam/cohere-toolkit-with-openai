@@ -26,7 +26,8 @@ from backend.database_models.message import (
 from backend.database_models.tool_call import ToolCall as ToolCallModel
 from backend.schemas import CohereChatRequest
 from backend.schemas.agent import Agent, AgentToolMetadata
-from backend.schemas.chat import (
+from backend.schemas.chat_native import StreamInlineFix
+from backend.schemas.chat_native import (
     BaseChatRequest,
     ChatMessage,
     ChatResponseEvent,
@@ -48,7 +49,7 @@ from backend.schemas.conversation import UpdateConversationRequest
 from backend.schemas.search_query import SearchQuery
 from backend.schemas.tool import Tool, ToolCall, ToolCallDelta
 from backend.services.agent import validate_agent_exists
-
+import re
 LOOKBACKS = [3, 5, 7]
 DEATHLOOP_SIMILARITY_THRESHOLDS = [0.5, 0.7, 0.9]
 
@@ -741,6 +742,7 @@ def handle_stream_event(
         StreamEvent.CITATION_GENERATION: handle_stream_citation_generation,
         StreamEvent.TOOL_CALLS_CHUNK: handle_stream_tool_calls_chunk,
         StreamEvent.STREAM_END: handle_stream_end,
+        StreamEvent.INLINE_FIX: custom_handler
     }
     event_type = event["event_type"]
 
@@ -936,6 +938,9 @@ def handle_stream_tool_calls_chunk(
 ) -> tuple[StreamToolCallsChunk, dict[str, Any], Message, dict[str, Document]]:
     event["text"] = event.get("text", "")
     tool_call_delta = event.get("tool_call_delta", None)
+    part_to_remove = event.get("part_to_remove", "")
+    escaped_part_to_remove = re.escape(part_to_remove)
+    
     if tool_call_delta:
         tool_call = ToolCallDelta(
             name=tool_call_delta.get("name"),
@@ -944,8 +949,19 @@ def handle_stream_tool_calls_chunk(
         )
         event["tool_call_delta"] = tool_call
 
+    if part_to_remove:
+        pattern = (
+            fr"```\s*\{{\s*{escaped_part_to_remove}\s*\}}\s*```|"
+            fr"`\s*\{{\s*{escaped_part_to_remove}\s*\}}\s*`|"
+            fr"\{{\s*{escaped_part_to_remove}\s*\}}"
+        )
+        stream_end_data["text"] = re.sub(pattern, "", stream_end_data["text"])
+        
+        # stream_end_data["text"] = stream_end_data["text"].replace(f"```{part_to_remove}```", "").replace(part_to_remove, "")
+        
     stream_event = StreamToolCallsChunk.model_validate(event)
     return stream_event, stream_end_data, response_message, document_ids_to_document
+
 
 
 def handle_stream_end(
@@ -967,6 +983,18 @@ def handle_stream_end(
     stream_event = stream_end
     return stream_event, stream_end_data, response_message, document_ids_to_document
 
+
+def custom_handler(
+    event: dict[str, Any],
+    _: str,
+    stream_end_data: dict[str, Any],
+    response_message: Message,
+    document_ids_to_document: dict[str, Document],
+    **kwargs: Any,
+) -> tuple[StreamInlineFix, dict[str, Any], Message, dict[str, Document]]:
+    # stream_end_data["text"] += event["text"]
+    stream_event = StreamInlineFix.model_validate(event)
+    return stream_event, stream_end_data, response_message, document_ids_to_document
 def are_previous_actions_similar(
     distances: List[float], threshold: float, lookback: int
 ) -> bool:

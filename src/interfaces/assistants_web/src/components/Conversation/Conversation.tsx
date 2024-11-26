@@ -1,11 +1,10 @@
-'use client';
-
-import React, { useRef } from 'react';
+import React, { useRef, useState } from 'react';
 
 import { AgentPublic, ManagedTool } from '@/cohere-client';
 import { Composer } from '@/components/Composer';
 import { Header } from '@/components/Conversation';
 import { MessagingContainer, WelcomeGuideTooltip } from '@/components/MessagingContainer';
+// Add the modal component
 import {
   WelcomeGuideStep,
   useChat,
@@ -17,6 +16,8 @@ import { useConversationStore } from '@/stores';
 import { ConfigurableParams } from '@/stores/slices/paramsSlice';
 import { ChatMessage } from '@/types/message';
 
+import { FolderPreviewModal } from './FolderUpload/FolderPreviewModal';
+
 type Props = {
   startOptionsEnabled?: boolean;
   agent?: AgentPublic;
@@ -24,13 +25,10 @@ type Props = {
   history?: ChatMessage[];
 };
 
-/**
- * @description Renders the entire conversation pane, which includes the header, messages,
- * composer, and the citation panel.
- */
 export const Conversation: React.FC<Props> = ({ agent, tools, startOptionsEnabled = false }) => {
   const { uploadFiles } = useConversationFileActions();
-  const { uploadFolder } = useFolderActions();
+  const { uploadFolder, getAllFiles } = useFolderActions();
+
   const { welcomeGuideState, finishWelcomeGuide } = useWelcomeGuideState();
   const {
     conversation: { messages, id: conversationId },
@@ -56,15 +54,50 @@ export const Conversation: React.FC<Props> = ({ agent, tools, startOptionsEnable
 
   const chatWindowRef = useRef<HTMLDivElement>(null);
 
-  const handleUploadFile = async (files: File[]) => {
-    await uploadFiles(files, conversationId);
-  };
+  // State for folder preview modal
+  const [isFolderModalOpen, setIsFolderModalOpen] = useState(false);
+  const [folderStructure, setFolderStructure] = useState<{ path: string; file: File }[]>([]);
+  const [selectedFolder, setSelectedFolder] = useState<FileSystemDirectoryHandle | null>(null);
 
+  // Handle folder attachment with preview
   const handleAttachFolder = async (folder: FileSystemDirectoryHandle) => {
     console.log(folder);
     console.log(conversationId);
-    await uploadFolder(folder, conversationId);
-    // await uploadFiles(files, conversationId);
+
+    const files = await getAllFiles(folder); // Fetch folder structure
+    setFolderStructure(files);
+    setSelectedFolder(folder); // Save folder for upload
+    setIsFolderModalOpen(true); // Open the modal
+  };
+
+  // Handle folder upload after confirmation
+  const handleConfirmUpload = async () => {
+    if (selectedFolder) {
+      try {
+        if (!agent?.id) throw new Error('You Should Choose an assistant or conversation to upload a folder');
+        await uploadFolder(selectedFolder, agent?.id, conversationId); // Proceed with folder upload
+        console.log('Folder uploaded successfully.');
+      } catch (error) {
+        console.error('Folder upload failed:', error);
+      }
+    }
+    setIsFolderModalOpen(false); // Close the modal
+  };
+
+  const handleCancelUpload = () => {
+    setIsFolderModalOpen(false); // Close the modal without uploading
+  };
+
+  const handleUploadFile = async (files: File[]) => {
+    try {
+      if (!agent?.id) throw new Error('You Should Choose an assistant or conversation to upload your files');
+      await uploadFiles(agent.id,files, conversationId);
+      console.log('Files uploaded successfully.');
+    } catch (error) {
+      console.error('Files upload failed:', error);
+    }
+
+    
   };
 
   const handleSend = (msg?: string, overrides?: Partial<ConfigurableParams>) => {
@@ -108,6 +141,15 @@ export const Conversation: React.FC<Props> = ({ agent, tools, startOptionsEnable
           />
         </div>
       </div>
+      {/* Folder Preview Modal */}
+      {isFolderModalOpen && (
+        <FolderPreviewModal
+          isOpen={isFolderModalOpen}
+          folderHandle={selectedFolder}
+          onCancel={handleCancelUpload}
+          onConfirm={handleConfirmUpload}
+        />
+      )}
     </div>
   );
 };

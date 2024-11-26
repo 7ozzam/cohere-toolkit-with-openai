@@ -45,8 +45,8 @@ export const useUploadAgentFile = () => {
 export const useUploadConversationFile = () => {
   const cohereClient = useCohereClient();
   return useMutation({
-    mutationFn: ({ files, conversationId }: { files: File[]; conversationId?: string }) =>
-      cohereClient.batchUploadConversationFile({ files, conversation_id: conversationId }),
+    mutationFn: ({ agentId, files, conversationId }: { agentId: string; files: File[]; conversationId?: string }) =>
+      cohereClient.batchUploadConversationFile({ agent_id: agentId, files, conversation_id: conversationId }),
   });
 };
 
@@ -85,7 +85,7 @@ export const useConversationFileActions = () => {
   const { error } = useNotify();
   const { setConversation } = useConversationStore();
 
-  const handleUploadFiles = async (files?: File[], conversationId?: string) => {
+  const handleUploadFiles = async (agentId: string, files?: File[], conversationId?: string) => {
     // cleanup uploadingFiles with errors
     const uploadingFilesWithErrors = uploadingFiles.filter((file) => file.error);
     uploadingFilesWithErrors.forEach((file) => deleteUploadingFile(file.id));
@@ -148,7 +148,7 @@ export const useConversationFileActions = () => {
     addUploadingFiles(newUploadingFiles);
 
     try {
-      const uploadedFiles = await uploadFiles({ files, conversationId });
+      const uploadedFiles = await uploadFiles({ files, conversationId, agentId });
 
       newUploadingFiles.forEach((file) => deleteUploadingFile(file.id));
 

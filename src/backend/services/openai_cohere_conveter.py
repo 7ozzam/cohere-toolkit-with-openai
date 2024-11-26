@@ -1,6 +1,6 @@
 from typing import Iterable, List, Dict, Any, Optional, Union
 
-from cohere import NonStreamedChatResponse, ToolResult
+
 from openai.types.chat.completion_create_params import CompletionCreateParamsBase as ChatCompletionCreateParamsBase
 from openai.types.completion_create_params import CompletionCreateParamsBase as RegularCompletionCreateParamsBase
 from openai.types.chat import ChatCompletionSystemMessageParam, ChatCompletionUserMessageParam,ChatCompletionAssistantMessageParam, ChatCompletionMessageParam, ChatCompletionChunk, ChatCompletionToolParam, ChatCompletionMessageToolCallParam, ChatCompletionToolMessageParam
@@ -10,7 +10,12 @@ from openai.types.chat.chat_completion_message_tool_call_param import Function a
 
 from backend.schemas.cohere_chat import CohereChatRequest
 from backend.schemas.chat import ChatRole, ChatMessage
-from cohere.types import StreamedChatResponse,  StreamStartStreamedChatResponse,SearchQueriesGenerationStreamedChatResponse,SearchResultsStreamedChatResponse,TextGenerationStreamedChatResponse,CitationGenerationStreamedChatResponse,ToolCallsGenerationStreamedChatResponse,StreamEndStreamedChatResponse,ToolCallsChunkStreamedChatResponse, ToolCallsChunkStreamedChatResponse, ToolCallDelta, ToolParameterDefinitionsValue, ToolCall, Message, ChatbotMessage, UserMessage, ToolMessage, SystemMessage
+from cohere.types import ToolParameterDefinitionsValue, ToolCall, ChatbotMessage, UserMessage, ToolMessage, SystemMessage, ToolResult, StreamedChatResponse
+from backend.schemas.chat_native import StreamedChatEvent, StreamTextGeneration, StreamCitationGeneration, StreamToolCallsGeneration, StreamEnd, StreamToolCallsChunk, ToolCallDelta, ToolCall, NonStreamedChatResponse, StreamToolResult, StreamInlineFix
+# from backend.schemas.message import Message
+from backend.schemas.context import Context
+
+from backend.chat.enums import StreamEvent
 
 from backend.services.template_builder.template_builder import TemplateBuilderFactory as TemplateBuilder
 from cohere.types import Tool as CohereTool
@@ -33,34 +38,35 @@ class CohereToOpenAI:
     # def __init__(self):
     
     @staticmethod
-    def convert_backend_message_to_openai_message(chatMessages: List[ChatMessage]) -> List[Message]:
+    def convert_backend_message_to_openai_message(chatMessages: List[ChatMessage]) -> List[Dict[str, Any]]:
         new_chat_history = []
         for x in chatMessages:
-            if x and hasattr(x, "role") and hasattr(x, "message"):
-                if (x.role == ChatRole.CHATBOT):
-                    message_body = x.message
-                    if hasattr(x, "tool_calls"):
-                        message_body = (message_body or "") + str(x.tool_calls)
+            try:
+                if x and hasattr(x, "role") and hasattr(x, "message"):
+                    if x.role == ChatRole.CHATBOT:
+                        message_body = x.message or ""
+                        if hasattr(x, "tool_calls") and x.tool_calls:
+                            message_body += str(x.tool_calls)
+                        
+                        updated_dict = x.to_dict()
+                        updated_dict.update({'role': ChatRole.CHATBOT, "message": message_body})
+                    elif x.role == ChatRole.USER:
+                        updated_dict = x.to_dict()
+                        updated_dict.update({'role': ChatRole.USER, "message": x.message})
+                    elif x.role == ChatRole.TOOL:
+                        updated_dict = x.to_dict()
+                        updated_dict.update({'role': ChatRole.TOOL})
+                    elif x.role == ChatRole.SYSTEM:
+                        message_body = f"Tool Response: {x.tool_results}" if x.tool_results else x.message
+                        updated_dict = x.to_dict()
+                        updated_dict.update({'role': ChatRole.SYSTEM, "message": message_body})
                     
-                    updated_dict = {**x.to_dict(), 'role': 'CHATBOT',"message": message_body}
-                    new_chat_history.append(ChatbotMessage(**updated_dict))
-                elif(x.role == ChatRole.USER):
-                    updated_dict = {**x.to_dict(), 'role': 'USER', "message": x.message}
-
-                    new_chat_history.append(UserMessage(**updated_dict))
-                elif(x.role == ChatRole.TOOL):
-                    updated_dict = {**x.to_dict(), 'role': 'TOOL'}
-
-                    new_chat_history.append(ToolMessage(**updated_dict))
-                elif(x.role == ChatRole.SYSTEM):
-                    if x.tool_results:
-                        updated_dict = {**x.to_dict(), 'role': 'SYSTEM', "message": f"Tool Response: x.tool_results"}
-                    else:
-                        updated_dict = {**x.to_dict(), 'role': 'SYSTEM'}
-
-                    new_chat_history.append(SystemMessage(**updated_dict))
-                
+                    new_chat_history.append(dict(ChatMessage(**updated_dict)))
+            except Exception as e:
+                print(f"Error processing message: {x}. Exception: {e}")
+                raise
         return new_chat_history
+
                     
                     
     @staticmethod
@@ -91,9 +97,10 @@ class CohereToOpenAI:
         build_template: bool = False,
         stream_message: Optional[str] = "",
         finish_reason: Optional[str] = None,
-        delta: Optional[ChoiceDeltaToolCall] = None
-    ) -> list[StreamedChatResponse] | None:
-
+        delta: Optional[ChoiceDeltaToolCall] = None,
+        ctx: Context = None
+    ) -> list[StreamedChatEvent] | None:
+        
         # # # # Extract the message from the event
         # # # stream_message = ""
         # # # finish_reason = None
@@ -116,10 +123,12 @@ class CohereToOpenAI:
         # # # if stream_message:
         # # #     previous_response = (previous_response or "") + stream_message
         
+        conversation_id = chat_request.conversation_id
+        response_id = ctx.get_trace_id()
         print("stream_message:", stream_message)
         print("finish_reason:", finish_reason)
         print("delta:", delta)
-  
+        new_chat_history = CohereToOpenAI.convert_backend_message_to_openai_message(chat_request.chat_history)
         
         
         # Extract JSON from the response
@@ -139,10 +148,9 @@ class CohereToOpenAI:
             func_name = CohereToOpenAI.get_value(parsed_response, "name")
             func_params: Dict[str, Any] = CohereToOpenAI.get_value(parsed_response, "parameters")
 
-            tool_call_class = ToolCall(name=func_name, parameters=func_params)
+            tool_call_class = ToolCall(name=str(func_name), parameters=dict(func_params))
             tool_call_delta = ToolCallDelta(name=func_name, index=0, parameters=str(func_params))
 
-            new_chat_history = CohereToOpenAI.convert_backend_message_to_openai_message(chat_request.chat_history)
             
             message_rest = ""
             if type(previous_response) == str and  any(quote in previous_response for quote in ("```", "'", '"')) and not previous_response.endswith(("```", "'", '"')):
@@ -153,21 +161,25 @@ class CohereToOpenAI:
             
             # Handle response based on function_triggered status
             if function_triggered == 'none':
-                tool_call_message = ChatbotMessage(role='CHATBOT', message="", tool_calls=[tool_call_class])
-                new_chat_history.append(tool_call_message)
+                tool_call_message = ChatMessage(role=ChatRole.CHATBOT, message="", tool_calls=[dict(tool_call_class)])
+                new_chat_history.append(dict(tool_call_message))
 
                 response = NonStreamedChatResponse(
                     text="", 
                     chat_history=new_chat_history, 
                     generation_id=generation_id, 
+                    conversation_id=conversation_id,
                     finish_reason="COMPLETE", 
-                    tool_calls=[tool_call_class]
+                    tool_calls=[tool_call_class],
+                    response_id=response_id
                 )
                 
-                end_response = StreamEndStreamedChatResponse(
-                    event_type="stream-end", 
+                end_response = StreamEnd(
+                    event_type=StreamEvent.STREAM_END, 
+                    chat_history=new_chat_history,
                     finish_reason="COMPLETE", 
-                    response=response
+                    response=response,
+                    tool_calls=[tool_call_class]
                 )
 
                 # class RemoveResponse:
@@ -177,24 +189,21 @@ class CohereToOpenAI:
 
                 
                 # removeResponse = ToolCallsChunkStreamedChatResponse(event_type="tool-calls-chunk", text="OAI_REMOVE", part=extracted_json_string)
-                removeResponse =  ToolCallsGenerationStreamedChatResponse(
-                        event_type="tool-calls-generation", 
-                        tool_calls=[], 
-                        text=f"OAI_REMOVE{original_json_string}"
-                        # text=f"{str(parsed_response)})"
-                    )
 
                 return [
-                    TextGenerationStreamedChatResponse(event_type="text-generation", text=stream_message),
-                    ToolCallsChunkStreamedChatResponse(event_type="tool-calls-chunk", tool_call_delta=tool_call_delta),
-                    ToolCallsGenerationStreamedChatResponse(
-                        event_type="tool-calls-generation", 
+                    StreamTextGeneration(event_type=StreamEvent.TEXT_GENERATION, text=stream_message),
+                    StreamToolCallsChunk(text="Calling A Tool",event_type=StreamEvent.TOOL_CALLS_CHUNK, tool_call_delta=tool_call_delta, part_to_remove=original_json_string),
+                    StreamToolCallsGeneration(
+                        event_type=StreamEvent.TOOL_CALLS_GENERATION, 
                         tool_calls=[tool_call_class], 
-                        text=f"Retrieving tool response...\n{str(parsed_response)})"
+                        text=f"Retrieving tool response...\n{original_json_string}"
                         # text=f"{str(parsed_response)})"
                     ),
-                   
-                    removeResponse,
+                    # StreamInlineFix(
+                    #     event_type=StreamEvent.INLINE_FIX, 
+                    #     text=f"oai-remove-part:{original_json_string}"
+                    #     # text=f"{str(parsed_response)})"
+                    # ),
                     end_response
                 ]
 
@@ -206,13 +215,22 @@ class CohereToOpenAI:
             tool_calls = getattr(delta, 'tool_calls', None)
             if tool_calls:
                 tool_call_deltas = [CohereToOpenAI.convert_tool_call_delta(tc) for tc in tool_calls]
-                return [ToolCallsGenerationStreamedChatResponse(event_type="tool-calls-chunk", tool_call_delta=tool_call_deltas[0])]
-            return [TextGenerationStreamedChatResponse(event_type="text-generation", text=stream_message or '')]
+                return [StreamToolCallsChunk(event_type=StreamEvent.TOOL_CALLS_CHUNK, tool_call_delta=tool_call_deltas[0])]
+            return [StreamTextGeneration(event_type=StreamEvent.TEXT_GENERATION, text=stream_message or '')]
         
         if finish_reason == "stop":
-            response = NonStreamedChatResponse(text=stream_message or '')
-            return [StreamEndStreamedChatResponse(event_type="stream-end", finish_reason="COMPLETE", response=response)]
-        return [TextGenerationStreamedChatResponse(event_type="text-generation", text=stream_message or '')]
+            print(f"Chat history content: {new_chat_history}")
+            response = NonStreamedChatResponse(
+                text= stream_message or "", 
+                chat_history=new_chat_history,
+                generation_id=generation_id,
+                conversation_id=conversation_id,
+                response_id=response_id,
+                finish_reason="COMPLETE", 
+            )
+            # response = NonStreamedChatResponse(text=stream_message or '')
+            return [StreamEnd(event_type=StreamEvent.STREAM_END, finish_reason="COMPLETE", response=response)]
+        return [StreamTextGeneration(event_type=StreamEvent.TEXT_GENERATION, text=stream_message or '')]
 
     @staticmethod
     def check_if_tool_call_in_text_chunk_is_complete(full_text: str) -> bool:
@@ -323,33 +341,41 @@ class CohereToOpenAI:
         return messages
 
     @staticmethod
+    def process_tool_result_entry_as_text(tool_result: ToolResult) -> str:
+        text_outputs: str = ""
+        
+        tool_result_dict = dict(tool_result)
+        # print("tool_result_dict: ", tool_result_dict)
+        outputs: List[Any]  = tool_result_dict.get("outputs", [])
+        call: Any  = tool_result_dict.get("call", [])
+        if len(outputs) > 0:
+            for output in outputs:
+                # print("OTYPE:", isinstance(output, dict))
+                # print("OUTTEXT:", output["text"])
+                if output and isinstance(output, dict) and output["text"]:
+                    text = output["text"]
+                else:
+                    text = str(output)
+                    
+                text_outputs += f"""Here's the tool response: 
+                
+                Tool Call:
+                {call}
+                
+                Result: 
+                {text}
+                """ or ""
+                # text_outputs += f'{{"output": "{text}"}}' or ""
+            
+        return text_outputs or ""
+    @staticmethod
     def process_tool_results_as_text(tool_results: List[ToolResult]) -> str | None:
         text_outputs: str = ""
         
         if len(tool_results):
-            for tool_result in tool_results:
-                tool_result_dict = dict(tool_result)
-                # print("tool_result_dict: ", tool_result_dict)
-                outputs: List[Any]  = tool_result_dict.get("outputs", [])
-                call: Any  = tool_result_dict.get("call", [])
-                if len(outputs) > 0:
-                    for output in outputs:
-                        # print("OTYPE:", isinstance(output, dict))
-                        # print("OUTTEXT:", output["text"])
-                        if output and isinstance(output, dict) and output["text"]:
-                            text = output["text"]
-                        else:
-                            text = str(output)
-                            
-                        text_outputs += f"""Here's the tool response: 
-                        
-                        Tool Call:
-                        {call}
-                        
-                        Result: 
-                        {text}
-                        """ or ""
-                        # text_outputs += f'{{"output": "{text}"}}' or ""
+            for tool_result in tool_results:            
+                text_outputs += CohereToOpenAI.process_tool_result_entry_as_text(tool_result)
+                # text_outputs += f'{{"output": "{text}"}}' or ""
             
         return text_outputs
     @staticmethod
@@ -436,6 +462,9 @@ class CohereToOpenAI:
 
     @staticmethod
     def append_assistant_message(message: str, tool_calls: Any) -> ChatCompletionAssistantMessageParam:
+        if tool_calls:
+            message = f"{tool_calls}"
+        
         return ChatCompletionAssistantMessageParam(role="assistant", content=message, tool_calls=tool_calls)
 
     @staticmethod

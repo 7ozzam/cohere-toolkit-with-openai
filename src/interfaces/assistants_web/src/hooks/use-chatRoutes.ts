@@ -23,6 +23,7 @@ export const useNavigateToNewChat = () => {
   const { setLeftPanelOpen } = useSettingsStore();
 
   const handleNavigate = () => {
+    console.log(agentId);
     const url = agentId ? `/a/${agentId}` : '/';
     resetConversation();
     resetCitations();

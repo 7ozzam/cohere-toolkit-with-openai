@@ -11,7 +11,7 @@ import { Button } from '@/components/UI';
 import { useFixCopyBug } from '@/hooks';
 import { useSynthesizer } from '@/hooks/use-synthesizer';
 import { ChatMessage, MessageType, StreamingMessage, isFulfilledMessage } from '@/types/message';
-import { cn } from '@/utils';
+import { checkIsBaseAgent, cn } from '@/utils';
 
 type Props = {
   isStreaming: boolean;
@@ -62,7 +62,7 @@ export const MessagingContainer = memo(MessagingContainerContents);
  * In order to access the state hooks for the scroll to bottom component, we need to wrap the content in a component.
  */
 const Content: React.FC<Props> = (props) => {
-  const { isStreaming, messages, composer, streamingMessage } = props;
+  const { isStreaming, messages, composer, streamingMessage, agentId } = props;
   const scrollToBottom = useScrollToBottom();
 
   useFixCopyBug();
@@ -100,27 +100,29 @@ const Content: React.FC<Props> = (props) => {
       <div className="flex h-auto min-w-0 flex-1 flex-col">
         <Messages {...props} />
         {/* Composer container */}
-        <div className="sticky bottom-0 rounded-b-lg bg-marble-980 px-4 pb-4 dark:bg-volcanic-100">
-          <Transition
-            show={showNewMessageButton}
-            enter="duration-300 ease-out transition-all"
-            enterFrom="translate-y-10 opacity-0"
-            enterTo="translate-y-0 opacity-100"
-            leave="duration-300 ease-in transition-all"
-            leaveFrom="translate-y-0 opacity-100"
-            leaveTo="translate-y-10 opacity-0"
-            as="div"
-            className="absolute bottom-full left-1/2 -z-10 flex h-fit -translate-x-1/2 transform pb-4"
-          >
-            <Button
-              label="New message"
-              kind="cell"
-              icon="arrow-down"
-              onClick={handleScrollToNewMessage}
-            />
-          </Transition>
-          {composer}
-        </div>
+        {agentId && (
+          <div className="sticky bottom-0 rounded-b-lg bg-marble-980 px-4 pb-4 dark:bg-volcanic-100">
+            <Transition
+              show={showNewMessageButton}
+              enter="duration-300 ease-out transition-all"
+              enterFrom="translate-y-10 opacity-0"
+              enterTo="translate-y-0 opacity-100"
+              leave="duration-300 ease-in transition-all"
+              leaveFrom="translate-y-0 opacity-100"
+              leaveTo="translate-y-10 opacity-0"
+              as="div"
+              className="absolute bottom-full left-1/2 -z-10 flex h-fit -translate-x-1/2 transform pb-4"
+            >
+              <Button
+                label="New message"
+                kind="cell"
+                icon="arrow-down"
+                onClick={handleScrollToNewMessage}
+              />
+            </Transition>
+            {composer}
+          </div>
+        )}
       </div>
     </div>
   );

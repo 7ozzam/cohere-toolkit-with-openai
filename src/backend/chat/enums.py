@@ -12,6 +12,7 @@ class StreamEvent(str, Enum):
     TOOL_INPUT = "tool-input"
     TOOL_RESULT = "tool-result"
     TEXT_GENERATION = "text-generation"
+    INLINE_FIX = "inline-fix"
     CITATION_GENERATION = "citation-generation"
     STREAM_END = "stream-end"
     NON_STREAMED_CHAT_RESPONSE = "non-streamed-chat-response"

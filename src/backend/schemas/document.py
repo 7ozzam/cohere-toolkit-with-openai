@@ -1,6 +1,6 @@
-from typing import Union
+from typing import Union, Optional
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 
 class DocumentBase(BaseModel):
@@ -8,13 +8,15 @@ class DocumentBase(BaseModel):
 
 
 class Document(BaseModel):
-    text: str
-    document_id: str
+    document_id: Optional[Union[str, None]] = Field(default=None)
+    id: Optional[Union[str, None]]= Field(default=None)
+    text: str = Field(default="")
+    
 
-    title: Union[str, None]
-    url: Union[str, None]
-    fields: Union[dict, None]
-    tool_name: Union[str, None]
+    title: Union[str, None] = Field(default="")
+    url: Union[str, None] = Field(default=None)
+    fields: Union[dict, None] = Field(default=None)
+    tool_name: Union[str, None] = Field(default=None)
 
     class Config:
         from_attributes = True

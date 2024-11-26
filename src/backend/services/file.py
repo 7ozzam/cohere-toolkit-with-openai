@@ -369,6 +369,7 @@ class FileService:
         user_id: str,
         files: list[FastAPIUploadFile],
         paths: list[str],
+        names: list[str],
         conversation_id: str,
         ctx: Context = Depends(get_context),
     ) -> list:
@@ -399,7 +400,7 @@ class FileService:
 
             # Save the file (You will need to implement this)
             # await self.save_file(file, file_location)
-            saved_file = await insert_files_in_db(session, [file], user_id, folder=folder, path=paths[index], ctx=ctx, conversation_id=conversation_id)
+            saved_file = await insert_files_in_db(session, [file], user_id, folder=folder, path=paths[index], name=names[index], ctx=ctx, conversation_id=conversation_id)
             for file in saved_file:
                 associated_files.append(file)
 
@@ -445,6 +446,7 @@ async def insert_files_in_db(
     files: list[FastAPIUploadFile],
     user_id: str,
     path: str = None,
+    name: str = None,
     conversation_id: str = None,
     folder: Folder = None,
     ctx: Context = Depends(get_context),
@@ -464,7 +466,11 @@ async def insert_files_in_db(
     for file in files:
         content = await get_file_content(file)
         cleaned_content = content.replace("\x00", "")
-        filename = file.filename.encode("ascii", "ignore").decode("utf-8")
+        if name:
+            filename = name
+        else:
+            filename = file.filename.encode("ascii", "ignore").decode("utf-8")
+        
         _, extension = os.path.splitext(filename)
         
         # I found that file name sometimes affect the accuracy of the model.

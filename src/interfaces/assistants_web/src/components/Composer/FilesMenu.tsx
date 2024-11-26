@@ -1,11 +1,11 @@
 import { Popover, PopoverButton, PopoverPanel } from '@headlessui/react';
+import { showDirectoryPicker } from 'file-system-access';
 import { useRef } from 'react';
 
 import { Icon, Text, Tooltip } from '@/components/UI';
 import { ACCEPTED_FILE_TYPES } from '@/constants';
 import { useBrandedColors, useChatRoutes } from '@/hooks';
 import { cn, mapMimeTypeToExtension } from '@/utils';
-import { showDirectoryPicker } from 'file-system-access';
 
 type Props = {
   onUploadFile: (files: File[]) => void;

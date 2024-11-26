@@ -45,8 +45,20 @@ export const useUploadAgentFile = () => {
 export const useUploadConversationFile = () => {
   const cohereClient = useCohereClient();
   return useMutation({
-    mutationFn: ({ agentId, files, conversationId }: { agentId: string; files: File[]; conversationId?: string }) =>
-      cohereClient.batchUploadConversationFile({ agent_id: agentId, files, conversation_id: conversationId }),
+    mutationFn: ({
+      agentId,
+      files,
+      conversationId,
+    }: {
+      agentId: string;
+      files: File[];
+      conversationId?: string;
+    }) =>
+      cohereClient.batchUploadConversationFile({
+        agent_id: agentId,
+        files,
+        conversation_id: conversationId,
+      }),
   });
 };
 

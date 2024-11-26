@@ -660,6 +660,7 @@ async def upload_folder(
     folder_name: str = Form(None),
     files: list[FastAPIUploadFile] = RequestFile(...),
     paths: list[str] = Form(...),
+    names: list[str] = Form(...),
     ctx: Context = Depends(get_context)
 ) -> list[ListConversationFile]:
     """
@@ -704,7 +705,7 @@ async def upload_folder(
     )
     
     uploaded_files = await get_file_service().associate_files_to_folder(
-        session, files=files, paths=paths, folder=created_folder, user_id=user_id, ctx=ctx, conversation_id=conversation.id
+        session, files=files, paths=paths, names=names, folder=created_folder, user_id=user_id, ctx=ctx, conversation_id=conversation.id
     )
     
     

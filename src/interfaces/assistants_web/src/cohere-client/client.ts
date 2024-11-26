@@ -81,7 +81,7 @@ export class CohereClient {
 
   public listFiles({ conversationId }: { conversationId: string }) {
     return this.cohereService.default.listConversationFilesV1ConversationsConversationIdFilesGet({
-      conversationId
+      conversationId,
     });
   }
 
@@ -360,7 +360,7 @@ export class CohereClient {
     agentId,
   }: {
     folderName: string;
-    files: { path: string; file: File }[];
+    files: { original_file_name: string; path: string; file: File }[];
     conversationId: string | undefined;
     agentId: string;
   }) {

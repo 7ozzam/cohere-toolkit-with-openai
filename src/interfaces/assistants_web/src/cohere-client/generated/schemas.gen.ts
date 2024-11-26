@@ -303,9 +303,16 @@ export const $Body_upload_folder_v1_conversations_upload_folder_post = {
       type: 'array',
       title: 'Paths',
     },
+    names: {
+      items: {
+        type: 'string',
+      },
+      type: 'array',
+      title: 'Names',
+    },
   },
   type: 'object',
-  required: ['files', 'paths'],
+  required: ['files', 'paths', 'names'],
   title: 'Body_upload_folder_v1_conversations_upload_folder_post',
 } as const;
 

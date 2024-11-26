@@ -53,7 +53,7 @@ export type Body_batch_upload_file_v1_agents_batch_upload_file_post = {
 
 export type Body_batch_upload_file_v1_conversations_batch_upload_file_post = {
   conversation_id?: string;
-  agent_id: string;
+  agent_id?: string;
   files: Array<Blob | File>;
 };
 
@@ -63,6 +63,7 @@ export type Body_upload_folder_v1_conversations_upload_folder_post = {
   folder_name?: string;
   files: Array<Blob | File>;
   paths: Array<string>;
+  names: Array<string>;
 };
 
 export enum Category {

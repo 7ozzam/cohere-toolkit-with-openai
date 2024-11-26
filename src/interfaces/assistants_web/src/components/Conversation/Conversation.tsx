@@ -74,7 +74,8 @@ export const Conversation: React.FC<Props> = ({ agent, tools, startOptionsEnable
   const handleConfirmUpload = async () => {
     if (selectedFolder) {
       try {
-        if (!agent?.id) throw new Error('You Should Choose an assistant or conversation to upload a folder');
+        if (!agent?.id)
+          throw new Error('You Should Choose an assistant or conversation to upload a folder');
         await uploadFolder(selectedFolder, agent?.id, conversationId); // Proceed with folder upload
         console.log('Folder uploaded successfully.');
       } catch (error) {
@@ -90,14 +91,13 @@ export const Conversation: React.FC<Props> = ({ agent, tools, startOptionsEnable
 
   const handleUploadFile = async (files: File[]) => {
     try {
-      if (!agent?.id) throw new Error('You Should Choose an assistant or conversation to upload your files');
-      await uploadFiles(agent.id,files, conversationId);
+      if (!agent?.id)
+        throw new Error('You Should Choose an assistant or conversation to upload your files');
+      await uploadFiles(agent.id, files, conversationId);
       console.log('Files uploaded successfully.');
     } catch (error) {
       console.error('Files upload failed:', error);
     }
-
-    
   };
 
   const handleSend = (msg?: string, overrides?: Partial<ConfigurableParams>) => {

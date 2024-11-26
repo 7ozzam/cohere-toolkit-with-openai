@@ -1,11 +1,11 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { FileSystemDirectoryHandle } from 'file-system-access';
 
 import { useCohereClient } from '@/cohere-client';
+import { ACCEPTED_FILE_TYPES } from '@/constants';
 import { useNotify, useSession } from '@/hooks';
 import { useConversationStore, useFilesStore, useFoldersStore, useParamsStore } from '@/stores';
-import {FileSystemDirectoryHandle} from 'file-system-access'
 import { getFileExtension, mapExtensionToMimeType } from '@/utils';
-import { ACCEPTED_FILE_TYPES } from '@/constants';
 
 // Adjust this import based on your cohere client
 
@@ -44,7 +44,7 @@ export const useUploadFolderFiles = () => {
       agentId,
     }: {
       folder: FileSystemDirectoryHandle;
-      files: { path: string; file: File }[];
+      files: { original_file_name: string; path: string; file: File }[];
       conversationId?: string;
       agentId: string;
     }) =>
@@ -137,7 +137,6 @@ export const useFolderActions = () => {
       if (!conversationId) {
         const newConversationId = uploadedFolder[0].conversation_id;
         setConversation({ id: newConversationId });
-        
       }
 
       await queryClient.invalidateQueries({ queryKey: ['listFiles'] });
@@ -152,8 +151,8 @@ export const useFolderActions = () => {
   const getAllFiles = async (
     directoryHandle: FileSystemDirectoryHandle,
     relativePath = ''
-  ): Promise<{ path: string; file: File }[]> => {
-    const files: { path: string; file: File }[] = [];
+  ): Promise<{ original_file_name: string; path: string; file: File }[]> => {
+    const files: { original_file_name: string; path: string; file: File }[] = [];
 
     for await (const entry of directoryHandle.values()) {
       const fullPath = relativePath ? `${relativePath}/${entry.name}` : entry.name;
@@ -170,9 +169,9 @@ export const useFolderActions = () => {
         const isAcceptedExtension = ACCEPTED_FILE_TYPES.some(
           (acceptedFile) => file.type === acceptedFile
         );
-        
+
         if (isAcceptedExtension) {
-          files.push({ path: fullPath, file });
+          files.push({ path: fullPath, file, original_file_name: entry.name });
         }
       } else if (entry.kind === 'directory') {
         if (!entry.name.includes('.git') && !entry.name.includes('.obsedian')) {

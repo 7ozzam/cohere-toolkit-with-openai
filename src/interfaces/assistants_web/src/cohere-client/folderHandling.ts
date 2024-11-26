@@ -101,17 +101,20 @@ export class CohereFolderHandling {
     agentId: string;
     conversationId?: string;
     folderName: string;
-    files: { path: string; file: Blob | File }[];
+    files: { original_file_name: string; path: string; file: Blob | File }[];
   }) {
     try {
       const formData = new FormData();
       const filesPayload: (File | Blob)[] = [];
       const pathsPayload: string[] = [];
+      const originalFilesNamesPayload: string[] = [];
       files.forEach((file) => {
         formData.append('files', file.file);
         filesPayload.push(file.file);
         formData.append('paths', file.path);
         pathsPayload.push(file.path);
+        formData.append('names', file.original_file_name);
+        originalFilesNamesPayload.push(file.original_file_name);
       });
 
       const response =
@@ -122,6 +125,7 @@ export class CohereFolderHandling {
             folder_name: folderName,
             files: filesPayload,
             paths: pathsPayload,
+            names: originalFilesNamesPayload,
           },
         });
       return response;

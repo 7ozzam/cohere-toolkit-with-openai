@@ -66,6 +66,27 @@ def get_file_by_name(db: Session, file_name: str, user_id: str) -> File:
     return db.query(File).filter(File.file_name == file_name, File.user_id == user_id).first()
 
 @validate_transaction
+def get_file_by_name_or_id(db: Session, identifier: str, user_id: str) -> File:
+    """
+    Get a file by either name or ID.
+
+    Args:
+        db (Session): Database session.
+        identifier (str): File name or ID.
+        user_id (str): User ID.
+
+    Returns:
+        File: File with the given name or ID.
+    """
+    # Try to find by ID first
+    file = get_file(db, identifier, user_id)
+    if file:
+        return file
+    
+    # If not found by ID, try by name
+    return get_file_by_name(db, identifier, user_id)
+
+@validate_transaction
 def get_files(db: Session, user_id: str, offset: int = 0, limit: int = 100):
     """
     List all files.
@@ -177,3 +198,25 @@ def bulk_delete_files(db: Session, file_ids: list[str], user_id: str) -> None:
     files = db.query(File).filter(File.id.in_(file_ids), File.user_id == user_id)
     files.delete()
     db.commit()
+
+@validate_transaction
+def get_files_by_identifiers(db: Session, identifiers: list[str], user_id: str) -> list[File]:
+    """
+    Get files by either their IDs or names.
+
+    Args:
+        db (Session): Database session.
+        identifiers (list[str]): List of file IDs or names.
+        user_id (str): User ID.
+
+    Returns:
+        list[File]: List of files matching the given IDs or names.
+    """
+    return (
+        db.query(File)
+        .filter(
+            File.user_id == user_id,
+            (File.id.in_(identifiers) | File.file_name.in_(identifiers))
+        )
+        .all()
+    )

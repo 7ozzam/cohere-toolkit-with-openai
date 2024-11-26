@@ -43,13 +43,13 @@ class ReadFileTool(BaseTool):
                 _, file_id = file
             elif isinstance(file, list):
                 _, file_id = file
-            retrieved_file = file_crud.get_file(session, file_id, user_id)    
+            retrieved_file = file_crud.get_file_by_name_or_id(session, file_id, user_id)    
         elif _file_name and not _file_id:
-            retrieved_file = file_crud.get_file_by_name(session, _file_name, user_id)
+            retrieved_file = file_crud.get_file_by_name_or_id(session, _file_name, user_id)
         elif _file_id:
-            retrieved_file = file_crud.get_file(session, _file_id, user_id)
+            retrieved_file = file_crud.get_file_by_name_or_id(session, _file_id, user_id)
         elif _file_ids:
-            retrieved_files = file_crud.get_files_by_ids(session, _file_ids, user_id)
+            retrieved_files = file_crud.get_files_by_identifiers(session, _file_ids, user_id)
             print("retrieved_files_ont: ", retrieved_files)
             # Initialize a variable to hold the combined content
             combined_file_name = "Compination of Files "

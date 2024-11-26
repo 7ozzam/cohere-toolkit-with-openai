@@ -472,7 +472,7 @@ async def list_files(
             "folder_id": folder.id,  # Use folder's ID from the folder object
             "item_type": "folder",
             "conversation_id": conversation_id,
-            "files": [
+            "files": sorted([
                 {
                     "id": file.id,
                     "user_id": file.user_id,
@@ -484,7 +484,7 @@ async def list_files(
                     "item_type": "file",
                 }
                 for file in folder.files or []  # Serialize files in the folder
-            ],
+            ], key=lambda x: x["file_path"]),
         }
         for folder in folders
     ]

@@ -480,6 +480,7 @@ async def list_files(
                     "updated_at": file.updated_at,
                     "file_name": file.file_name,
                     "folder_id": folder.id,
+                    "file_path": file.path,
                     "item_type": "file",
                 }
                 for file in folder.files or []  # Serialize files in the folder

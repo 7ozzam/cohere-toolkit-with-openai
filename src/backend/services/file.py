@@ -467,7 +467,7 @@ async def insert_files_in_db(
         content = await get_file_content(file)
         cleaned_content = content.replace("\x00", "")
         if name:
-            filename = path
+            filename = name
         else:
             filename = file.filename
         

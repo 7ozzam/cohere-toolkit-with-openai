@@ -19,7 +19,7 @@ export const useListConversationFiles = (
   const cohereClient = useCohereClient();
   return useQuery<ListConversationFile[], ApiError>({
     queryKey: ['listFiles', conversationId],
-    queryFn: async () => {
+    queryFn: async (): Promise<ListConversationFile[]> => {
       if (!conversationId) throw new Error('Conversation ID not found');
       try {
         return await cohereClient.listFiles({ conversationId });

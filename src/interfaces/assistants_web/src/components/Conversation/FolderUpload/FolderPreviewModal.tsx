@@ -125,7 +125,7 @@ export const processDirectoryHandle = async (
       user_id: userId,
       created_at: new Date(file.lastModified).toISOString(),
       updated_at: new Date(file.lastModified).toISOString(),
-      file_name: `${path}/${original_file_name}`,
+      file_name: `${path}/${original_file_name || file.name}`,
       folder_id: folderId,
       item_type: 'file',
     });

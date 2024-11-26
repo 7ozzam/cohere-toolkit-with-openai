@@ -175,8 +175,10 @@ export const useFolderActions = () => {
           files.push({ path: fullPath, file });
         }
       } else if (entry.kind === 'directory') {
-        const subFiles = await getAllFiles(entry, fullPath);
-        files.push(...subFiles);
+        if (entry.name != '.get' && entry.name != '.obsedian') {
+          const subFiles = await getAllFiles(entry, fullPath);
+          files.push(...subFiles);
+        }
       }
     }
 

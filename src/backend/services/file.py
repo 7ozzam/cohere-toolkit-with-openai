@@ -467,15 +467,16 @@ async def insert_files_in_db(
         content = await get_file_content(file)
         cleaned_content = content.replace("\x00", "")
         if name:
-            filename = name
+            filename = path
         else:
-            filename = file.filename.encode("ascii", "ignore").decode("utf-8")
+            filename = file.filename
         
+        filename = filename.encode("ascii", "ignore").decode("utf-8")
         _, extension = os.path.splitext(filename)
         
         # I found that file name sometimes affect the accuracy of the model.
         
-        filename = sanitize_filename(filename)
+        # filename = sanitize_filename(filename)
         
         conversation = conversation_crud.get_conversation(session, conversation_id, user_id)
         print("Conversation O User: ", conversation)

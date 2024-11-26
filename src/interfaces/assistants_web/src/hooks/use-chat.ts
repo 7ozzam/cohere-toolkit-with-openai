@@ -346,7 +346,7 @@ export const useChat = (config?: { onSend?: (msg: string) => void }) => {
                     `\\{\\s*${escapedPartToRemove}\\s*\\}`,
                   'g'
                 );
-                botResponse = botResponse.replace(pattern, '');
+                botResponse = botResponse.replace(pattern, '').replace(PartToRemove, "");
                 // botResponse = botResponse
                 //   .replace('```' + `${data?.part_to_remove}` + '```', '')
                 //   .replace(data?.part_to_remove, '');

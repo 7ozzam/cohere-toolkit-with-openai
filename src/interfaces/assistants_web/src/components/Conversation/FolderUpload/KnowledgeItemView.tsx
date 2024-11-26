@@ -29,11 +29,12 @@ export const KnowledgeItem: React.FC<KnowledgeItemProps> = ({ file, isDeleting, 
         />
       </div>
       {file.files && file.files.length > 0 && (
-        <div className="flex w-full flex-col gap-2 pl-2">
+        <div className="flex w-full flex-col gap-2 pl-2 overflow-y-auto max-h-64 min">
           {file.files.map((childFile) => (
             <div
               key={childFile.id}
               className="flex items-center gap-x-2 overflow-hidden rounded-full bg-mushroom-600/10 p-2"
+              style={{ minHeight: '40px' }}
             >
               <Icon name="file" kind="outline" className="fill-mushroom-300 dark:fill-marble-950" />
               <Text className="truncate">{childFile.file_name}</Text>

@@ -77,9 +77,9 @@ export const ConversationPanel: React.FC = () => {
               ))}
             </div>
           )}
-          <Text styleAs="caption" className="text-mushroom-300 dark:text-marble-800">
+          {/* <Text styleAs="caption" className="text-mushroom-300 dark:text-marble-800">
             These files will only be accessible to you and won’t impact others.
-          </Text>
+          </Text> */}
         </section>
       </div>
     </aside>

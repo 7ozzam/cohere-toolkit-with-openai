@@ -956,6 +956,7 @@ def handle_stream_tool_calls_chunk(
             fr"\{{\s*{escaped_part_to_remove}\s*\}}"
         )
         stream_end_data["text"] = re.sub(pattern, "", stream_end_data["text"])
+        stream_end_data["text"] = stream_end_data["text"].replace(part_to_remove)
         
         # stream_end_data["text"] = stream_end_data["text"].replace(f"```{part_to_remove}```", "").replace(part_to_remove, "")
         

@@ -11,7 +11,7 @@ import { useAvailableTools, useBreakpoint, useIsDesktop } from '@/hooks';
 import { ConfigurableParams } from '@/stores/slices/paramsSlice';
 import { ChatMessage } from '@/types/message';
 import { cn } from '@/utils';
-
+import { FileSystemDirectoryHandle } from 'file-system-access';
 type Props = {
   isStreaming: boolean;
   value: string;

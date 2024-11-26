@@ -6,7 +6,7 @@ import { ACCEPTED_FILE_TYPES } from '@/constants';
 import { useNotify, useSession } from '@/hooks';
 import { useConversationStore, useFilesStore, useFoldersStore, useParamsStore } from '@/stores';
 import { getFileExtension, mapExtensionToMimeType } from '@/utils';
-
+import * as path from 'path'
 // Adjust this import based on your cohere client
 
 // Query hook to list files in a folder
@@ -158,6 +158,10 @@ export const useFolderActions = () => {
       const fullPath = relativePath ? `${relativePath}/${entry.name}` : entry.name;
 
       if (entry.kind === 'file') {
+        let directory = '.'
+        if (fullPath.includes("/")) {
+          directory = path.dirname(fullPath);
+        }
         const file = await entry.getFile();
         if (file.type.length === 0) {
           const fileExtension = getFileExtension(file.name)!;
@@ -171,7 +175,7 @@ export const useFolderActions = () => {
         );
 
         if (isAcceptedExtension) {
-          files.push({ path: fullPath, file, original_file_name: entry.name });
+          files.push({ path: directory, file, original_file_name: file.name });
         }
       } else if (entry.kind === 'directory') {
         if (!entry.name.includes('.git') && !entry.name.includes('.obsedian')) {

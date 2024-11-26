@@ -17,7 +17,7 @@ import { ConfigurableParams } from '@/stores/slices/paramsSlice';
 import { ChatMessage } from '@/types/message';
 
 import { FolderPreviewModal } from './FolderUpload/FolderPreviewModal';
-
+import { FileSystemDirectoryHandle } from 'file-system-access';
 type Props = {
   startOptionsEnabled?: boolean;
   agent?: AgentPublic;

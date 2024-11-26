@@ -209,7 +209,7 @@ class CustomChat(BaseChat):
                 
                 folders = get_folder_service().get_folders_by_conversation_id(
                     session, user_id, ctx.get_conversation_id(), ctx)
-                folders_files = [file for folder in folders for file in folder.files]
+                folders_files = sorted([file for folder in folders for file in folder.files], key=lambda x: x.path or '')
 
                 agent_files = []
                 if agent_id:

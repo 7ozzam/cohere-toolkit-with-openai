@@ -175,7 +175,7 @@ export const useFolderActions = () => {
           files.push({ path: fullPath, file });
         }
       } else if (entry.kind === 'directory') {
-        if (entry.name != '.get' && entry.name != '.obsedian') {
+        if (!entry.name.includes('.git') && !entry.name.includes('.obsedian')) {
           const subFiles = await getAllFiles(entry, fullPath);
           files.push(...subFiles);
         }

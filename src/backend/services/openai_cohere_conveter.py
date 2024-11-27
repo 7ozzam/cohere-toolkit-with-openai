@@ -140,8 +140,13 @@ class CohereToOpenAI:
         is_json_full = extracted_json_string.strip().count("{") == extracted_json_string.strip().count("}") if extracted_json_string else False
 
         # Parse the extracted JSON
-        parsed_response = jp.parse(extracted_json_string)
-        is_json_present = len(parsed_response) > 0
+        try:
+            parsed_response = jp.parse(extracted_json_string)
+            is_json_present = len(parsed_response) > 0
+        except Exception as e:
+            parsed_response = None
+            is_json_present = False
+            
 
         # If JSON is valid and complete, handle the tool call
         if is_json_present and is_json_full:
@@ -196,7 +201,7 @@ class CohereToOpenAI:
                     StreamToolCallsGeneration(
                         event_type=StreamEvent.TOOL_CALLS_GENERATION, 
                         tool_calls=[tool_call_class], 
-                        text=f"Retrieving tool response...\n{original_json_string}"
+                        text=f"{original_json_string}"
                         # text=f"{str(parsed_response)})"
                     ),
                     # StreamInlineFix(

@@ -951,12 +951,18 @@ def handle_stream_tool_calls_chunk(
 
     if part_to_remove:
         pattern = (
-            fr"```\s*\{{\s*{escaped_part_to_remove}\s*\}}\s*```|"
-            fr"`\s*\{{\s*{escaped_part_to_remove}\s*\}}\s*`|"
-            fr"\{{\s*{escaped_part_to_remove}\s*\}}"
+        fr"```json\s*\{{\s*{escaped_part_to_remove}\s*\}}\s*```|"  # Matches ```json {part_to_remove} ```
+        fr"```\s*\{{\s*{escaped_part_to_remove}\s*\}}\s*```|"      # Matches ```{part_to_remove}```
+        fr"`\s*\{{\s*{escaped_part_to_remove}\s*\}}\s*`|"          # Matches `{part_to_remove}`
+        fr"\{{\s*{escaped_part_to_remove}\s*\}}"                  # Matches {part_to_remove}
         )
-        stream_end_data["text"] = re.sub(pattern, "", stream_end_data["text"])
+        
+        post_pattern = r"\`\`\`json\s*\`\`\`"
+        
+        stream_end_data["text"] = re.sub(pattern, "", stream_end_data["text"], flags=re.DOTALL)
         stream_end_data["text"] = stream_end_data["text"].replace(part_to_remove, "")
+        stream_end_data["text"] = re.sub(post_pattern, "", stream_end_data["text"], flags=re.DOTALL)
+
         
         # stream_end_data["text"] = stream_end_data["text"].replace(f"```{part_to_remove}```", "").replace(part_to_remove, "")
         

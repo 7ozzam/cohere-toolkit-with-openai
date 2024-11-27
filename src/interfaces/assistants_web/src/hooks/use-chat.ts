@@ -340,13 +340,20 @@ export const useChat = (config?: { onSend?: (msg: string) => void }) => {
 
                 const PartToRemove = data?.part_to_remove;
                 const escapedPartToRemove = escapeRegex(PartToRemove);
+                // Define a pattern to match all cases
                 const pattern = new RegExp(
-                  `\`\`\`\\s*\\{\\s*${escapedPartToRemove}\\s*\\}\\s*\`\`\`|` +
-                    `\`\\s*\\{\\s*${escapedPartToRemove}\\s*\\}\\s*\`|` +
-                    `\\{\\s*${escapedPartToRemove}\\s*\\}`,
-                  'g'
-                );
-                botResponse = botResponse.replace(pattern, '').replace(PartToRemove, "");
+                  `\\{\\s*${escapedPartToRemove}\\s*\\}|` +                  // Matches {part_to_remove} (standalone with whitespace)
+                    `\`\`\`\\s*\\{\\s*${escapedPartToRemove}\\s*\\}\\s*\`\`\`|` + // Matches ```{part_to_remove}```
+                    `\`\`\`json\\s*\\{\\s*${escapedPartToRemove}\\s*\\}\\s*\`\`\`|` + // Matches ```json {part_to_remove}```
+                    `\`\\s*\\{\\s*${escapedPartToRemove}\\s*\\}\\s*\``        // Matches `{part_to_remove}` (in backticks)
+                , 'g');
+
+                const postPattern = /```json\s*```/g;
+
+                // Replace matching patterns with an empty string
+                botResponse = botResponse
+                  .replace(pattern, '')
+                  .replace(PartToRemove, '').replace(postPattern, '');
                 // botResponse = botResponse
                 //   .replace('```' + `${data?.part_to_remove}` + '```', '')
                 //   .replace(data?.part_to_remove, '');

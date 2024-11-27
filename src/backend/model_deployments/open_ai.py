@@ -321,7 +321,9 @@ class OpenAIDeployment(BaseDeployment):
                                 tool_call_parameters = dict(tool_call['parameters'])
                                 file_ids = tool_call_parameters.get('file_ids')
                                 output_str = CohereToOpenAI.process_tool_result_entry_as_text(chat_request.tool_results)
-                                search_event = self.process_tool_result_event(output_str=output_str, generation_id=generation_id, file_ids=file_ids, ctx=ctx)
+                                search_result,search_event = self.process_tool_result_event(output_str=output_str, generation_id=generation_id, file_ids=file_ids, ctx=ctx)
+                                
+                                # chat_request.search_results.append(dict(search_result))
                                 result_sent = True
                                 yield to_dict(search_event)
                                   
@@ -339,7 +341,7 @@ class OpenAIDeployment(BaseDeployment):
             raise
 
     @staticmethod
-    def process_tool_result_event(generation_id: str,file_ids=None, output_str="", ctx: Context = Depends(get_context)):
+    def process_tool_result_event(generation_id: str,file_ids=None, output_str="", tool_calls: Dict[str, Any] = None, ctx: Context = Depends(get_context)):
         
         chat_search_query = ChatSearchQuery(text=output_str, generation_id=generation_id)
         connector = ChatSearchResultConnector(id="")
@@ -354,7 +356,7 @@ class OpenAIDeployment(BaseDeployment):
         # document: ChatDocument = {"text": output_str, "title": } 
         search_event = StreamSearchResults(event_type=StreamEvent.SEARCH_RESULTS, documents=documents, search_results=[dict(search_result)])
         
-        return search_event
+        return search_result, search_event
     
     async def invoke_rerank(
         self, query: str, documents: List[Dict[str, Any]], ctx: Context, **kwargs: Any

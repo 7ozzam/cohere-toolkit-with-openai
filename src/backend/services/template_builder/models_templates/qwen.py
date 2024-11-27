@@ -44,6 +44,7 @@ class QwenTemplateBuilder(BaseTemplateBuilder):
             3. **User Queries**  
             - Use available functions as needed to retrieve relevant information.  
             - Respect function results exactly as provided. Avoid rephrasing, correcting, or adding information unless explicitly requested by the user.
+            - Make sure to use the tool result effectivily, and don't miss anything.
 
             4. **Focus & Integrity**  
             - Respond only to the user’s specific request without mixing unrelated sections.  

@@ -39,6 +39,7 @@ class QwenTemplateBuilder(BaseTemplateBuilder):
     - When notified of a file upload, immediately use `read_document` with the provided `document_id`.
     - ALWAYS prioritize `read_document` even if the you know the answer in conversation history.
     - Maintain original formatting of retrieved content when responding.
+    - Don't answer from file summary, just use it to know what files to read.
 
     ### User Queries
     - Answer strictly within the scope of the user’s question. Do not add or infer information unless explicitly asked.
@@ -64,6 +65,7 @@ class QwenTemplateBuilder(BaseTemplateBuilder):
     - Adhere to all specified formats for function calls.
     - Do not call unintroduced functions.
     - Cite sources when using search results or external information.
+    - File summary is just to know what exactly inside the file, don't use it to answer, always `read_file` to answer
     """,
     "role": "system",
     "name": "System"

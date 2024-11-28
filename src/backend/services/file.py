@@ -68,6 +68,20 @@ The Original File name is: {file_name}
 
 # TITLE
 """
+GENERATE_FILE_SUMMARY_PROMPT = """# TASK
+Given the following file information, write a concise summary of the file content in 2-5 sentences. Focus on the main topics and key information.
+
+## START FILE Information
+{folder_prompt_part}
+The File name is: {file_name}
+## END FILE Information
+
+## START File Content
+{file_content}
+## END File Content
+
+# SUMMARY
+"""
 
 # Monkey patch Pandas to use Calamine for Excel reading because Calamine is faster than Pandas
 pandas_monkeypatch()
@@ -494,17 +508,16 @@ async def insert_files_in_db(
             print("Agent GEN FILE: ", agent)
             print("MODEL GEN FILE: ", agent.model)
         
-        
-            generated_file_name, error = await generate_file_name(session,file_name=filename, folder_name=folder.name if folder else None, file_content=content, path=path,  agent_id=agent_id, ctx=ctx, model=agent.model)
+            generated_file_name, error = await generate_file_name(session, file_name=filename, folder_name=folder.name if folder else None, file_content=content, path=path, agent_id=agent_id, ctx=ctx, model=agent.model)
+            generated_summary, summary_error = await generate_file_summary(session, file_name=filename, folder_name=folder.name if folder else None, file_content=content, path=path, agent_id=agent_id, ctx=ctx, model=agent.model)
         except Exception as e:
-            print("Error generating file name: ", e)
+            print("Error generating file name or summary: ", e)
             generated_file_name = filename
+            generated_summary = ""
+            
         file_generated_name = f"{generated_file_name}{extension}"
         # file_generated_name = content[0:64].replace(" ", "").encode("ascii", "ignore").decode("utf-8") + f"{extension}"
         file_generated_name = sanitize_filename(file_generated_name)
-        
-
-        
         
         files_to_upload.append(
             FileModel(
@@ -512,6 +525,7 @@ async def insert_files_in_db(
                 file_generated_name=file_generated_name,
                 file_size=file.size,
                 file_content=cleaned_content,
+                file_summary=generated_summary,
                 user_id=user_id,
                 folder_id=folder.id if folder else None,
                 path=path
@@ -703,3 +717,72 @@ async def generate_file_name(
     #     )
 
     return generated_file_name, error
+
+async def generate_file_summary(
+    session: DBSessionDep,
+    file_name: str,
+    file_content: str,
+    agent_id: str,
+    path: str | None,
+    folder_name: str | None = None,
+    ctx: Context = Depends(get_context),
+    model: Optional[str] = "command-r",
+) -> tuple[str, str | None]:
+    """Generate a summary for a file
+
+    Args:
+        session: Database session
+        file_name: Name of the file
+        file_content: Content of the file
+        agent_id: Agent ID
+        path: File path
+        folder_name: Name of the folder containing the file
+        ctx: Context object
+        model: Model name
+
+    Returns:
+        str: Generated summary
+        str: Error message
+    """
+    from backend.chat.custom.custom import CustomChat
+    
+    user_id = ctx.get_user_id()
+    logger = ctx.get_logger()
+    generated_summary = ""
+    error = None
+
+    folder_prompt_part = ""
+    if path and folder_name:
+        folder_prompt_part = FOLDER_INFO_PROMPT_PART.format(folder_name=folder_name, file_path=path)
+    
+    prompt = GENERATE_FILE_SUMMARY_PROMPT.format(
+        file_content=file_content,
+        file_path=path,
+        file_name=file_name,
+        folder_prompt_part=folder_prompt_part
+    )
+
+    chat_request = CohereChatRequest(
+        message=prompt,
+        model=model,
+    )
+
+    response = await generate_chat_response(
+        session,
+        CustomChat().chat(
+            chat_request,
+            stream=False,
+            agent_id=agent_id,
+            ctx=ctx,
+        ),
+        response_message=None,
+        conversation_id=None,
+        user_id=user_id,
+        should_store=False,
+        ctx=ctx,
+    )
+    
+    generated_summary = response.text
+    error = response.error
+
+    return generated_summary, error

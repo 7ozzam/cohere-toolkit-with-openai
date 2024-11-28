@@ -13,6 +13,7 @@ class File(Base):
     file_generated_name: Mapped[str] = mapped_column(default="", nullable=True)
     file_size: Mapped[int] = mapped_column(default=0)
     file_content: Mapped[str] = mapped_column(default="")
+    file_summary: Mapped[str] = mapped_column(default="", nullable=True)
     folder_id: Mapped[int] = mapped_column(ForeignKey("folders.id"), nullable=True)
     path: Mapped[str] = mapped_column(default=None, nullable=True)
 

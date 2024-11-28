@@ -326,6 +326,7 @@ class CustomChat(BaseChat):
 
             if file.folder and file.folder.name and file.path:
             # Construct folder info
+                file_smmary = f'"file_summary": """Read the file to see it\'s content, the summary is just an indicator don\'t use it for answer :\n\n {file.file_summary}""", '
                 folder_info = f'"folder_name": "{file.folder.name}", '
                 if file.path:
                     folder_info += f'"file_path": "{file.path}", '
@@ -335,12 +336,12 @@ class CustomChat(BaseChat):
 
             # Construct the file message
             files_message += (
-                f'{{"filename": "{file.file_name}", '
+                f'"filename": "{file.file_name}", '
                 f'"file_id": "{file.id}", '
                 f'{folder_info}'  # Append folder info dynamically
-                f'"file_path": "{file.path}", '
                 f'"word_count": {word_count}, '
-                f'"preview": "{preview}"}}\n'
+                f'{file_smmary}'
+                # f'"preview": "{preview}"}}\n'
             )
 
             # files_message += f'Filename: "{file.file_name}"\nFile ID: "{file.id}"\nWord Count: {word_count} Preview: {preview}\n\n'

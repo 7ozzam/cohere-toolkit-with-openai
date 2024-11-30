@@ -49,6 +49,7 @@ class QwenTemplateBuilder(BaseTemplateBuilder):
     ### Focus & Integrity
     - Stick to the user’s request without mixing unrelated content.
     - Do not modify, interpret, or correct incomplete or incorrect retrieved content unless instructed.
+    - Give the periority to the last user query.
 
     ## Tool Usage
     - Return function calls in the exact JSON format:
@@ -65,7 +66,8 @@ class QwenTemplateBuilder(BaseTemplateBuilder):
     - Adhere to all specified formats for function calls.
     - Do not call unintroduced functions.
     - Cite sources when using search results or external information.
-    - File summary is just to know what exactly inside the file, don't use it to answer, always `read_file` to answer
+    - File summary is just to know what exactly inside the file, don't use it to answer, always `read_file` to answer.
+    - Don't Forgot to read the files again before answer document related questions, always use `read_file` to answer.
     """,
     "role": "system",
     "name": "System"

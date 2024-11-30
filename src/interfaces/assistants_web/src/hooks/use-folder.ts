@@ -163,14 +163,14 @@ export const useFolderActions = () => {
           directory = path.dirname(fullPath);
         }
         const file = await entry.getFile();
-        if (file.type.length === 0) {
-          const fileExtension = getFileExtension(file.name)!;
-          Object.defineProperty(file, 'type', {
-            value: mapExtensionToMimeType(fileExtension),
-          });
-        }
+        // if (file.type.length === 0) {
+        //   const fileExtension = getFileExtension(file.name)!;
+        //   Object.defineProperty(file, 'type', {
+        //     value: mapExtensionToMimeType(fileExtension),
+        //   });
+        // }
 
-        const isAcceptedExtension = ACCEPTED_FILE_TYPES.some(
+        const isAcceptedExtension = file.type.length > 0 && ACCEPTED_FILE_TYPES.some(
           (acceptedFile) => file.type === acceptedFile
         );
 

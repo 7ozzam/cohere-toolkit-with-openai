@@ -14,6 +14,7 @@ export type FileAccept =
   | 'text/plain'
   | 'text/html'
   | 'text/markdown'
+  | 'text/x-markdown'
   | 'text/tab-separated-values'
   | 'application/msword'
   | 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'

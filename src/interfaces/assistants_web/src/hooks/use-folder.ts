@@ -163,13 +163,13 @@ export const useFolderActions = () => {
           directory = path.dirname(fullPath);
         }
         const file = await entry.getFile();
-        // if (file.type.length === 0) {
-        //   const fileExtension = getFileExtension(file.name)!;
-        //   Object.defineProperty(file, 'type', {
-        //     value: mapExtensionToMimeType(fileExtension),
-        //   });
-        // }
-
+        const fileExtension = getFileExtension(file.name)!;
+        if (file.type.length === 0 && fileExtension) {
+          Object.defineProperty(file, 'type', {
+            value: mapExtensionToMimeType(fileExtension),
+          });
+        }
+        console.log(file);
         const isAcceptedExtension = file.type.length > 0 && ACCEPTED_FILE_TYPES.some(
           (acceptedFile) => file.type === acceptedFile
         );
@@ -178,7 +178,7 @@ export const useFolderActions = () => {
           files.push({ path: directory, file, original_file_name: file.name });
         }
       } else if (entry.kind === 'directory') {
-        if (!entry.name.includes('.git') && !entry.name.includes('.obsedian')) {
+        if (!entry.name.includes('.git') && !entry.name.includes('.obsedian') && !fullPath.includes(".obsedian") && !fullPath.includes(".git")) {
           const subFiles = await getAllFiles(entry, fullPath);
           files.push(...subFiles);
         }

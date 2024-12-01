@@ -153,9 +153,33 @@ export const useFolderActions = () => {
     relativePath = ''
   ): Promise<{ original_file_name: string; path: string; file: File }[]> => {
     const files: { original_file_name: string; path: string; file: File }[] = [];
+    
+    // Define patterns to exclude
+    const excludedPatterns = [
+      /\.git/,
+      /\.obsidian/,
+      /\.DS_Store$/,
+      /\.env/,
+      /\.vscode/,
+      /\.idea/,
+      /node_modules/,
+      /\.config/,
+      /thumbs\.db$/i,
+      /desktop\.ini$/i,
+      /\.gitignore$/,
+      /\.gitattributes$/,
+    ];
+
+    // Helper function to check if path should be excluded
+    const shouldExclude = (path: string): boolean => {
+      return excludedPatterns.some(pattern => pattern.test(path));
+    };
 
     for await (const entry of directoryHandle.values()) {
       const fullPath = relativePath ? `${relativePath}/${entry.name}` : entry.name;
+
+      // Skip if the path matches any excluded pattern
+      if (shouldExclude(fullPath)) continue;
 
       if (entry.kind === 'file') {
         let directory = '.'
@@ -164,13 +188,14 @@ export const useFolderActions = () => {
         }
         const file = await entry.getFile();
         const fileExtension = getFileExtension(file.name)!;
+        
         if (file.type.length === 0 && fileExtension) {
           Object.defineProperty(file, 'type', {
             value: mapExtensionToMimeType(fileExtension),
           });
         }
-        console.log(file);
-        const isAcceptedExtension = file.type.length > 0 && ACCEPTED_FILE_TYPES.some(
+
+        const isAcceptedExtension = file.type.length > 0 && fileExtension && ACCEPTED_FILE_TYPES.some(
           (acceptedFile) => file.type === acceptedFile
         );
 
@@ -178,10 +203,8 @@ export const useFolderActions = () => {
           files.push({ path: directory, file, original_file_name: file.name });
         }
       } else if (entry.kind === 'directory') {
-        if (!entry.name.includes('.git') && !entry.name.includes('.obsedian') && !fullPath.includes(".obsedian") && !fullPath.includes(".git")) {
-          const subFiles = await getAllFiles(entry, fullPath);
-          files.push(...subFiles);
-        }
+        const subFiles = await getAllFiles(entry, fullPath);
+        files.push(...subFiles);
       }
     }
 

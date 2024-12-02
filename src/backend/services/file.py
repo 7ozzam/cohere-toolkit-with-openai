@@ -69,7 +69,7 @@ The Original File name is: {file_name}
 # TITLE
 """
 GENERATE_FILE_SUMMARY_PROMPT = """# TASK
-Given the following file information, write a concise summary of the file content in 2-5 sentences. Focus on the main topics and key information.
+Given the following file information, write a concise summary of the file content in a very very very tiny 2-5 sentences. Focus on the main topics and key information.
 
 ## START FILE Information
 {folder_prompt_part}

@@ -72,6 +72,8 @@ class QwenTemplateBuilder(BaseTemplateBuilder):
 
                 - RETURN FUNCTION CALLS IN THE EXACT JSON FORMAT:
                     `{{'name': 'function_name', 'parameters': ...}}`
+                - DO NOT use any other format to call functions - only the provided JSON.
+                - DO NOT ask the user to confirm or verify function calls.
                 - USE ONLY ONE FUNCTION CALL PER RESPONSE.
                 - STRICTLY ADHERE TO THE REQUIRED FORMATS AND INCLUDE ALL NECESSARY PARAMETERS IN FUNCTION CALLS.
                 - DO NOT CALL FUNCTIONS THAT HAVE NOT BEEN INTRODUCED OR ARE UNAVAILABLE.

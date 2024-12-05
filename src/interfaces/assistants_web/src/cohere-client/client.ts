@@ -1,6 +1,7 @@
 import { FetchEventSourceInit, fetchEventSource } from '@microsoft/fetch-event-source';
 
 import {
+  AssociateItemToConversationV1ConversationsConversationIdAssociateItemIdPostData,
   Body_batch_upload_file_v1_agents_batch_upload_file_post,
   Body_batch_upload_file_v1_conversations_batch_upload_file_post,
   CancelablePromise,
@@ -64,6 +65,26 @@ export class CohereClient {
     return this.cohereService.default.batchUploadFileV1ConversationsBatchUploadFilePost({
       formData,
     });
+  }
+
+  public associateItemToConversation(
+    data: AssociateItemToConversationV1ConversationsConversationIdAssociateItemIdPostData
+  ) {
+    return this.cohereService.default.associateItemToConversationV1ConversationsConversationIdAssociateItemIdPost(
+      {
+        ...data,
+      }
+    );
+  }
+
+  public deassociateItemToConversation(
+    data: AssociateItemToConversationV1ConversationsConversationIdAssociateItemIdPostData
+  ) {
+    return this.cohereService.default.deassociateItemFromConversationV1ConversationsConversationIdDeassociateItemIdDelete(
+      {
+        ...data,
+      }
+    );
   }
 
   public batchUploadAgentFile(formData: Body_batch_upload_file_v1_agents_batch_upload_file_post) {
@@ -138,6 +159,14 @@ export class CohereClient {
     return this.cohereService.default.getConversationV1ConversationsConversationIdGet({
       conversationId,
     });
+  }
+
+  public getConversationAssociatableItems({ conversationId }: { conversationId: string }) {
+    return this.cohereService.default.listUserFilesAndFoldersV1ConversationsFilesAndFoldersConversationIdGet(
+      {
+        conversationId,
+      }
+    );
   }
 
   public deleteConversation({ conversationId }: { conversationId: string }) {

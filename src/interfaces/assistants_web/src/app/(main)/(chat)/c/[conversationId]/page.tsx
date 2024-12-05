@@ -23,6 +23,13 @@ const Page: NextPage<Props> = async ({ params }) => {
         cohereServerClient.getConversation({ conversationId: params.conversationId }),
     }),
     queryClient.prefetchQuery({
+      queryKey: ['associatableItems', params.conversationId],
+      queryFn: async () =>
+        cohereServerClient.getConversationAssociatableItems({
+          conversationId: params.conversationId,
+        }),
+    }),
+    queryClient.prefetchQuery({
       queryKey: ['agent', null],
       queryFn: () => BASE_AGENT,
     }),

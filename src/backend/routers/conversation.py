@@ -11,7 +11,7 @@ from backend.crud import agent as agent_crud
 from backend.crud import conversation as conversation_crud
 from backend.crud import message as message_crud
 from backend.database_models import Conversation as ConversationModel
-from backend.database_models.database import DBSessionDep
+from backend.database_models.database import DBSessionDep, get_session
 from backend.schemas.agent import Agent
 from backend.schemas.context import Context
 from backend.schemas.conversation import (
@@ -26,6 +26,7 @@ from backend.schemas.file import (
     DeleteConversationFileResponse,
     ListConversationFile,
     UploadConversationFileResponse,
+    UserConversationFileAndFolderList,
 )
 from backend.services.agent import validate_agent_exists
 from backend.services.context import get_context
@@ -713,3 +714,192 @@ async def upload_folder(
     folder_response = ListConversationFile(id=created_folder.id, file_name=created_folder.name, files=uploaded_files, item_type="folder", conversation_id=conversation.id, user_id=user_id,created_at=created_folder.created_at, updated_at=created_folder.updated_at)
 
     return [folder_response]
+
+
+async def prepare_user_files_and_folders(user_files, user_folders, conversation_file_ids, conversation_folder_ids, conversation_id=""):
+    print("conversation_file_ids", conversation_file_ids)
+    print("conversation_folder_ids", conversation_folder_ids)
+    results = []
+    
+    # Add files
+    results.extend(UserConversationFileAndFolderList(
+        id=file.id,
+        file_name=file.file_name,
+        item_type="file",
+        conversation_id=conversation_id,
+        is_associated=file.id in conversation_file_ids,
+        created_at=file.created_at,
+        updated_at=file.updated_at
+    ) for file in user_files)
+
+    # Add folders
+    results.extend(UserConversationFileAndFolderList(
+        id=folder.id,
+        file_name=folder.name,
+        item_type="folder",
+        conversation_id=conversation_id,
+        is_associated=folder.id in conversation_folder_ids,
+        created_at=folder.created_at,
+        updated_at=folder.updated_at,
+        files=folder.files if folder.files else []
+    ) for folder in user_folders if folder.files)
+
+    return results
+
+
+@router.post("/{conversation_id}/associate/{item_id}", response_model=list[UserConversationFileAndFolderList])
+async def associate_item_to_conversation(
+    conversation_id: str,
+    agent_id: str,
+    item_id: str,
+    session: DBSessionDep,
+    ctx: Context = Depends(get_context),
+) -> list[UserConversationFileAndFolderList]:
+    user_id = ctx.get_user_id()
+    
+    # Validate conversation exists and user has access
+    # conversation = validate_conversation(session, conversation_id, user_id)
+    conversation = conversation_crud.get_conversation(
+        session, conversation_id, user_id
+    )
+    
+    # Create a new conversation if it doesn't exist
+    if not conversation:
+       conversation = conversation_crud.create_conversation(
+            session,
+            ConversationModel(user_id=user_id, agent_id=agent_id)
+        )
+    
+    # Try to find item as folder first
+    folder = get_folder_service().get_folder_by_id(item_id, session, ctx)
+    if folder:
+        _ = await get_folder_service().associate_folder_with_conversation(
+            session, conversation.id, item_id, user_id, ctx
+        )
+    else:
+        # If not folder, try as file
+        file = get_file_service().get_file_by_id(item_id, session, ctx)
+        if file:
+            _ = await get_file_service().associate_file_with_conversation(
+                session, conversation.id, item_id, user_id, ctx
+            )
+        else:
+            raise HTTPException(
+                status_code=404,
+                detail=f"Item with ID {item_id} not found"
+            )
+    
+    # Get all user's files and folders
+    user_files = get_file_service().get_files_by_user_id(session, user_id, ctx)
+    user_folders = get_folder_service().get_folders_by_user_id(session, user_id, ctx)
+    
+    # Get files and folders associated with the conversation
+    conversation_files = get_file_service().get_files_without_folders_by_conversation_id(
+        session, user_id, conversation.id, ctx
+    )
+    conversation_folders = get_folder_service().get_folders_by_conversation_id(
+        session, user_id, conversation.id, ctx
+    )
+    
+    # Create sets of IDs for quick lookup
+    conversation_file_ids = {file.id for file in conversation_files}
+    conversation_folder_ids = {folder.id for folder in conversation_folders}
+    
+    return await prepare_user_files_and_folders(user_files, user_folders, conversation_file_ids, conversation_folder_ids, conversation.id)
+
+@router.delete("/{conversation_id}/deassociate/{item_id}", response_model=list[UserConversationFileAndFolderList])
+async def deassociate_item_from_conversation(
+    conversation_id: str,
+    agent_id: str,
+    item_id: str,
+    session: DBSessionDep,
+    ctx: Context = Depends(get_context),
+) -> list[UserConversationFileAndFolderList]:
+    user_id = ctx.get_user_id()
+    
+    # Validate conversation exists and user has access
+    # conversation = validate_conversation(session, conversation_id, user_id)
+    conversation = conversation_crud.get_conversation(
+        session, conversation_id, user_id
+    )
+    
+    # Create a new conversation if it doesn't exist
+    if not conversation:
+        conversation = conversation_crud.create_conversation(
+            session,
+            ConversationModel(user_id=user_id, agent_id=agent_id)
+        )
+    
+    # Try to find item as folder first
+    folder = get_folder_service().get_folder_by_id(item_id, session, ctx)
+    if folder:
+        _ = await get_folder_service().deassociate_folder_from_conversation(
+            session, conversation.id, item_id, user_id, ctx
+        )
+    else:
+        # If not folder, try as file
+        file = get_file_service().get_file_by_id(item_id, session, ctx)
+        if file:
+            _ = await get_file_service().deassociate_file_from_conversation(
+                session, conversation.id, item_id, user_id, ctx
+            )
+        else:
+            raise HTTPException(
+                status_code=404,
+                detail=f"Item with ID {item_id} not found"
+            )
+    
+    # Get all user's files and folders
+    user_files = get_file_service().get_files_by_user_id(session, user_id, ctx)
+    user_folders = get_folder_service().get_folders_by_user_id(session, user_id, ctx)
+    
+    # Get files and folders associated with the conversation
+    conversation_files = get_file_service().get_files_without_folders_by_conversation_id(
+        session, user_id, conversation.id, ctx
+    )
+    conversation_folders = get_folder_service().get_folders_by_conversation_id(
+        session, user_id, conversation.id, ctx
+    )
+    
+    # Create sets of IDs for quick lookup
+    conversation_file_ids = {file.id for file in conversation_files}
+    conversation_folder_ids = {folder.id for folder in conversation_folders}
+    
+    return await prepare_user_files_and_folders(user_files, user_folders, conversation_file_ids, conversation_folder_ids, conversation.id)
+
+@router.get("/files-and-folders/all", response_model=list[UserConversationFileAndFolderList])
+@router.get("/files-and-folders/{conversation_id}", response_model=list[UserConversationFileAndFolderList])
+async def list_user_files_and_folders(
+    conversation_id: Optional[str] = "",  # Make conversation_id optional
+    session: DBSessionDep = None,
+    ctx: Context = Depends(get_context)
+) -> list[UserConversationFileAndFolderList]:
+    user_id = ctx.get_user_id()
+    
+    # Validate conversation exists and user has access
+    if conversation_id and conversation_id != "all":
+        _ = validate_conversation(session, conversation_id, user_id)
+    
+    # Get all user's files and folders
+    user_files = get_file_service().get_files_by_user_id(session, user_id, ctx)
+    user_folders = get_folder_service().get_folders_by_user_id(session, user_id, ctx)
+    
+    # Get files and folders associated with the conversation
+    if conversation_id and conversation_id != "all":
+        conversation_files = get_file_service().get_files_without_folders_by_conversation_id(
+            session, user_id, conversation_id, ctx
+        )
+        conversation_folders = get_folder_service().get_folders_by_conversation_id(
+            session, user_id, conversation_id, ctx
+        )
+    else:
+        conversation_files = []
+        conversation_folders = []
+    
+    # Create sets of IDs for quick lookup
+    conversation_file_ids = {file.id for file in conversation_files}
+    conversation_folder_ids = {folder.id for folder in conversation_folders}
+    
+    return await prepare_user_files_and_folders(user_files, user_folders, conversation_file_ids, conversation_folder_ids)
+
+

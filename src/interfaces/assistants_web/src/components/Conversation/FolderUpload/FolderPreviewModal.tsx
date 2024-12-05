@@ -1,3 +1,4 @@
+import { FileSystemDirectoryHandle } from 'file-system-access';
 import React, { useEffect, useState } from 'react';
 import { v4 as uuidv4 } from 'uuid';
 
@@ -7,7 +8,7 @@ import { Modal } from '@/components/UI/Modal';
 import { useFolderActions } from '@/hooks/use-folder';
 
 import { KnowledgeItem } from './KnowledgeItemView';
-import { FileSystemDirectoryHandle } from 'file-system-access';
+
 type FolderPreviewModalProps = {
   isOpen: boolean;
   folderHandle: FileSystemDirectoryHandle | null;
@@ -37,7 +38,7 @@ export const FolderPreviewModal: React.FC<FolderPreviewModalProps> = ({
       setIsLoading(true); // Start loading
 
       const processedFolder = await processDirectoryHandle(folderHandle, getAllFiles);
-      
+
       // Only update state if the component is still mounted
       if (isMounted) {
         setFolderView(processedFolder);
@@ -84,6 +85,7 @@ export const FolderPreviewModal: React.FC<FolderPreviewModalProps> = ({
               <KnowledgeItem
                 key={folderView.id}
                 file={folderView}
+                forceExpand={true}
                 isDeleting={false}
                 onDelete={() => {}}
               />
@@ -108,7 +110,9 @@ export const FolderPreviewModal: React.FC<FolderPreviewModalProps> = ({
 
 export const processDirectoryHandle = async (
   directoryHandle: FileSystemDirectoryHandle,
-  getAllFiles: (handle: FileSystemDirectoryHandle) => Promise<{ path: string; file: File; original_file_name: string }[]>
+  getAllFiles: (
+    handle: FileSystemDirectoryHandle
+  ) => Promise<{ path: string; file: File; original_file_name: string }[]>
 ): Promise<ListConversationFile> => {
   const folderId = uuidv4();
   const files: ListConversationFile[] = [];

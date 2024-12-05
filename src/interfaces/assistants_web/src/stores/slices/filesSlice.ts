@@ -1,6 +1,9 @@
 import { StateCreator } from 'zustand';
 
-import { ListConversationFile as CohereFile } from '@/cohere-client';
+import {
+  ListConversationFile as CohereFile,
+  UserConversationFileAndFolderList,
+} from '@/cohere-client';
 
 import { StoreState } from '..';
 
@@ -8,6 +11,7 @@ const INITIAL_STATE: State = {
   isFileInputQueuedToFocus: false,
   uploadingFiles: [],
   composerFiles: [],
+  associableItems: [],
 };
 
 export interface UploadingFile {
@@ -21,6 +25,7 @@ type State = {
   isFileInputQueuedToFocus: boolean;
   uploadingFiles: UploadingFile[];
   composerFiles: CohereFile[];
+  associableItems: UserConversationFileAndFolderList[];
 };
 
 type Actions = {
@@ -34,6 +39,7 @@ type Actions = {
   deleteComposerFile: (id: string) => void;
   clearUploadingErrors: () => void;
   clearComposerFiles: () => void;
+  setAssociableItems: (associableItems: UserConversationFileAndFolderList[]) => void;
 };
 
 export type FilesStore = {
@@ -41,6 +47,14 @@ export type FilesStore = {
 } & Actions;
 
 export const createFilesSlice: StateCreator<StoreState, [], [], FilesStore> = (set) => ({
+  setAssociableItems(associableItems: UserConversationFileAndFolderList[]) {
+    set((state) => ({
+      files: {
+        ...state.files,
+        associableItems: associableItems,
+      },
+    }));
+  },
   queueFocusFileInput() {
     set((state) => ({
       files: {

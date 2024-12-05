@@ -41,12 +41,16 @@ export const ToolEvents: React.FC<Props> = ({ show, isStreaming, isLast, events 
           {toolEvent.stream_search_results && toolEvent.stream_search_results.search_results && (
             <ToolEvent stream_search_results={toolEvent.stream_search_results} />
           )}
-          
-          {toolEvent.text && <ToolEvent plan={
-            (toolEvent.text.trim().startsWith('{') || toolEvent.text.trim().startsWith('[')) 
-              ? "Calling tool" 
-              : toolEvent.text
-          } />}
+
+          {toolEvent.text && (
+            <ToolEvent
+              plan={
+                toolEvent.text.trim().startsWith('{') || toolEvent.text.trim().startsWith('[')
+                  ? 'Calling tool'
+                  : toolEvent.text
+              }
+            />
+          )}
           {toolEvent.tool_calls?.map((toolCall, j) => (
             <ToolEvent key={`event-${j}`} event={toolCall} />
           ))}

@@ -196,6 +196,7 @@ def get_folders_by_ids(db: Session, folder_ids: List[int], user_id: str) -> List
     )
 
 
+
 @validate_transaction
 def get_folders_by_user_id(
     db: Session, user_id: str, offset: int = 0, limit: int = 100
@@ -219,3 +220,57 @@ def get_folders_by_user_id(
         .limit(limit)
         .all()
     )
+
+@validate_transaction
+def get_folder_by_id(db: Session, folder_id: str, user_id: str) -> Folder:
+    """
+    Get a folder by its ID and user ID.
+
+    Args:
+        db (Session): Database session.
+        folder_id (str): The ID of the folder to retrieve.
+        user_id (str): The user ID who owns the folder.
+
+    Returns:
+        Folder: The requested folder.
+
+    Raises:
+        FileNotFoundError: If the folder does not exist or doesn't belong to the user.
+    """
+    folder = db.query(Folder).filter(
+        Folder.id == folder_id,
+        Folder.user_id == user_id
+    ).first()
+    
+    if not folder:
+        raise FileNotFoundError(f"Folder with id {folder_id} not found")
+    
+    return folder
+
+@validate_transaction
+def delete_conversation_folder_association(db: Session, folder_id: str, conversation_id: str, user_id: str) -> None:
+    """
+    Delete the association between a folder and a conversation.
+
+    Args:
+        db (Session): Database session.
+        folder_id (str): The ID of the folder.
+        conversation_id (str): The ID of the conversation.
+        user_id (str): The user ID.
+
+    Raises:
+        FileNotFoundError: If the association does not exist.
+    """
+    association = db.query(ConversationFolderAssociation).filter(
+        ConversationFolderAssociation.folder_id == folder_id,
+        ConversationFolderAssociation.conversation_id == conversation_id,
+        ConversationFolderAssociation.user_id == user_id
+    ).first()
+    
+    if not association:
+        raise FileNotFoundError(f"Association between folder {folder_id} and conversation {conversation_id} not found")
+    
+    db.delete(association)
+    db.commit()
+    
+    # No return value as the function is void

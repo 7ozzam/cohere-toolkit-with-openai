@@ -3,6 +3,8 @@ import type { BaseHttpRequest } from './core/BaseHttpRequest';
 import type { CancelablePromise } from './core/CancelablePromise';
 import type {
   ApplyMigrationsMigratePostResponse,
+  AssociateItemToConversationV1ConversationsConversationIdAssociateItemIdPostData,
+  AssociateItemToConversationV1ConversationsConversationIdAssociateItemIdPostResponse,
   AuthorizeV1StrategyAuthPostData,
   AuthorizeV1StrategyAuthPostResponse,
   BatchUploadFileV1AgentsBatchUploadFilePostData,
@@ -31,6 +33,8 @@ import type {
   CreateUserScimV2UsersPostResponse,
   CreateUserV1UsersPostData,
   CreateUserV1UsersPostResponse,
+  DeassociateItemFromConversationV1ConversationsConversationIdDeassociateItemIdDeleteData,
+  DeassociateItemFromConversationV1ConversationsConversationIdDeassociateItemIdDeleteResponse,
   DeleteAgentFileV1AgentsAgentIdFilesFileIdDeleteData,
   DeleteAgentFileV1AgentsAgentIdFilesFileIdDeleteResponse,
   DeleteAgentToolMetadataV1AgentsAgentIdToolMetadataAgentToolMetadataIdDeleteData,
@@ -104,6 +108,10 @@ import type {
   ListSnapshotsV1SnapshotsGetResponse,
   ListToolsV1ToolsGetData,
   ListToolsV1ToolsGetResponse,
+  ListUserFilesAndFoldersV1ConversationsFilesAndFoldersAllGetData,
+  ListUserFilesAndFoldersV1ConversationsFilesAndFoldersAllGetResponse,
+  ListUserFilesAndFoldersV1ConversationsFilesAndFoldersConversationIdGetData,
+  ListUserFilesAndFoldersV1ConversationsFilesAndFoldersConversationIdGetResponse,
   ListUsersV1UsersGetData,
   ListUsersV1UsersGetResponse,
   LoginV1LoginPostData,
@@ -996,6 +1004,106 @@ export class DefaultService {
       url: '/v1/conversations/upload_folder',
       formData: data.formData,
       mediaType: 'multipart/form-data',
+      errors: {
+        422: 'Validation Error',
+      },
+    });
+  }
+
+  /**
+   * Associate Item To Conversation
+   * @param data The data for the request.
+   * @param data.conversationId
+   * @param data.itemId
+   * @param data.agentId
+   * @returns UserConversationFileAndFolderList Successful Response
+   * @throws ApiError
+   */
+  public associateItemToConversationV1ConversationsConversationIdAssociateItemIdPost(
+    data: AssociateItemToConversationV1ConversationsConversationIdAssociateItemIdPostData
+  ): CancelablePromise<AssociateItemToConversationV1ConversationsConversationIdAssociateItemIdPostResponse> {
+    return this.httpRequest.request({
+      method: 'POST',
+      url: '/v1/conversations/{conversation_id}/associate/{item_id}',
+      path: {
+        conversation_id: data.conversationId,
+        item_id: data.itemId,
+      },
+      query: {
+        agent_id: data.agentId,
+      },
+      errors: {
+        422: 'Validation Error',
+      },
+    });
+  }
+
+  /**
+   * Deassociate Item From Conversation
+   * @param data The data for the request.
+   * @param data.conversationId
+   * @param data.itemId
+   * @param data.agentId
+   * @returns UserConversationFileAndFolderList Successful Response
+   * @throws ApiError
+   */
+  public deassociateItemFromConversationV1ConversationsConversationIdDeassociateItemIdDelete(
+    data: DeassociateItemFromConversationV1ConversationsConversationIdDeassociateItemIdDeleteData
+  ): CancelablePromise<DeassociateItemFromConversationV1ConversationsConversationIdDeassociateItemIdDeleteResponse> {
+    return this.httpRequest.request({
+      method: 'DELETE',
+      url: '/v1/conversations/{conversation_id}/deassociate/{item_id}',
+      path: {
+        conversation_id: data.conversationId,
+        item_id: data.itemId,
+      },
+      query: {
+        agent_id: data.agentId,
+      },
+      errors: {
+        422: 'Validation Error',
+      },
+    });
+  }
+
+  /**
+   * List User Files And Folders
+   * @param data The data for the request.
+   * @param data.conversationId
+   * @returns UserConversationFileAndFolderList Successful Response
+   * @throws ApiError
+   */
+  public listUserFilesAndFoldersV1ConversationsFilesAndFoldersConversationIdGet(
+    data: ListUserFilesAndFoldersV1ConversationsFilesAndFoldersConversationIdGetData
+  ): CancelablePromise<ListUserFilesAndFoldersV1ConversationsFilesAndFoldersConversationIdGetResponse> {
+    return this.httpRequest.request({
+      method: 'GET',
+      url: '/v1/conversations/files-and-folders/{conversation_id}',
+      path: {
+        conversation_id: data.conversationId,
+      },
+      errors: {
+        422: 'Validation Error',
+      },
+    });
+  }
+
+  /**
+   * List User Files And Folders
+   * @param data The data for the request.
+   * @param data.conversationId
+   * @returns UserConversationFileAndFolderList Successful Response
+   * @throws ApiError
+   */
+  public listUserFilesAndFoldersV1ConversationsFilesAndFoldersAllGet(
+    data: ListUserFilesAndFoldersV1ConversationsFilesAndFoldersAllGetData = {}
+  ): CancelablePromise<ListUserFilesAndFoldersV1ConversationsFilesAndFoldersAllGetResponse> {
+    return this.httpRequest.request({
+      method: 'GET',
+      url: '/v1/conversations/files-and-folders/all',
+      query: {
+        conversation_id: data.conversationId,
+      },
       errors: {
         422: 'Validation Error',
       },

@@ -811,6 +811,7 @@ export const $ConversationFilePublic = {
     user_id: {
       type: 'string',
       title: 'User Id',
+      default: '',
     },
     created_at: {
       type: 'string',
@@ -825,10 +826,12 @@ export const $ConversationFilePublic = {
     conversation_id: {
       type: 'string',
       title: 'Conversation Id',
+      default: '',
     },
     file_name: {
       type: 'string',
       title: 'File Name',
+      default: '',
     },
     file_size: {
       type: 'integer',
@@ -838,7 +841,7 @@ export const $ConversationFilePublic = {
     },
   },
   type: 'object',
-  required: ['id', 'user_id', 'created_at', 'updated_at', 'conversation_id', 'file_name'],
+  required: ['id', 'created_at', 'updated_at'],
   title: 'ConversationFilePublic',
 } as const;
 
@@ -1953,6 +1956,7 @@ export const $ListConversationFile = {
     user_id: {
       type: 'string',
       title: 'User Id',
+      default: '',
     },
     created_at: {
       type: 'string',
@@ -1967,10 +1971,12 @@ export const $ListConversationFile = {
     conversation_id: {
       type: 'string',
       title: 'Conversation Id',
+      default: '',
     },
     file_name: {
       type: 'string',
       title: 'File Name',
+      default: '',
     },
     file_size: {
       type: 'integer',
@@ -2023,7 +2029,7 @@ export const $ListConversationFile = {
     },
   },
   type: 'object',
-  required: ['id', 'user_id', 'created_at', 'updated_at', 'conversation_id', 'file_name'],
+  required: ['id', 'created_at', 'updated_at'],
   title: 'ListConversationFile',
 } as const;
 
@@ -3824,6 +3830,7 @@ export const $UploadConversationFileResponse = {
     user_id: {
       type: 'string',
       title: 'User Id',
+      default: '',
     },
     created_at: {
       type: 'string',
@@ -3838,10 +3845,12 @@ export const $UploadConversationFileResponse = {
     conversation_id: {
       type: 'string',
       title: 'Conversation Id',
+      default: '',
     },
     file_name: {
       type: 'string',
       title: 'File Name',
+      default: '',
     },
     file_size: {
       type: 'integer',
@@ -3851,8 +3860,98 @@ export const $UploadConversationFileResponse = {
     },
   },
   type: 'object',
-  required: ['id', 'user_id', 'created_at', 'updated_at', 'conversation_id', 'file_name'],
+  required: ['id', 'created_at', 'updated_at'],
   title: 'UploadConversationFileResponse',
+} as const;
+
+export const $UserConversationFileAndFolderList = {
+  properties: {
+    id: {
+      type: 'string',
+      title: 'Id',
+    },
+    user_id: {
+      type: 'string',
+      title: 'User Id',
+      default: '',
+    },
+    created_at: {
+      type: 'string',
+      format: 'date-time',
+      title: 'Created At',
+    },
+    updated_at: {
+      type: 'string',
+      format: 'date-time',
+      title: 'Updated At',
+    },
+    conversation_id: {
+      type: 'string',
+      title: 'Conversation Id',
+      default: '',
+    },
+    file_name: {
+      type: 'string',
+      title: 'File Name',
+      default: '',
+    },
+    file_size: {
+      type: 'integer',
+      minimum: 0,
+      title: 'File Size',
+      default: 0,
+    },
+    file_path: {
+      anyOf: [
+        {
+          type: 'string',
+        },
+        {
+          type: 'null',
+        },
+      ],
+      title: 'File Path',
+      default: '',
+    },
+    item_type: {
+      type: 'string',
+      enum: ['file', 'folder'],
+      title: 'Item Type',
+      default: 'file',
+    },
+    folder_id: {
+      anyOf: [
+        {
+          type: 'string',
+        },
+        {
+          type: 'null',
+        },
+      ],
+      title: 'Folder Id',
+    },
+    files: {
+      anyOf: [
+        {
+          items: {
+            $ref: '#/components/schemas/File',
+          },
+          type: 'array',
+        },
+        {
+          type: 'null',
+        },
+      ],
+      title: 'Files',
+    },
+    is_associated: {
+      type: 'boolean',
+      title: 'Is Associated',
+    },
+  },
+  type: 'object',
+  required: ['id', 'created_at', 'updated_at', 'is_associated'],
+  title: 'UserConversationFileAndFolderList',
 } as const;
 
 export const $ValidationError = {

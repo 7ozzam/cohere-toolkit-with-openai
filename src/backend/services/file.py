@@ -69,7 +69,7 @@ The Original File name is: {file_name}
 # TITLE
 """
 GENERATE_FILE_SUMMARY_PROMPT = """# TASK
-Given the following file information, write a concise summary of the file content in a very very very tiny 2-5 sentences. Focus on the main topics and key information.
+Given the following file information, write a concise summary of the file content in a very tiny 2-5 titles. Focus on the main Titles.
 
 ## START FILE Information
 {folder_prompt_part}
@@ -168,6 +168,26 @@ class FileService:
 
         return uploaded_files
 
+
+    def get_files_by_user_id(
+            self, session: DBSessionDep, user_id: str, ctx: Context
+        ) -> list[File]:
+            """
+            Get all files associated with a user that are not in any folder
+
+            Args:
+                session (DBSessionDep): The database session
+                user_id (str): The user ID
+
+            Returns:
+                list[File]: The files created by the user that are not in any folder
+            """
+            # Get all files for the user
+            files = file_crud.get_files_by_user_id(session, user_id)
+            # Filter out files that have a folder_id
+            files_without_folder = [file for file in files if not file.folder_id]
+
+            return files_without_folder
     def get_files_by_agent_id(
         self, session: DBSessionDep, user_id: str, agent_id: str, ctx: Context
     ) -> list[File]:
@@ -219,6 +239,14 @@ class FileService:
 
         return files
 
+    def get_file_by_id(self, file_id: str, session: DBSessionDep = Depends(get_session), ctx: Context = Depends(get_context)):
+        user_id = ctx.get_user_id()
+        file = file_crud.get_file(session, file_id, user_id)
+
+        return file
+    
+    
+    
     def get_files_by_conversation_id(
         self, session: DBSessionDep, user_id: str, conversation_id: str, ctx: Context
     ) -> list[FileModel]:
@@ -419,6 +447,62 @@ class FileService:
                 associated_files.append(file)
 
         return associated_files
+
+    async def associate_file_with_conversation(
+        self,
+        session: DBSessionDep,
+        conversation_id: str,
+        file_id: str,
+        user_id: str,
+        ctx: Context,
+    ) -> None:
+        """
+        Associate a file with a conversation.
+
+        Args:
+            session (DBSessionDep): The database session
+            conversation_id (str): The conversation ID
+            file_id (str): The file ID
+            user_id (str): The user ID
+            ctx (Context): Context object
+        """
+        # Create the conversation file association
+        conversation_crud.create_conversation_file_association(
+            session,
+            ConversationFileAssociation(
+                conversation_id=conversation_id,
+                user_id=user_id,
+                file_id=file_id,
+            ),
+        )
+        return
+
+    async def deassociate_file_from_conversation(
+        self,
+        session: DBSessionDep,
+        conversation_id: str,
+        file_id: str,
+        user_id: str,
+        ctx: Context,
+    ) -> None:
+        """
+        Deassociate a file from a conversation.
+
+        Args:
+            session (DBSessionDep): The database session
+            conversation_id (str): The conversation ID
+            file_id (str): The file ID
+            user_id (str): The user ID
+            ctx (Context): Context object
+        """
+        # Delete the conversation file association
+        conversation_crud.delete_conversation_file_association(
+            session,
+            conversation_id,
+            file_id,
+            user_id
+        )
+        return
 
 # Misc
 def validate_file(

@@ -1,6 +1,7 @@
 'use client';
 
 import { useResizeObserver } from '@react-hookz/web';
+import { FileSystemDirectoryHandle } from 'file-system-access';
 import React, { useEffect, useRef, useState } from 'react';
 
 import { AgentPublic, ManagedTool } from '@/cohere-client';
@@ -11,7 +12,7 @@ import { useAvailableTools, useBreakpoint, useIsDesktop } from '@/hooks';
 import { ConfigurableParams } from '@/stores/slices/paramsSlice';
 import { ChatMessage } from '@/types/message';
 import { cn } from '@/utils';
-import { FileSystemDirectoryHandle } from 'file-system-access';
+
 type Props = {
   isStreaming: boolean;
   value: string;

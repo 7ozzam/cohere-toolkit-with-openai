@@ -6,12 +6,15 @@ import {
   ConversationPublic,
   ConversationWithoutMessages,
   DeleteConversationResponse,
+  ListConversationFile,
   ToggleConversationPinRequest,
   UpdateConversationRequest,
+  UserConversationFileAndFolderList,
   useCohereClient,
 } from '@/cohere-client';
 import { DeleteConversations } from '@/components/Modals/DeleteConversations';
 import { EditConversationTitle } from '@/components/Modals/EditConversationTitle';
+import { DEFAULT_AGENT_TOOLS } from '@/constants';
 import { useContextStore } from '@/context';
 import { useNavigateToNewChat, useNotify } from '@/hooks';
 import { useConversationStore } from '@/stores';
@@ -60,6 +63,25 @@ export const useConversation = ({
     },
     retry: 0,
     refetchOnWindowFocus: false,
+  });
+};
+
+export const useConversationAssociatableItems = ({
+  conversationId,
+}: {
+  conversationId: string;
+}) => {
+  const client = useCohereClient();
+  return useQuery<UserConversationFileAndFolderList[], Error>({
+    queryKey: ['associatableItems', conversationId],
+    queryFn: async () => {
+      const items = await client.getConversationAssociatableItems({
+        conversationId: conversationId,
+      });
+      return items;
+    },
+    refetchOnWindowFocus: false,
+    enabled: true,
   });
 };
 

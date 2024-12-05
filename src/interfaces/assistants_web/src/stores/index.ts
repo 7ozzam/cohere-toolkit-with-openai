@@ -65,6 +65,7 @@ export const useFilesStore = () => {
       addUploadingFiles: state.addUploadingFiles,
       deleteUploadingFile: state.deleteUploadingFile,
       addComposerFile: state.addComposerFile,
+      setAssociableItems: state.setAssociableItems,
       deleteComposerFile: state.deleteComposerFile,
       clearComposerFiles: state.clearComposerFiles,
       clearUploadingErrors: state.clearUploadingErrors,

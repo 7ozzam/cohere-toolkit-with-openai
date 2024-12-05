@@ -1,5 +1,5 @@
 import os
-from fastapi import HTTPException, UploadFile
+from fastapi import APIRouter, Depends, HTTPException, Response
 import backend.crud.folder as folder_crud
 import backend.crud.file as file_crud
 from backend.database_models.folder import Folder
@@ -9,8 +9,9 @@ from backend.database_models.conversation import ConversationFolderAssociation
 # from backend.database_models.agent import AgentFolderAssociation
 
 from backend.services.logger.utils import LoggerFactory
-from backend.database_models.database import DBSessionDep
+from backend.database_models.database import DBSessionDep, get_session
 from backend.schemas.context import Context
+from backend.services.context import get_context
 
 logger = LoggerFactory().get_logger()
 
@@ -79,6 +80,12 @@ class FolderService:
         return folders
 
 
+    def get_folder_by_id(self, folder_id: str, session: DBSessionDep = Depends(get_session), ctx: Context = Depends(get_context)):
+            user_id = ctx.get_user_id()
+            file = folder_crud.get_folder_by_id(session, folder_id, user_id)
+
+            return file
+  
   
 
     def get_folders_by_conversation_id(
@@ -239,3 +246,24 @@ class FolderService:
     #             )
     #         )
     #     return results
+
+    async def deassociate_folder_from_conversation(
+        self,
+        session: DBSessionDep,
+        conversation_id: str,
+        folder_id: str,
+        user_id: str,
+        ctx: Context
+    ) -> None:
+        """
+        Deassociate a folder from a conversation
+
+        Args:
+            session (DBSessionDep): The database session
+            conversation_id (str): The conversation ID
+            folder_id (str): The folder ID to deassociate
+            user_id (str): The user ID
+        """
+        folder_crud.delete_conversation_folder_association(
+            session, conversation_id=conversation_id, folder_id=folder_id, user_id=user_id
+        )

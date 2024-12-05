@@ -6,8 +6,15 @@ import { useEffect } from 'react';
 import { Document, ManagedTool, useCohereClient } from '@/cohere-client';
 import { Conversation, ConversationError } from '@/components/Conversation';
 import { TOOL_PYTHON_INTERPRETER_ID } from '@/constants';
-import { useAgent, useAvailableTools, useConversation, useListTools } from '@/hooks';
-import { useCitationsStore, useConversationStore, useParamsStore } from '@/stores';
+import {
+  useAgent,
+  useAvailableTools,
+  useConversation,
+  useConversationAssociatableItems,
+  useGetConversationAssociatableItems,
+  useListTools,
+} from '@/hooks';
+import { useCitationsStore, useConversationStore, useFilesStore, useParamsStore } from '@/stores';
 import { OutputFiles } from '@/stores/slices/citationsSlice';
 import {
   createStartEndKey,
@@ -33,6 +40,18 @@ const Chat: React.FC<{ agentId?: string; conversationId?: string }> = ({
   } = useConversation({
     conversationId: conversationId,
   });
+
+  const { setAssociableItems } = useFilesStore();
+
+  const { data: associatableItems } = useConversationAssociatableItems({
+    conversationId: conversationId || 'all',
+  });
+
+  useEffect(() => {
+    if (!!associatableItems?.length) {
+      setAssociableItems(associatableItems);
+    }
+  }, [conversationId, associatableItems, setAssociableItems]);
 
   // resetConversationSettings();
 

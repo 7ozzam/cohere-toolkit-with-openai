@@ -24,12 +24,12 @@ class File(BaseModel):
 
 class ConversationFilePublic(BaseModel):
     id: str
-    user_id: str
+    user_id: str = Field(default="")
     created_at: datetime.datetime
     updated_at: datetime.datetime
 
-    conversation_id: str
-    file_name: str
+    conversation_id: str = Field(default="")
+    file_name: str = Field(default="")
     file_size: int = Field(default=0, ge=0)
 
 
@@ -44,11 +44,13 @@ class AgentFilePublic(BaseModel):
 
 class ListConversationFile(ConversationFilePublic):
     file_path: Optional[str] = Field(default="")
-    item_type: Literal["file", "folder"] = "file"
+    item_type: Literal["file", "folder"] = Field(default="file")
     folder_id: Optional[str] = None
     files: Optional[list[File]] = None
 
-
+class UserConversationFileAndFolderList(ListConversationFile):
+    is_associated: bool
+    
 class UploadConversationFileResponse(ConversationFilePublic):
     pass
 

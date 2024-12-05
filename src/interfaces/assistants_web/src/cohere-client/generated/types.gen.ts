@@ -164,11 +164,11 @@ export type CohereChatRequest = {
 
 export type ConversationFilePublic = {
   id: string;
-  user_id: string;
+  user_id?: string;
   created_at: string;
   updated_at: string;
-  conversation_id: string;
-  file_name: string;
+  conversation_id?: string;
+  file_name?: string;
   file_size?: number;
 };
 
@@ -385,11 +385,11 @@ export type ListAuthStrategy = {
 
 export type ListConversationFile = {
   id: string;
-  user_id: string;
+  user_id?: string;
   created_at: string;
   updated_at: string;
-  conversation_id: string;
-  file_name: string;
+  conversation_id?: string;
+  file_name?: string;
   file_size?: number;
   file_path?: string | null;
   item_type?: 'file' | 'folder';
@@ -776,12 +776,27 @@ export type UploadAgentFileResponse = {
 
 export type UploadConversationFileResponse = {
   id: string;
-  user_id: string;
+  user_id?: string;
   created_at: string;
   updated_at: string;
-  conversation_id: string;
-  file_name: string;
+  conversation_id?: string;
+  file_name?: string;
   file_size?: number;
+};
+
+export type UserConversationFileAndFolderList = {
+  id: string;
+  user_id?: string;
+  created_at: string;
+  updated_at: string;
+  conversation_id?: string;
+  file_name?: string;
+  file_size?: number;
+  file_path?: string | null;
+  item_type?: 'file' | 'folder';
+  folder_id?: string | null;
+  files?: Array<File> | null;
+  is_associated: boolean;
 };
 
 export type ValidationError = {
@@ -1001,6 +1016,39 @@ export type UploadFolderV1ConversationsUploadFolderPostData = {
 };
 
 export type UploadFolderV1ConversationsUploadFolderPostResponse = Array<ListConversationFile>;
+
+export type AssociateItemToConversationV1ConversationsConversationIdAssociateItemIdPostData = {
+  agentId: string;
+  conversationId: string;
+  itemId: string;
+};
+
+export type AssociateItemToConversationV1ConversationsConversationIdAssociateItemIdPostResponse =
+  Array<UserConversationFileAndFolderList>;
+
+export type DeassociateItemFromConversationV1ConversationsConversationIdDeassociateItemIdDeleteData =
+  {
+    agentId: string;
+    conversationId: string;
+    itemId: string;
+  };
+
+export type DeassociateItemFromConversationV1ConversationsConversationIdDeassociateItemIdDeleteResponse =
+  Array<UserConversationFileAndFolderList>;
+
+export type ListUserFilesAndFoldersV1ConversationsFilesAndFoldersConversationIdGetData = {
+  conversationId: string | null;
+};
+
+export type ListUserFilesAndFoldersV1ConversationsFilesAndFoldersConversationIdGetResponse =
+  Array<UserConversationFileAndFolderList>;
+
+export type ListUserFilesAndFoldersV1ConversationsFilesAndFoldersAllGetData = {
+  conversationId?: string | null;
+};
+
+export type ListUserFilesAndFoldersV1ConversationsFilesAndFoldersAllGetResponse =
+  Array<UserConversationFileAndFolderList>;
 
 export type ListToolsV1ToolsGetData = {
   agentId?: string | null;
@@ -1657,6 +1705,66 @@ export type $OpenApiTs = {
          * Successful Response
          */
         200: Array<ListConversationFile>;
+        /**
+         * Validation Error
+         */
+        422: HTTPValidationError;
+      };
+    };
+  };
+  '/v1/conversations/{conversation_id}/associate/{item_id}': {
+    post: {
+      req: AssociateItemToConversationV1ConversationsConversationIdAssociateItemIdPostData;
+      res: {
+        /**
+         * Successful Response
+         */
+        200: Array<UserConversationFileAndFolderList>;
+        /**
+         * Validation Error
+         */
+        422: HTTPValidationError;
+      };
+    };
+  };
+  '/v1/conversations/{conversation_id}/deassociate/{item_id}': {
+    delete: {
+      req: DeassociateItemFromConversationV1ConversationsConversationIdDeassociateItemIdDeleteData;
+      res: {
+        /**
+         * Successful Response
+         */
+        200: Array<UserConversationFileAndFolderList>;
+        /**
+         * Validation Error
+         */
+        422: HTTPValidationError;
+      };
+    };
+  };
+  '/v1/conversations/files-and-folders/{conversation_id}': {
+    get: {
+      req: ListUserFilesAndFoldersV1ConversationsFilesAndFoldersConversationIdGetData;
+      res: {
+        /**
+         * Successful Response
+         */
+        200: Array<UserConversationFileAndFolderList>;
+        /**
+         * Validation Error
+         */
+        422: HTTPValidationError;
+      };
+    };
+  };
+  '/v1/conversations/files-and-folders/all': {
+    get: {
+      req: ListUserFilesAndFoldersV1ConversationsFilesAndFoldersAllGetData;
+      res: {
+        /**
+         * Successful Response
+         */
+        200: Array<UserConversationFileAndFolderList>;
         /**
          * Validation Error
          */

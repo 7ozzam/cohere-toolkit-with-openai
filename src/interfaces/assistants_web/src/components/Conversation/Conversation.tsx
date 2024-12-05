@@ -1,3 +1,4 @@
+import { FileSystemDirectoryHandle } from 'file-system-access';
 import React, { useRef, useState } from 'react';
 
 import { AgentPublic, ManagedTool } from '@/cohere-client';
@@ -17,7 +18,7 @@ import { ConfigurableParams } from '@/stores/slices/paramsSlice';
 import { ChatMessage } from '@/types/message';
 
 import { FolderPreviewModal } from './FolderUpload/FolderPreviewModal';
-import { FileSystemDirectoryHandle } from 'file-system-access';
+
 type Props = {
   startOptionsEnabled?: boolean;
   agent?: AgentPublic;
@@ -56,6 +57,7 @@ export const Conversation: React.FC<Props> = ({ agent, tools, startOptionsEnable
 
   // State for folder preview modal
   const [isFolderModalOpen, setIsFolderModalOpen] = useState(false);
+
   const [folderStructure, setFolderStructure] = useState<{ path: string; file: File }[]>([]);
   const [selectedFolder, setSelectedFolder] = useState<FileSystemDirectoryHandle | null>(null);
 

@@ -323,7 +323,8 @@ class CustomChat(BaseChat):
             # Use the first 25 words as the document preview in the preamble
             num_words = min(25, word_count)
             preview = " ".join(file.file_content.split()[:num_words])
-
+            file_smmary = ""
+            folder_info = ""
             if file.folder and file.folder.name and file.path:
             # Construct folder info
                 file_smmary = f'"file_summary": """Read the file to see it\'s content, the summary is just an indicator don\'t use it for answer :\n\n {file.file_summary}""", '

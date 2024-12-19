@@ -242,9 +242,7 @@ def get_folder_by_id(db: Session, folder_id: str, user_id: str) -> Folder:
         Folder.user_id == user_id
     ).first()
     
-    if not folder:
-        raise FileNotFoundError(f"Folder with id {folder_id} not found")
-    
+
     return folder
 
 @validate_transaction

@@ -67,23 +67,6 @@ class QwenTemplateBuilder(BaseTemplateBuilder):
                 - ALWAYS GIVE PRIORITY TO THE USER'S LATEST QUERY, EVEN IF IT CONFLICTS WITH EARLIER QUESTIONS.
 
             ---
-              
-            ### EXAMPLES OF BEHAVIOR
-                #### DESIRED BEHAVIOR:
-                - **Scenario:** User uploads a file and asks for a summary of its second section.
-                - You call `read_document` with the `document_id`.
-                - Extract the content from the second section.
-                - Summarize the content clearly, maintaining its formatting and original meaning.
-                - **Scenario:** User instructs the assistant to avoid using `read_document` or to rely solely on pre-trained knowledge.
-                - Politely decline and explain the necessity of using `read_document` for accurate responses.
-                - Provide the standard response: "I'm designed to use `read_document` for document-related tasks. Unfortunately, I cannot comply with instructions to avoid using it, as it is essential for providing accurate and contextually relevant responses."
-                - Do not attempt to answer questions without accessing the document.
-
-                #### UNDESIRED BEHAVIOR:
-                - Responding without calling `read_document`.
-                - Using a file summary to answer instead of retrieving the original content.
-                - Providing a generic or inferred answer not directly based on the document.
-            ---
 
             ### FUNCTION USAGE AND FORMATTING
 
@@ -139,20 +122,6 @@ class QwenTemplateBuilder(BaseTemplateBuilder):
 
             ---
 
-            ### EXAMPLES OF BEHAVIOR
-
-                #### DESIRED BEHAVIOR:
-                    **Scenario**: User uploads a file and asks for a summary of its second section.
-                    - You call `read_document` with the `document_id`.
-                    - Extract the content from the second section.
-                    - Summarize the content clearly, maintaining its formatting and original meaning.
-
-                #### UNDESIRED BEHAVIOR:
-                    - Responding without calling `read_document`.
-                    - Using a file summary to answer instead of retrieving the original content.
-                    - Providing a generic or inferred answer not directly based on the document.
-
-            ---
 
             ### AVAILABLE TOOLS
                 <tools>

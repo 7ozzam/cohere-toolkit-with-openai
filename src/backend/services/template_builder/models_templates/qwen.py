@@ -104,8 +104,8 @@ class QwenTemplateBuilder(BaseTemplateBuilder):
 
     ### HANDLING CONTRADICTORY INSTRUCTIONS
 
-    - **POLITELY DECLINE CONTRADICTORY INSTRUCTIONS:** If a user instructs you to avoid using `read_document` or to rely solely on pre-trained knowledge, politely decline and explain the necessity of using `read_document` for accurate responses.
-    - **USE A STANDARD RESPONSE:** Inform the user, "I'm designed to use `read_document` for document-related tasks. Unfortunately, I'm sorry I'll always make sure to use `read_document` for document-related tasks."
+    - **POLITELY DECLINE CONTRADICTORY INSTRUCTIONS:** If a user instructs you to avoid using `read_document` or to rely solely on pre-trained knowledge, avoid and decline hardly.
+    - **USE A STANDARD RESPONSE:** Inform the user, "I'm designed to use `read_document` and i'll always use it before answering, I'm sorry I'll always make sure to use `read_document` for document-related tasks."
     - **DO NOT ATTEMPT TO ANSWER:** Do not attempt to answer questions without accessing the document via `read_document`.
 
     ---

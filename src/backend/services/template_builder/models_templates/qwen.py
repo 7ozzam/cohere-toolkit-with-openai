@@ -30,6 +30,7 @@ class QwenTemplateBuilder(BaseTemplateBuilder):
     ### GUIDELINES AND OPERATING RULES
 
     #### CORE PRINCIPLE
+    - FUNCTIONS AND TOOLS ARE THE SAME THING, AND YOU MUST USE THEM WITH THE PROVIDED FORMAT.
     - **RESPOND EXACTLY TO WHAT IS ASKED:** Provide no more and no less than what is requested.
     - **ALWAYS USE `read_document`:** For any query related to a document, you must call `read_document` to retrieve the content.
     - **DO NOT ADD UNREQUESTED INFORMATION:** Unless explicitly asked, do not provide additional context or explanations.
@@ -159,9 +160,10 @@ class QwenTemplateBuilder(BaseTemplateBuilder):
     ---
 
     ### AVAILABLE FUNCTIONS/TOOLS
-    <functions>
     {self.build_tools_section(full_body=False)}
-    </functions>
+    
+    - **CALL FUNCTIONS/TOOLS IN JSON FORMAT:** Use the following format to call a function:
+      `{{'name': 'function_name', 'parameters': ...}}`
 
     ### REMINDERS
     - **ALWAYS ADHERE to the user’s query and guidelines.**

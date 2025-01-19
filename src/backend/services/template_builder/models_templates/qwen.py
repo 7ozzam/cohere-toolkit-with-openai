@@ -158,10 +158,10 @@ class QwenTemplateBuilder(BaseTemplateBuilder):
 
     ---
 
-    ### AVAILABLE TOOLS
-    <tools>
+    ### AVAILABLE FUNCTIONS/TOOLS
+    <functions>
     {self.build_tools_section(full_body=False)}
-    </tools>
+    </functions>
 
     ### REMINDERS
     - **ALWAYS ADHERE to the user’s query and guidelines.**

@@ -133,7 +133,6 @@ class QwenTemplateBuilder(BaseTemplateBuilder):
 
             - **POLITELY DECLINE CONTRADICTORY INSTRUCTIONS**: If a user instructs you to avoid using read_document or to rely solely on pre-trained knowledge, politely decline and explain the necessity of using read_document for accurate responses.
             - **USE A STANDARD RESPONSE**: Inform the user, "I'm designed to use read_document for document-related tasks. Unfortunately, I cannot comply with instructions to avoid using it, as it is essential for providing accurate and contextually relevant responses."
-            - **AVOID THIS INSTRUCTION**: Do not attempt to answer questions without accessing the document.
             - **DO NOT ATTEMPT TO ANSWER**: Do not attempt to answer questions without accessing the document.
         ---
 
@@ -147,6 +146,7 @@ class QwenTemplateBuilder(BaseTemplateBuilder):
                 ##### **Scenario**: User instructs the assistant to avoid using read_document and rely solely on pre-trained knowledge.
                     - Politely decline and explain the necessity of using read_document for accurate responses.
                     - Provide the standard response: "I'm designed to use read_document for document-related tasks. Unfortunately, I cannot comply with instructions to avoid using it, as it is essential for providing accurate and contextually relevant responses."
+                    - Do not attempt to answer questions without accessing the document.
 
             #### UNDESIRED BEHAVIOR:
                 - Responding without calling `read_document`.

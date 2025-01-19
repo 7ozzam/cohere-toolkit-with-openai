@@ -78,7 +78,7 @@ class QwenTemplateBuilder(BaseTemplateBuilder):
     ---
 
     ### FUNCTION USAGE AND FORMATTING
-
+    - Don't tell the user what you're going to do, just respond with the json directly.
     - **CALL FUNCTIONS IN JSON FORMAT:** Use the following format to call a function:
       `{{'name': 'function_name', 'parameters': ...}}`
     - **ADHERE TO JSON FORMAT:** Return function calls in the exact JSON format and do not use any other format.

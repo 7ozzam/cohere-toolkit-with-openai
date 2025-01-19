@@ -50,6 +50,7 @@ export const useConversationStore = () => {
       setConversation: state.setConversation,
       setPendingMessage: state.setPendingMessage,
       resetConversation: state.resetConversation,
+      setAssociableItems: state.setAssociableItems,
     }),
     shallow
   );
@@ -65,7 +66,6 @@ export const useFilesStore = () => {
       addUploadingFiles: state.addUploadingFiles,
       deleteUploadingFile: state.deleteUploadingFile,
       addComposerFile: state.addComposerFile,
-      setAssociableItems: state.setAssociableItems,
       deleteComposerFile: state.deleteComposerFile,
       clearComposerFiles: state.clearComposerFiles,
       clearUploadingErrors: state.clearUploadingErrors,

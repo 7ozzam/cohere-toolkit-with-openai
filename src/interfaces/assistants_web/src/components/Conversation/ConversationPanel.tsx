@@ -11,12 +11,11 @@ import {
   useBrandedColors,
   useChatRoutes,
   useConversationFileActions,
-  useGetConversationAssociatableItems,
   useListConversationFiles,
   useSession,
 } from '@/hooks';
 import { useFolderActions } from '@/hooks/use-folder';
-import { useFilesStore, useParamsStore, useSettingsStore } from '@/stores';
+import { useConversationStore, useFilesStore, useParamsStore, useSettingsStore } from '@/stores';
 
 import { ExistingItemsViewModal } from './ExistingItemsView/ExistingItemsViewModal';
 import { KnowledgeItem } from './FolderUpload/KnowledgeItemView';
@@ -26,8 +25,8 @@ export const ConversationPanel: React.FC = () => {
   const [isExistingItemsModalOpen, setIsExistingItemsModalOpen] = useState(false);
   const {
     setAssociableItems,
-    files: { associableItems },
-  } = useFilesStore();
+    conversation: { associableItems },
+  } = useConversationStore();
   // const [associatableItems, setAssociatableItems] = useState(Array<UserConversationFileAndFolderList>(0));
   const { agentId, conversationId } = useChatRoutes();
   const { data: files } = useListConversationFiles(conversationId);

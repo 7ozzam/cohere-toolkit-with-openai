@@ -11,23 +11,27 @@ import {
 } from '@/types/message';
 
 import { StoreState } from '..';
+import { UserConversationFileAndFolderList } from '@/cohere-client';
 
 const INITIAL_STATE: State = {
   id: undefined,
   name: DEFAULT_CONVERSATION_NAME,
   messages: [],
+  associableItems: []
 };
 
 type State = {
   id?: string;
   name?: string;
   messages: ChatMessage[];
+  associableItems: UserConversationFileAndFolderList[];
 };
 
 type Actions = {
   setConversation: (conversation: Partial<State>) => void;
   setPendingMessage: (message: FulfilledMessage | LoadingMessage | TypingMessage | null) => void;
   resetConversation: VoidFunction;
+  setAssociableItems: (associableItems: UserConversationFileAndFolderList[]) => void;
 };
 
 export type ConversationStore = {
@@ -37,6 +41,14 @@ export type ConversationStore = {
 export const createConversationSlice: StateCreator<StoreState, [], [], ConversationStore> = (
   set
 ) => ({
+  setAssociableItems(associableItems: UserConversationFileAndFolderList[]) {
+    set((state) => ({
+      conversation: {
+        ...state.conversation,
+        associableItems: associableItems,
+      },
+    }));
+  },
   setConversation(conversation) {
     set((state) => ({
       conversation: {

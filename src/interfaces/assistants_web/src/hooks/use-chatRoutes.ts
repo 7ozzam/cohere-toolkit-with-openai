@@ -3,7 +3,7 @@
 import { useParams, useRouter } from 'next/navigation';
 import { useMemo } from 'react';
 
-import { useIsDesktop } from '@/hooks';
+import { useConversations, useIsDesktop } from '@/hooks';
 import {
   useCitationsStore,
   useConversationStore,
@@ -11,6 +11,7 @@ import {
   useSettingsStore,
 } from '@/stores';
 import { getQueryString } from '@/utils';
+import { useQueryClient } from '@tanstack/react-query';
 
 export const useNavigateToNewChat = () => {
   const router = useRouter();
@@ -18,11 +19,12 @@ export const useNavigateToNewChat = () => {
   const isMobile = !isDesktop;
   const { agentId } = useChatRoutes();
   const { resetConversation } = useConversationStore();
+  
   const { resetCitations } = useCitationsStore();
   const { resetFileParams } = useParamsStore();
   const { setLeftPanelOpen } = useSettingsStore();
-
-  const handleNavigate = () => {
+  const queryClient = useQueryClient();
+  const handleNavigate = async () => {
     console.log(agentId);
     const url = agentId ? `/a/${agentId}` : '/';
     resetConversation();

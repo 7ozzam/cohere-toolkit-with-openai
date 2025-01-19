@@ -11,10 +11,9 @@ import {
   useAvailableTools,
   useConversation,
   useConversationAssociatableItems,
-  useGetConversationAssociatableItems,
   useListTools,
 } from '@/hooks';
-import { useCitationsStore, useConversationStore, useFilesStore, useParamsStore } from '@/stores';
+import { useCitationsStore, useConversationStore, useParamsStore } from '@/stores';
 import { OutputFiles } from '@/stores/slices/citationsSlice';
 import {
   createStartEndKey,
@@ -29,7 +28,7 @@ const Chat: React.FC<{ agentId?: string; conversationId?: string }> = ({
 }) => {
   const { data: agent, isLoading: isLoadingAgent } = useAgent({ agentId });
   const { data: tools } = useListTools();
-  const { setConversation } = useConversationStore();
+  const { setConversation, setAssociableItems } = useConversationStore();
   const { addCitation, saveOutputFiles } = useCitationsStore();
   const { setParams, resetFileParams } = useParamsStore();
   const { availableTools } = useAvailableTools({ agent, managedTools: tools });
@@ -41,17 +40,26 @@ const Chat: React.FC<{ agentId?: string; conversationId?: string }> = ({
     conversationId: conversationId,
   });
 
-  const { setAssociableItems } = useFilesStore();
+  
 
   const { data: associatableItems } = useConversationAssociatableItems({
     conversationId: conversationId || 'all',
   });
+  
+  
 
   useEffect(() => {
+    console.log("Setting Associatable Items",associatableItems);
     if (!!associatableItems?.length) {
       setAssociableItems(associatableItems);
     }
-  }, [conversationId, associatableItems, setAssociableItems]);
+  }, [ associatableItems, setAssociableItems,  agent,
+    tools,
+    conversation,
+    setParams,
+    resetFileParams,
+    setConversation,
+    conversationId]);
 
   // resetConversationSettings();
 

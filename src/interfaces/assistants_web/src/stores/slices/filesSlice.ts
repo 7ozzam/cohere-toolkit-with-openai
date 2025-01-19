@@ -39,7 +39,6 @@ type Actions = {
   deleteComposerFile: (id: string) => void;
   clearUploadingErrors: () => void;
   clearComposerFiles: () => void;
-  setAssociableItems: (associableItems: UserConversationFileAndFolderList[]) => void;
 };
 
 export type FilesStore = {
@@ -47,14 +46,7 @@ export type FilesStore = {
 } & Actions;
 
 export const createFilesSlice: StateCreator<StoreState, [], [], FilesStore> = (set) => ({
-  setAssociableItems(associableItems: UserConversationFileAndFolderList[]) {
-    set((state) => ({
-      files: {
-        ...state.files,
-        associableItems: associableItems,
-      },
-    }));
-  },
+
   queueFocusFileInput() {
     set((state) => ({
       files: {

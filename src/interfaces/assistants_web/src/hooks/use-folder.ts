@@ -5,7 +5,7 @@ import * as path from 'path';
 import { ApiError, UserConversationFileAndFolderList, useCohereClient } from '@/cohere-client';
 import { ACCEPTED_FILE_TYPES } from '@/constants';
 import { useNotify, useSession } from '@/hooks';
-import { useConversationStore, useFilesStore, useFoldersStore, useParamsStore } from '@/stores';
+import { useConversationStore, useFoldersStore, useParamsStore } from '@/stores';
 import { getFileExtension, mapExtensionToMimeType } from '@/utils';
 import { useRouter } from 'next/navigation';
 import { useCallback } from 'react';
@@ -98,7 +98,7 @@ export const useFolderActions = () => {
     setParams,
   } = useParamsStore();
   const { mutateAsync: uploadFolder } = useUploadFolderFiles();
-  const { setAssociableItems } = useFilesStore();
+  const { setAssociableItems } = useConversationStore();
   const { mutateAsync: deleteFolderFileAction } = useDeleteUploadedFolderFile();
   const {
     conversation: { id: selectedConversationId, name: conversationName },
@@ -266,8 +266,9 @@ export const useFolderActions = () => {
       
       await queryClient.invalidateQueries({ queryKey: ['conversations'] });
       await queryClient.invalidateQueries({ queryKey: ['associatableItems'] });
-      
       await queryClient.invalidateQueries({ queryKey: ['listFiles'] });
+
+      
     } catch (e) {
       console.error(e);
       throw e;

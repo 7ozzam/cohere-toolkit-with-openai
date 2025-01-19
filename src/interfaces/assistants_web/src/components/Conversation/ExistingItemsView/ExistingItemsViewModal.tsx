@@ -36,9 +36,9 @@ export const ExistingItemsViewModal: React.FC<ExistingItemsViewModalProps> = ({
   const [isEmptyFolder, setIsEmptyFolder] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false); // Added state for processing
 
-  const {
-    files: { associableItems },
-  } = useFilesStore();
+  // const {
+  //   conversation: { associableItems },
+  // } = useConversationStore();
   // useEffect(() => {
   //   // Guard against running on every render
   //   if (!isOpen) return;
@@ -84,8 +84,8 @@ export const ExistingItemsViewModal: React.FC<ExistingItemsViewModalProps> = ({
         ) : isEmptyFolder ? (
           <p>This folder is empty. Please select a folder with files.</p>
         ) : (
-          associableItems &&
-          associableItems.map((item) => (
+          items &&
+          items.map((item) => (
             <div className="flex flex-col gap-y-4" key={item.id}>
               <KnowledgeItem
                 file={item}

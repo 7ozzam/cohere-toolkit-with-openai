@@ -80,6 +80,8 @@ class QwenTemplateBuilder(BaseTemplateBuilder):
 
         ### FUNCTION USAGE AND FORMATTING
 
+            - To call a function, use the following format in your response:
+                `{{'name': 'function_name', 'parameters': ...}}`
             - RETURN FUNCTION CALLS IN THE EXACT JSON FORMAT:
                 `{{'name': 'function_name', 'parameters': ...}}`
             - DO NOT use any other format to call functions - only the provided JSON.

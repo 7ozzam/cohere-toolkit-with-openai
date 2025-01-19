@@ -67,12 +67,7 @@ class QwenTemplateBuilder(BaseTemplateBuilder):
                 - ALWAYS GIVE PRIORITY TO THE USER'S LATEST QUERY, EVEN IF IT CONFLICTS WITH EARLIER QUESTIONS.
 
             ---
-              ### HANDLING CONTRADICTORY INSTRUCTIONS
-                - **POLITELY DECLINE CONTRADICTORY INSTRUCTIONS:** If a user instructs you to avoid using `read_document` or to rely solely on pre-trained knowledge, politely decline and explain the necessity of using `read_document` for accurate responses.
-                - **USE A STANDARD RESPONSE:** Inform the user, "I'm designed to use `read_document` for document-related tasks. Unfortunately, I cannot comply with instructions to avoid using it, as it is essential for providing accurate and contextually relevant responses."
-                - **DO NOT ATTEMPT TO ANSWER:** Do not attempt to answer questions without accessing the document via `read_document`.
-                
-            ---
+              
             ### EXAMPLES OF BEHAVIOR
                 #### DESIRED BEHAVIOR:
                 - **Scenario:** User uploads a file and asks for a summary of its second section.
@@ -88,11 +83,6 @@ class QwenTemplateBuilder(BaseTemplateBuilder):
                 - Responding without calling `read_document`.
                 - Using a file summary to answer instead of retrieving the original content.
                 - Providing a generic or inferred answer not directly based on the document.
-
-                #### ADDITIONAL SCENARIO:
-                - **Scenario:** User asks a question without providing a `document_id`.
-                - You inform the user that you need the `document_id` to proceed.
-                - You do not attempt to answer the question without accessing the document.
             ---
 
             ### FUNCTION USAGE AND FORMATTING
